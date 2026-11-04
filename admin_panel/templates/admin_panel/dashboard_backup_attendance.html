@@ -1,0 +1,354 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Staff Attendance</title>
+
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+
+    <style>
+        body {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+        }
+    </style>
+</head>
+
+<body class="bg-[#F8F9FA] min-h-screen flex text-gray-800 relative">
+
+    <!-- Mobile Sidebar Overlay -->
+    <div id="mobile-overlay" class="fixed inset-0 bg-gray-900/50 z-20 hidden md:hidden transition-opacity" onclick="toggleSidebar()"></div>
+
+    <!-- Sidebar Navigation -->
+    <aside id="sidebar" class="w-64 bg-white border-r border-gray-200 flex flex-col justify-between h-screen fixed md:sticky top-0 z-30 transform -translate-x-full md:translate-x-0 transition-transform duration-300">
+        
+        <div class="px-6 py-5 overflow-y-auto">
+            <!-- Branding -->
+            <div class="mb-8 flex justify-between items-center">
+                <div>
+                    <h2 class="text-xl font-bold text-gray-900 tracking-tight">Radiant Ayurveda</h2>
+                    <p class="text-xs text-gray-500 font-medium">Staff Portal</p>
+                </div>
+                <!-- Close Button (Mobile Only) -->
+                <button onclick="toggleSidebar()" class="md:hidden text-gray-400 hover:text-gray-900 transition-colors">
+                    <i class="fa-solid fa-xmark text-xl"></i>
+                </button>
+            </div>
+
+            <!-- Nav Links -->
+            <nav class="space-y-1">
+                <a href="#" class="flex items-center gap-3 px-4 py-2.5 bg-gray-100/80 text-gray-900 rounded-lg font-semibold text-sm transition">
+                    <i class="fa-solid fa-clock text-gray-700 text-base"></i>
+                    <span>Attendance</span>
+                </a>
+                <a href="#" class="flex items-center gap-3 px-4 py-2.5 text-gray-600 hover:bg-gray-50 hover:text-gray-900 rounded-lg font-medium text-sm transition">
+                    <i class="fa-solid fa-calendar-days text-gray-400"></i>
+                    <span>Leave Requests</span>
+                </a>
+                <a href="#" class="flex items-center gap-3 px-4 py-2.5 text-gray-600 hover:bg-gray-50 hover:text-gray-900 rounded-lg font-medium text-sm transition">
+                    <i class="fa-solid fa-file-lines text-gray-400"></i>
+                    <span>Salary Slips</span>
+                </a>
+            </nav>
+        </div>
+
+        <!-- Logout and Active Profile -->
+        <div class="border-t border-gray-100 p-4 flex items-center justify-between shrink-0">
+            <div>
+                <p class="text-sm font-semibold text-gray-900 capitalize">{{ request.user.full_name }}</p>
+                <p class="text-xs text-gray-500">{{ request.user.branch.name }}</p>
+            </div>
+            <a href="/logout/" class="text-gray-400 hover:text-red-500 transition-colors p-2 rounded-lg" title="Logout">
+                <i class="fa-solid fa-right-from-bracket text-lg"></i>
+            </a>
+        </div>
+
+    </aside>
+
+
+    <!-- Main Page Work Area -->
+    <div class="flex-1 flex flex-col min-h-screen min-w-0">
+        
+        <!-- Header -->
+        <header class="px-4 sm:px-8 py-5 flex flex-col md:flex-row md:items-center justify-between gap-4 bg-[#F8F9FA] z-10 sticky top-0 md:static">
+            
+            <div class="flex items-center gap-3">
+                <!-- Hamburger Menu Button (Mobile Only) -->
+                <button onclick="toggleSidebar()" class="md:hidden text-gray-700 p-2 -ml-2 rounded-lg hover:bg-gray-200 transition-colors">
+                    <i class="fa-solid fa-bars text-xl"></i>
+                </button>
+
+                <div>
+                    <h1 class="text-xl sm:text-2xl font-extrabold text-gray-950 tracking-tight">Attendance Tracking</h1>
+                    <p class="text-xs sm:text-sm text-gray-500 font-medium">Check in/out and view history</p>
+                </div>
+            </div>
+
+            <!-- Date Filter -->
+            <div class="flex flex-wrap sm:flex-nowrap items-center gap-3">
+                <form method="get" class="flex gap-2 flex-wrap sm:flex-nowrap">
+                    <select name="filter" class="appearance-none bg-white border border-gray-200 text-sm rounded-lg px-4 py-2 pr-8 font-medium text-gray-700 shadow-sm focus:outline-none focus:ring-1 focus:ring-gray-300 cursor-pointer">
+                        <option value="today" {% if filter_type == 'today' %}selected{% endif %}>Today</option>
+                        <option value="week" {% if filter_type == 'week' %}selected{% endif %}>This Week</option>
+                        <option value="month" {% if filter_type == 'month' %}selected{% endif %}>This Month</option>
+                        <option value="all" {% if filter_type == 'all' %}selected{% endif %}>All Records</option>
+                    </select>
+                    <i class="fa-solid fa-chevron-down absolute right-3 top-3.5 text-[10px] text-gray-400 pointer-events-none"></i>
+                    <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white rounded-lg px-4 py-2 text-sm font-semibold transition">Filter</button>
+                </form>
+            </div>
+        </header>
+
+
+        <!-- Main Content -->
+        <main class="flex-1 px-4 sm:px-8 pb-10">
+
+            <!-- Check In/Out Status Card -->
+            <div class="bg-white border border-gray-100 rounded-xl p-6 shadow-sm mb-6">
+                <h2 class="text-lg font-bold text-gray-900 mb-4">Today's Check In/Out</h2>
+                
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
+                    <!-- Check In Status -->
+                    <div class="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                        <div class="flex items-center justify-between mb-2">
+                            <p class="text-sm font-semibold text-gray-600">First Check In</p>
+                            <i class="fa-solid fa-arrow-right-to-bracket text-blue-600"></i>
+                        </div>
+                        <p class="text-2xl font-bold text-blue-600">
+                            {% if today_check_in %}
+                                {{ today_check_in|date:"h:i A" }}
+                            {% else %}
+                                <span class="text-gray-400">Not checked in</span>
+                            {% endif %}
+                        </p>
+                    </div>
+
+                    <!-- Check Out Status -->
+                    <div class="bg-emerald-50 border border-emerald-200 rounded-lg p-4">
+                        <div class="flex items-center justify-between mb-2">
+                            <p class="text-sm font-semibold text-gray-600">Last Check Out</p>
+                            <i class="fa-solid fa-arrow-right-from-bracket text-emerald-600"></i>
+                        </div>
+                        <p class="text-2xl font-bold text-emerald-600">
+                            {% if today_check_out %}
+                                {{ today_check_out|date:"h:i A" }}
+                            {% else %}
+                                <span class="text-gray-400">Not checked out</span>
+                            {% endif %}
+                        </p>
+                    </div>
+                </div>
+
+                <!-- Check In/Out Buttons -->
+                <div class="flex gap-3 flex-wrap">
+                    <button id="checkInBtn" class="bg-blue-600 hover:bg-blue-700 text-white rounded-lg px-6 py-2.5 font-semibold transition flex items-center gap-2">
+                        <i class="fa-solid fa-arrow-right-to-bracket"></i>
+                        Check In
+                    </button>
+                    <button id="checkOutBtn" class="bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg px-6 py-2.5 font-semibold transition flex items-center gap-2">
+                        <i class="fa-solid fa-arrow-right-from-bracket"></i>
+                        Check Out
+                    </button>
+                </div>
+            </div>
+
+            <!-- Activity History -->
+            <div class="bg-white border border-gray-100 rounded-xl p-6 shadow-sm">
+                <h2 class="text-lg font-bold text-gray-900 mb-4">Today's Activity Log</h2>
+                
+                <div class="overflow-x-auto">
+                    <table class="w-full text-sm">
+                        <thead>
+                            <tr class="border-b border-gray-100">
+                                <th class="text-left py-3 px-4 font-semibold text-gray-700">Time</th>
+                                <th class="text-left py-3 px-4 font-semibold text-gray-700">Activity</th>
+                                <th class="text-left py-3 px-4 font-semibold text-gray-700">Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% if today_activities %}
+                                {% for activity in today_activities %}
+                                    <tr class="border-b border-gray-50 hover:bg-gray-50 transition">
+                                        <td class="py-3 px-4">
+                                            <span class="font-semibold text-gray-900">{{ activity.timestamp|date:"h:i A" }}</span>
+                                        </td>
+                                        <td class="py-3 px-4">
+                                            {% if activity.activity_type == 'check_in' %}
+                                                <span class="flex items-center gap-2">
+                                                    <i class="fa-solid fa-arrow-right-to-bracket text-blue-600"></i>
+                                                    Check In
+                                                </span>
+                                            {% else %}
+                                                <span class="flex items-center gap-2">
+                                                    <i class="fa-solid fa-arrow-right-from-bracket text-emerald-600"></i>
+                                                    Check Out
+                                                </span>
+                                            {% endif %}
+                                        </td>
+                                        <td class="py-3 px-4">
+                                            <span class="inline-block px-3 py-1 rounded-full text-xs font-semibold {% if activity.activity_type == 'check_in' %}bg-blue-100 text-blue-700{% else %}bg-emerald-100 text-emerald-700{% endif %}">
+                                                {{ activity.get_activity_type_display }}
+                                            </span>
+                                        </td>
+                                    </tr>
+                                {% endfor %}
+                            {% else %}
+                                <tr>
+                                    <td colspan="3" class="py-8 text-center text-gray-500">
+                                        <i class="fa-solid fa-inbox text-2xl mb-2 block opacity-50"></i>
+                                        No activity recorded yet
+                                    </td>
+                                </tr>
+                            {% endif %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Attendance History -->
+            <div class="bg-white border border-gray-100 rounded-xl p-6 shadow-sm mt-6">
+                <h2 class="text-lg font-bold text-gray-900 mb-4">Attendance History</h2>
+                
+                <div class="overflow-x-auto">
+                    <table class="w-full text-sm">
+                        <thead>
+                            <tr class="border-b border-gray-100">
+                                <th class="text-left py-3 px-4 font-semibold text-gray-700">Date</th>
+                                <th class="text-left py-3 px-4 font-semibold text-gray-700">Check In</th>
+                                <th class="text-left py-3 px-4 font-semibold text-gray-700">Check Out</th>
+                                <th class="text-left py-3 px-4 font-semibold text-gray-700">Status</th>
+                                <th class="text-left py-3 px-4 font-semibold text-gray-700">Sessions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% if attendance_records %}
+                                {% for record in attendance_records %}
+                                    <tr class="border-b border-gray-50 hover:bg-gray-50 transition">
+                                        <td class="py-3 px-4 font-semibold text-gray-900">{{ record.date|date:"d M Y" }}</td>
+                                        <td class="py-3 px-4">
+                                            {% if record.check_in %}
+                                                <span class="font-mono text-gray-700">{{ record.check_in|date:"h:i A" }}</span>
+                                            {% else %}
+                                                <span class="text-gray-400">-</span>
+                                            {% endif %}
+                                        </td>
+                                        <td class="py-3 px-4">
+                                            {% if record.check_out %}
+                                                <span class="font-mono text-gray-700">{{ record.check_out|date:"h:i A" }}</span>
+                                            {% else %}
+                                                <span class="text-gray-400">-</span>
+                                            {% endif %}
+                                        </td>
+                                        <td class="py-3 px-4">
+                                            {% if record.status == 'present' %}
+                                                <span class="inline-block px-3 py-1 rounded-full text-xs font-semibold bg-emerald-100 text-emerald-700">Present</span>
+                                            {% elif record.status == 'absent' %}
+                                                <span class="inline-block px-3 py-1 rounded-full text-xs font-semibold bg-red-100 text-red-700">Absent</span>
+                                            {% elif record.status == 'leave' %}
+                                                <span class="inline-block px-3 py-1 rounded-full text-xs font-semibold bg-yellow-100 text-yellow-700">Leave</span>
+                                            {% else %}
+                                                <span class="inline-block px-3 py-1 rounded-full text-xs font-semibold bg-gray-100 text-gray-700">{{ record.status|title }}</span>
+                                            {% endif %}
+                                        </td>
+                                        <td class="py-3 px-4 text-gray-700">
+                                            {{ record.activities.count }} activity(ies)
+                                        </td>
+                                    </tr>
+                                {% endfor %}
+                            {% else %}
+                                <tr>
+                                    <td colspan="5" class="py-8 text-center text-gray-500">
+                                        <i class="fa-solid fa-calendar-xmark text-2xl mb-2 block opacity-50"></i>
+                                        No attendance records found
+                                    </td>
+                                </tr>
+                            {% endif %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+        </main>
+    </div>
+
+    <!-- Hidden Form for Check In/Out -->
+    <form id="attendanceForm" method="post" style="display: none;">
+        {% csrf_token %}
+        <input type="hidden" id="actionInput" name="action" value="">
+    </form>
+
+  <!-- Update only the JavaScript section at the bottom -->
+<script>
+    function toggleSidebar() {
+        const sidebar = document.getElementById('sidebar');
+        const overlay = document.getElementById('mobile-overlay');
+        
+        sidebar.classList.toggle('-translate-x-full');
+        overlay.classList.toggle('hidden');
+        document.body.classList.toggle('overflow-hidden');
+    }
+
+    // Get CSRF token from the form
+    function getCookie(name) {
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            const cookies = document.cookie.split(';');
+            for (let i = 0; i < cookies.length; i++) {
+                const cookie = cookies[i].trim();
+                if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
+            }
+        }
+        return cookieValue;
+    }
+
+    const csrftoken = getCookie('csrftoken');
+
+    // Check In/Out Button Handlers
+    document.getElementById('checkInBtn').addEventListener('click', function() {
+        submitAttendance('check_in');
+    });
+
+    document.getElementById('checkOutBtn').addEventListener('click', function() {
+        submitAttendance('check_out');
+    });
+
+    function submitAttendance(action) {
+        const formData = new FormData();
+        formData.append('action', action);
+        formData.append('csrfmiddlewaretoken', csrftoken);
+
+        console.log('Submitting:', action);
+        console.log('CSRF Token:', csrftoken);
+
+        fetch(window.location.href, {
+            method: 'POST',
+            body: formData,
+        })
+        .then(response => {
+            console.log('Response status:', response.status);
+            return response.json();
+        })
+        .then(data => {
+            console.log('Response data:', data);
+            if (data.status === 'success') {
+                alert('✓ ' + (action === 'check_in' ? 'Checked in' : 'Checked out') + ' successfully!');
+                setTimeout(() => location.reload(), 500);
+            } else {
+                alert('❌ Error: ' + (data.message || 'Action failed'));
+                console.log('Full response:', data);
+            }
+        })
+        .catch(error => {
+            console.error('Fetch error:', error);
+            alert('❌ Network error. Check browser console for details.');
+        });
+    }
+</script>
+
+</body>
+</html>

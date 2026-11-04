@@ -1,0 +1,256 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>All Leave Requests - Admin Dashboard</title>
+
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+
+    <style>
+        body {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+        }
+    </style>
+</head>
+
+<body class="bg-[#F8F9FA] min-h-screen flex text-gray-800 relative">
+
+    <!-- Mobile Sidebar Overlay -->
+    <div id="mobile-overlay" class="fixed inset-0 bg-gray-900/50 z-20 hidden md:hidden transition-opacity" onclick="toggleSidebar()"></div>
+
+    <!-- Sidebar Navigation -->
+    {% include "admin_panel/components/sidebar.html" %}
+
+    <!-- Main Page Work Area -->
+    <div class="flex-1 flex flex-col min-h-screen min-w-0">
+
+        <!-- Header -->
+        <header class="px-4 sm:px-8 py-5 flex flex-col md:flex-row md:items-center justify-between gap-4 bg-[#F8F9FA] z-10 sticky top-0 md:static">
+
+            <div class="flex items-center gap-3">
+                <button onclick="toggleSidebar()" class="md:hidden text-gray-700 p-2 -ml-2 rounded-lg hover:bg-gray-200 transition-colors">
+                    <i class="fa-solid fa-bars text-xl"></i>
+                </button>
+
+                <div>
+                    <h1 class="text-xl sm:text-2xl font-extrabold text-gray-950 tracking-tight">Leave Requests</h1>
+                    <p class="text-xs sm:text-sm text-gray-500 font-medium">Review and manage all staff leave applications</p>
+                </div>
+            </div>
+
+            <div class="flex items-center">
+                <a href="{% url 'admin_dashboard' %}" class="flex items-center gap-2 text-sm font-semibold text-gray-600 bg-white border border-gray-200 rounded-lg px-4 py-2 shadow-sm hover:bg-gray-50 hover:text-gray-900 transition">
+                    <i class="fa-solid fa-arrow-left"></i>
+                    Back to Dashboard
+                </a>
+            </div>
+        </header>
+
+        <!-- Main Content Area -->
+        <main class="flex-1 px-4 sm:px-8 pb-10">
+
+            {% if messages %}
+                <div class="space-y-2 mt-4">
+                    {% for message in messages %}
+                        <div class="{% if message.tags == 'error' %}bg-red-50 text-red-700 border-red-100{% else %}bg-emerald-50 text-emerald-700 border-emerald-100{% endif %} text-sm font-medium px-4 py-3 rounded-lg border">{{ message }}</div>
+                    {% endfor %}
+                </div>
+            {% endif %}
+
+            <div class="bg-white border border-gray-100 rounded-xl shadow-sm overflow-hidden mt-2">
+
+                <!-- Filters & Search Toolbar -->
+                <form method="GET" class="px-6 py-4 border-b border-gray-100 flex flex-col md:flex-row md:items-center justify-between gap-4 bg-gray-50/30">
+
+                    <div class="flex items-center gap-2 w-full md:w-auto">
+                        <div class="relative w-full md:w-64">
+                            <div class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
+                                <i class="fa-solid fa-magnifying-glass text-gray-400 text-sm"></i>
+                            </div>
+                            <input type="text" name="search" value="{{ request.GET.search }}" class="bg-white border border-gray-200 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full pl-10 p-2.5 shadow-sm" placeholder="Search staff name...">
+                        </div>
+                    </div>
+
+                    <div class="flex items-center gap-3 w-full md:w-auto">
+                        <select name="status" class="bg-white border border-gray-200 text-gray-700 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 shadow-sm font-medium">
+                            <option value="">All Statuses</option>
+                            <option value="pending" {% if request.GET.status == 'pending' %}selected{% endif %}>Pending</option>
+                            <option value="approved" {% if request.GET.status == 'approved' %}selected{% endif %}>Approved</option>
+                            <option value="rejected" {% if request.GET.status == 'rejected' %}selected{% endif %}>Rejected</option>
+                        </select>
+                        <button type="submit" class="flex items-center gap-2 bg-gray-900 text-white text-sm font-semibold rounded-lg px-4 py-2.5 hover:bg-gray-800 transition shadow-sm whitespace-nowrap">
+                            <i class="fa-solid fa-filter text-xs"></i> Filter
+                        </button>
+                    </div>
+
+                </form>
+
+                <!-- Leave Requests Table -->
+                <div class="overflow-x-auto relative">
+                    <table class="w-full text-sm text-left text-gray-500">
+
+                        <thead class="text-xs text-gray-400 uppercase bg-gray-50/50 font-semibold tracking-wide border-b border-gray-100">
+                            <tr>
+                                <th class="px-6 py-4">Staff Details</th>
+                                <th class="px-6 py-4">Leave Info</th>
+                                <th class="px-6 py-4">Reason</th>
+                                <th class="px-6 py-4">Status</th>
+                                <th class="px-6 py-4 text-right">Actions</th>
+                            </tr>
+                        </thead>
+
+                        <tbody class="divide-y divide-gray-50">
+
+                            <!-- LOOP START: Dynamic leave requests -->
+                            {% for leave in leave_requests %}
+                            <tr class="bg-white hover:bg-gray-50/50 transition-colors group">
+                                <td class="px-6 py-4">
+                                    <p class="font-bold text-gray-900">{{ leave.staff.get_full_name|default:leave.staff.username }}</p>
+                                    <p class="text-xs text-gray-500 mt-0.5">{{ leave.staff.designation|default:"Staff" }} • {{ leave.staff.branch.name|default:"Unassigned" }}</p>
+                                </td>
+                                <td class="px-6 py-4">
+                                    <!-- Leave Type Badge -->
+                                    {% if leave.leave_type == 'Sick' %}
+                                        <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-bold bg-blue-50 text-blue-700 mb-1 border border-blue-100">
+                                            <i class="fa-solid fa-virus"></i> Sick Leave
+                                        </span>
+                                    {% elif leave.leave_type == 'Casual' %}
+                                        <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-bold bg-purple-50 text-purple-700 mb-1 border border-purple-100">
+                                            <i class="fa-solid fa-umbrella-beach"></i> Casual Leave
+                                        </span>
+                                    {% else %}
+                                        <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-bold bg-gray-50 text-gray-700 mb-1 border border-gray-100">
+                                            {{ leave.leave_type }}
+                                        </span>
+                                    {% endif %}
+                                    <p class="font-medium text-gray-700 text-xs mt-1">{{ leave.start_date|date:"M d, Y" }} - {{ leave.end_date|date:"M d, Y" }}</p>
+                                    <p class="text-xs text-gray-500">({{ leave.num_days }} Day{% if leave.num_days != 1 %}s{% endif %})</p>
+                                </td>
+                                <td class="px-6 py-4">
+                                    <p class="text-gray-600 text-sm line-clamp-2 max-w-xs" title="{{ leave.reason }}">
+                                        {{ leave.reason }}
+                                    </p>
+                                </td>
+                                <td class="px-6 py-4">
+                                    <!-- Status Badge -->
+                    {% if leave.status == 'pending' %}
+    <span class="inline-flex px-3 py-1 rounded-md text-xs font-bold bg-amber-100 text-amber-800 border border-amber-200">
+        Pending
+    </span>
+{% elif leave.status == 'approved' %}
+    <span class="inline-flex px-3 py-1 rounded-md text-xs font-bold bg-green-100 text-green-800 border border-green-200">
+        Approved
+    </span>
+{% elif leave.status == 'rejected' %}
+    <span class="inline-flex px-3 py-1 rounded-md text-xs font-bold bg-red-100 text-red-800 border border-red-200">
+        Rejected
+    </span>
+{% endif %}
+                                </td>
+<td class="px-6 py-4 text-right">
+    <div class="flex justify-end gap-2 flex-wrap">
+
+     
+                <form method="POST" action="{% url 'approve_leave' leave.id %}" style="display: inline;">
+                    {% csrf_token %}
+                    <button type="submit" class="text-green-600 bg-green-50 border border-green-200 hover:bg-green-100 hover:border-green-300 px-3 py-1.5 rounded-lg font-semibold text-xs transition flex items-center gap-1 shadow-sm">
+                        <i class="fa-solid fa-check"></i> Approve
+                    </button>
+                </form>
+                <form method="POST" action="{% url 'reject_leave' leave.id %}" style="display: inline;">
+                    {% csrf_token %}
+                    <button type="submit" class="text-red-600 bg-red-50 border border-red-200 hover:bg-red-100 hover:border-red-300 px-3 py-1.5 rounded-lg font-semibold text-xs transition flex items-center gap-1 shadow-sm">
+                        <i class="fa-solid fa-xmark"></i> Reject
+                    </button>
+                </form>
+                <form method="POST" action="{% url 'delete_leave_request' leave.id %}" style="display: inline;" onsubmit="return confirm('Delete this leave request permanently? This cannot be undone.');">
+                    {% csrf_token %}
+                    <input type="hidden" name="next" value="{{ request.get_full_path }}">
+                    <button type="submit" class="text-gray-700 bg-gray-50 border border-gray-200 hover:bg-gray-100 hover:border-gray-300 px-3 py-1.5 rounded-lg font-semibold text-xs transition flex items-center gap-1 shadow-sm">
+                        <i class="fa-solid fa-trash"></i> Delete
+                    </button>
+                </form>
+            
+    </div>
+</td>                            </tr>
+
+                            <!-- EMPTY STATE: No leave requests -->
+                            {% empty %}
+                            <tr>
+                                <td colspan="5" class="px-6 py-16 text-center text-gray-400">
+                                    <div class="flex flex-col items-center">
+                                        <i class="fa-solid fa-inbox text-4xl mb-4 text-gray-300"></i>
+                                        <p class="text-base font-medium text-gray-600">No leave requests found</p>
+                                        <p class="text-sm mt-1">Staff leave applications will appear here.</p>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                            <!-- LOOP END -->
+
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Pagination (Dynamic with Django Paginator) -->
+                {% if leave_requests.has_other_pages %}
+                <div class="px-6 py-4 border-t border-gray-100 flex items-center justify-between bg-gray-50/30">
+                    <span class="text-sm text-gray-600 font-medium">Showing <span class="font-bold text-gray-900">{{ leave_requests.start_index }}</span> to <span class="font-bold text-gray-900">{{ leave_requests.end_index }}</span> of <span class="font-bold text-gray-900">{{ leave_requests.paginator.count }}</span> requests</span>
+
+                    <div class="flex items-center gap-1">
+                        {% if leave_requests.has_previous %}
+                            <a href="?page=1" class="px-3 py-1.5 border border-gray-200 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-100 transition bg-white">
+                                Previous
+                            </a>
+                        {% else %}
+                            <button class="px-3 py-1.5 border border-gray-200 rounded-md text-sm font-medium text-gray-500 disabled:opacity-50" disabled>
+                                Previous
+                            </button>
+                        {% endif %}
+
+                        {% for num in leave_requests.paginator.page_range %}
+                            {% if leave_requests.number == num %}
+                                <button class="px-3 py-1.5 border border-gray-200 bg-white rounded-md text-sm font-bold text-gray-900 shadow-sm">
+                                    {{ num }}
+                                </button>
+                            {% else %}
+                                <a href="?page={{ num }}" class="px-3 py-1.5 border border-transparent rounded-md text-sm font-medium text-gray-600 hover:bg-gray-100 transition">
+                                    {{ num }}
+                                </a>
+                            {% endif %}
+                        {% endfor %}
+
+                        {% if leave_requests.has_next %}
+                            <a href="?page=last" class="px-3 py-1.5 border border-gray-200 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-100 transition shadow-sm bg-white">
+                                Next
+                            </a>
+                        {% else %}
+                            <button class="px-3 py-1.5 border border-gray-200 rounded-md text-sm font-medium text-gray-500 disabled:opacity-50" disabled>
+                                Next
+                            </button>
+                        {% endif %}
+                    </div>
+                </div>
+                {% endif %}
+
+            </div>
+
+        </main>
+    </div>
+
+    <!-- Script for Mobile Sidebar Toggle -->
+    <script>
+        function toggleSidebar() {
+            const sidebar = document.getElementById('sidebar');
+            const overlay = document.getElementById('mobile-overlay');
+            sidebar.classList.toggle('-translate-x-full');
+            overlay.classList.toggle('hidden');
+            document.body.classList.toggle('overflow-hidden');
+        }
+    </script>
+
+</body>
+</html>

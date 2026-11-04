@@ -1,0 +1,120 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ title }} - Expenses</title>
+
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+
+    <style>
+        body {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+        }
+    </style>
+</head>
+
+<body class="bg-[#F8F9FA] min-h-screen flex text-gray-800 relative">
+
+    <!-- Mobile Sidebar Overlay -->
+    <div id="mobile-overlay" class="fixed inset-0 bg-gray-900/50 z-20 hidden md:hidden transition-opacity" onclick="toggleSidebar()"></div>
+
+    <!-- Sidebar Navigation -->
+    {% include "admin_panel/components/sidebar.html" %}
+
+    <!-- Main Page Work Area -->
+    <div class="flex-1 flex flex-col min-h-screen min-w-0">
+
+        <!-- Header -->
+        <header class="px-4 sm:px-8 py-5 flex flex-col md:flex-row md:items-center justify-between gap-4 bg-[#F8F9FA] z-10 sticky top-0 md:static">
+
+            <div class="flex items-center gap-3">
+                <!-- Hamburger Menu Button (Mobile Only) -->
+                <button onclick="toggleSidebar()" class="md:hidden text-gray-700 p-2 -ml-2 rounded-lg hover:bg-gray-200 transition-colors">
+                    <i class="fa-solid fa-bars text-xl"></i>
+                </button>
+
+                <div>
+                    <h1 class="text-xl sm:text-2xl font-extrabold text-gray-950 tracking-tight">{{ title }}</h1>
+                    <p class="text-xs sm:text-sm text-gray-500 font-medium">
+                        <a href="{% url 'expensetype_list' %}" class="hover:text-gray-700 transition">Expenses</a>
+                        / {{ title }}
+                    </p>
+                </div>
+            </div>
+
+            <!-- Back Button -->
+            <div class="flex items-center w-full md:w-auto">
+                <a href="{% url 'expensetype_list' %}" class="w-full md:w-auto bg-white border border-gray-200 hover:bg-gray-50 text-gray-700 text-sm font-semibold px-5 py-2.5 rounded-lg shadow-sm transition flex items-center justify-center gap-2">
+                    <i class="fa-solid fa-arrow-left"></i> Back
+                </a>
+            </div>
+        </header>
+
+        <!-- Main Content -->
+        <main class="flex-1 px-4 sm:px-8 pb-10">
+
+            <div class="max-w-2xl">
+                <div class="bg-white border border-gray-100 rounded-xl shadow-sm p-8">
+
+                    <form method="POST" class="space-y-6">
+                        {% csrf_token %}
+
+                        {% if form.non_field_errors %}
+                            <div class="p-4 bg-red-50 border border-red-200 text-red-700 rounded-lg text-sm">
+                                {% for error in form.non_field_errors %}<p>{{ error }}</p>{% endfor %}
+                            </div>
+                        {% endif %}
+
+                        <!-- Expense name -->
+                        <div>
+                            <label for="{{ form.name.id_for_label }}" class="block mb-2 text-sm font-semibold text-gray-700">Expense name</label>
+                            {{ form.name }}
+                            <p class="mt-2 text-xs text-gray-500">This is the name staff will see in the dropdown.</p>
+                            {% for error in form.name.errors %}
+                                <p class="mt-1.5 text-xs font-semibold text-rose-500 flex items-center gap-1"><i class="fa-solid fa-circle-exclamation"></i> {{ error }}</p>
+                            {% endfor %}
+                        </div>
+
+                        <!-- Show to staff -->
+                        <div class="flex items-start gap-3">
+                            {{ form.is_active }}
+                            <div>
+                                <label for="{{ form.is_active.id_for_label }}" class="block text-sm font-semibold text-gray-700">Show in staff dropdown</label>
+                                <p class="text-xs text-gray-500">Turn this off to hide the expense from staff without deleting it.</p>
+                            </div>
+                        </div>
+
+                        <!-- Buttons -->
+                        <div class="flex flex-col sm:flex-row items-center gap-3 pt-2">
+                            <a href="{% url 'expensetype_list' %}" class="w-full sm:w-auto px-6 py-2.5 bg-white border border-gray-200 text-gray-700 text-sm font-semibold rounded-lg hover:bg-gray-50 transition shadow-sm text-center">
+                                Cancel
+                            </a>
+                            <button type="submit" class="w-full sm:w-auto px-6 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-semibold rounded-lg shadow-sm transition flex items-center justify-center gap-2">
+                                <i class="fa-solid fa-floppy-disk"></i> Save
+                            </button>
+                        </div>
+                    </form>
+
+                </div>
+            </div>
+
+        </main>
+    </div>
+
+    <!-- Script for Mobile Sidebar Toggle -->
+    <script>
+        function toggleSidebar() {
+            const sidebar = document.getElementById('sidebar');
+            const overlay = document.getElementById('mobile-overlay');
+
+            sidebar.classList.toggle('-translate-x-full');
+            overlay.classList.toggle('hidden');
+            document.body.classList.toggle('overflow-hidden');
+        }
+    </script>
+
+</body>
+</html>

@@ -1,0 +1,351 @@
+<!-- templates/admin_panel/salary/admin_salary_manage.html -->
+
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Salary Management - Admin</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Plus Jakarta Sans', sans-serif; }
+    </style>
+</head>
+
+<body class="flex relative bg-[#F8F9FA] min-h-screen text-gray-800">
+    {% include "admin_panel/components/sidebar.html" %}
+    {% include "admin_panel/components/sidebar_script.html" %}
+    <div class="flex-1 min-w-0">
+
+    <!-- Main Content -->
+    <div class="flex-1 flex flex-col min-h-screen">
+
+        <!-- Header -->
+        <header class="px-8 py-5 flex items-center justify-between bg-[#F8F9FA] border-b border-gray-100">
+            <div>
+                <h1 class="text-2xl font-extrabold text-gray-950">Salary Management</h1>
+                <p class="text-sm text-gray-500 font-medium">Add, edit, delete, and manage staff salaries</p>
+            </div>
+            <button onclick="openAddModal()" class="flex items-center gap-2 bg-[#273B30] text-white font-bold py-2 px-4 rounded-lg hover:bg-[#1A2720] transition">
+                <i class="fa-solid fa-plus"></i> Add Salary
+            </button>
+        </header>
+
+        <!-- Monthly salary and leave deductions -->
+        {% if messages %}
+        <div class="space-y-2 mb-6">
+            {% for message in messages %}
+                <div class="px-4 py-3 rounded-lg border text-sm {% if message.tags == 'success' %}bg-emerald-50 text-emerald-700 border-emerald-100{% else %}bg-red-50 text-red-600 border-red-100{% endif %}">{{ message }}</div>
+            {% endfor %}
+        </div>
+        {% endif %}
+
+        <section class="bg-white border border-gray-100 rounded-xl shadow-sm mb-8">
+            <div class="px-6 py-4 border-b border-gray-100 flex flex-col md:flex-row md:items-center justify-between gap-3">
+                <div>
+                    <h2 class="text-lg font-bold text-gray-900"><i class="fa-solid fa-coins text-gray-500 mr-2"></i>Monthly salary and leave deductions</h2>
+                    <p class="text-xs text-gray-500 mt-1">Enter each staff member's monthly salary. Per day = monthly salary divided by the days in the month. Only paid leave is not deducted. Sick leave and other approved leave are deducted per day. Allowance is added to the total.</p>
+                </div>
+                <form method="get" class="flex items-center gap-2">
+                    <input type="month" name="payroll_month" value="{{ payroll_month|date:'Y-m' }}" class="px-3 py-2 border border-gray-200 rounded-lg text-sm">
+                    <button type="submit" class="px-4 py-2 text-sm font-semibold bg-white border border-gray-300 rounded-lg hover:bg-gray-50">Show month</button>
+                </form>
+            </div>
+
+            <form method="post" action="{% url 'admin_salary_save_rates' %}">
+                {% csrf_token %}
+                <input type="hidden" name="payroll_month" value="{{ payroll_month|date:'Y-m' }}">
+                <div class="overflow-x-auto">
+                    <table class="w-full text-sm">
+                        <thead class="bg-gray-50 text-gray-500 text-xs uppercase tracking-wider">
+                            <tr>
+                                <th class="px-6 py-3 text-left">Staff</th>
+                                <th class="px-6 py-3 text-left">Branch</th>
+                                <th class="px-6 py-3 text-left">Monthly salary (₹)</th>
+                                <th class="px-6 py-3 text-right">Per day (₹)</th>
+                                <th class="px-6 py-3 text-right">Other leave (days)</th>
+                                <th class="px-6 py-3 text-right">Sick leave (days)</th>
+                                <th class="px-6 py-3 text-right">Paid leave (days)</th>
+                                <th class="px-6 py-3 text-right">Deduction (₹)</th>
+                                <th class="px-6 py-3 text-right">Allowance (₹)</th>
+                                <th class="px-6 py-3 text-right">This month's salary (₹)</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-gray-100">
+                            {% for row in rate_rows %}
+                                <tr>
+                                    <td class="px-6 py-3 font-medium text-gray-900">{{ row.staff.full_name|default:row.staff.username }}</td>
+                                    <td class="px-6 py-3 text-gray-600">{{ row.staff.branch.name|default:"-" }}</td>
+                                    <td class="px-6 py-3">
+                                        <input type="number" name="monthly_{{ row.staff.id }}" value="{{ row.staff.monthly_salary|default_if_none:'' }}" min="0" step="0.01" class="w-36 px-3 py-2 border border-gray-200 rounded-lg text-sm">
+                                    </td>
+                                    <td class="px-6 py-3 text-right">{{ row.per_day|floatformat:2 }}</td>
+                                    <td class="px-6 py-3 text-right">{{ row.deducted_days }}</td>
+                                    <td class="px-6 py-3 text-right">{{ row.sick_days }}</td>
+                                    <td class="px-6 py-3 text-right">{{ row.no_deduction_days }}</td>
+                                    <td class="px-6 py-3 text-right text-red-600">- {{ row.deduction|floatformat:2 }}</td>
+                                    <td class="px-6 py-3 text-right">
+                                        {% if row.has_allowance %}{{ row.allowance|floatformat:2 }}{% else %}-{% endif %}
+                                        <a href="{% url 'admin_salary_allowance' row.staff.id %}?payroll_month={{ payroll_month|date:'Y-m' }}" class="block text-xs text-[#273B30] font-semibold hover:underline">{% if row.has_allowance %}Edit Salary Allowance{% else %}Add Salary Allowance{% endif %}</a>
+                                    </td>
+                                    <td class="px-6 py-3 text-right font-semibold text-[#273B30]">₹{{ row.total|floatformat:2 }}</td>
+                                </tr>
+                            {% empty %}
+                                <tr><td colspan="10" class="px-6 py-8 text-center text-gray-500">No approved staff yet.</td></tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                <div class="px-6 py-4 border-t border-gray-100 flex justify-end">
+                    <button type="submit" class="bg-[#273B30] hover:bg-[#1A2720] text-white text-sm font-medium px-5 py-2.5 rounded-lg shadow-sm transition"><i class="fa-solid fa-floppy-disk mr-2"></i>Save all</button>
+                </div>
+            </form>
+        </section>
+
+        <!-- Statistics -->
+        <div class="px-8 py-6">
+            <div class="grid grid-cols-4 gap-4 mb-6">
+                <div class="bg-white border border-gray-100 rounded-lg p-4">
+                    <p class="text-xs text-gray-500 uppercase font-semibold">Total Salaries</p>
+                    <p class="text-2xl font-bold text-gray-900 mt-2">{{ total_salaries }}</p>
+                </div>
+                <div class="bg-white border border-gray-100 rounded-lg p-4">
+                    <p class="text-xs text-gray-500 uppercase font-semibold">Total Paid</p>
+                    <p class="text-2xl font-bold text-emerald-600 mt-2">₹{{ total_amount|floatformat:0 }}</p>
+                </div>
+                <div class="bg-white border border-gray-100 rounded-lg p-4">
+                    <p class="text-xs text-gray-500 uppercase font-semibold">Pending Approval</p>
+                    <p class="text-2xl font-bold text-amber-600 mt-2">{{ pending_count }}</p>
+                </div>
+                <div class="bg-white border border-gray-100 rounded-lg p-4">
+                    <p class="text-xs text-gray-500 uppercase font-semibold">Already Paid</p>
+                    <p class="text-2xl font-bold text-blue-600 mt-2">{{ paid_count }}</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Filters -->
+        <div class="px-8 mb-6">
+            <form method="GET" class="flex gap-3">
+                <input type="text" name="search" placeholder="Search by staff name..." value="{{ search_query }}" class="flex-1 px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#273B30]">
+                <select name="status" class="px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#273B30]">
+                    <option value="">All Status</option>
+                    <option value="draft" {% if status_filter == 'draft' %}selected{% endif %}>Draft</option>
+                    <option value="pending_approval" {% if status_filter == 'pending_approval' %}selected{% endif %}>Pending</option>
+                    <option value="approved" {% if status_filter == 'approved' %}selected{% endif %}>Approved</option>
+                    <option value="paid" {% if status_filter == 'paid' %}selected{% endif %}>Paid</option>
+                </select>
+                <input type="month" name="month" value="{{ month_filter }}" class="px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#273B30]">
+                <button type="submit" class="px-4 py-2 bg-gray-200 text-gray-900 font-semibold rounded-lg hover:bg-gray-300 transition">Filter</button>
+            </form>
+        </div>
+
+        <!-- Table -->
+        <div class="px-8 pb-8">
+            <div class="bg-white border border-gray-100 rounded-lg shadow-sm overflow-hidden">
+                <table class="w-full">
+                    <thead class="bg-gray-50 border-b border-gray-100">
+                        <tr>
+                            <th class="px-6 py-3 text-left text-xs font-bold text-gray-600 uppercase">Staff Member</th>
+                            <th class="px-6 py-3 text-left text-xs font-bold text-gray-600 uppercase">Month</th>
+                            <th class="px-6 py-3 text-left text-xs font-bold text-gray-600 uppercase">Basic Salary</th>
+                            <th class="px-6 py-3 text-left text-xs font-bold text-gray-600 uppercase">Net Salary</th>
+                            <th class="px-6 py-3 text-left text-xs font-bold text-gray-600 uppercase">Status</th>
+                            <th class="px-6 py-3 text-left text-xs font-bold text-gray-600 uppercase">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-gray-100">
+                        {% for salary in salaries %}
+                        <tr class="hover:bg-gray-50">
+                            <td class="px-6 py-4">
+                                <div class="font-semibold text-gray-900">{{ salary.staff.full_name }}</div>
+                                <div class="text-sm text-gray-500">{{ salary.staff.email }}</div>
+                            </td>
+                            <td class="px-6 py-4 text-gray-900">{{ salary.month|date:"M Y" }}</td>
+                            <td class="px-6 py-4 text-gray-900 font-semibold">₹{{ salary.basic_salary|floatformat:0 }}</td>
+                            <td class="px-6 py-4 text-gray-900 font-bold">₹{{ salary.net_salary|floatformat:0 }}</td>
+                            <td class="px-6 py-4">
+                                {% if salary.status == 'draft' %}
+                                    <span class="px-3 py-1 bg-gray-100 text-gray-800 text-xs font-bold rounded-md">Draft</span>
+                                {% elif salary.status == 'pending_approval' %}
+                                    <span class="px-3 py-1 bg-amber-100 text-amber-800 text-xs font-bold rounded-md">Pending</span>
+                                {% elif salary.status == 'approved' %}
+                                    <span class="px-3 py-1 bg-blue-100 text-blue-800 text-xs font-bold rounded-md">Approved</span>
+                                {% elif salary.status == 'paid' %}
+                                    <span class="px-3 py-1 bg-emerald-100 text-emerald-800 text-xs font-bold rounded-md">Paid</span>
+                                {% endif %}
+                            </td>
+                            <td class="px-6 py-4">
+                                <div class="flex gap-2">
+                                    <button onclick="viewDetails({{ salary.id }})" class="text-blue-600 hover:text-blue-800 font-semibold text-sm" title="View">
+                                        <i class="fa-solid fa-eye"></i>
+                                    </button>
+                                    <button onclick="editSalary({{ salary.id }})" class="text-green-600 hover:text-green-800 font-semibold text-sm" title="Edit">
+                                        <i class="fa-solid fa-pencil"></i>
+                                    </button>
+                                    <button onclick="deleteSalary({{ salary.id }}, '{{ salary.staff.full_name }}')" class="text-red-600 hover:text-red-800 font-semibold text-sm" title="Delete">
+                                        <i class="fa-solid fa-trash"></i>
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="6" class="px-6 py-8 text-center text-gray-500">No salary records found</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Pagination -->
+            {% if page_obj.has_other_pages %}
+            <div class="mt-6 flex justify-center gap-2">
+                {% if page_obj.has_previous %}
+                    <a href="?page=1" class="px-3 py-2 border border-gray-200 rounded-lg hover:bg-gray-50">First</a>
+                    <a href="?page={{ page_obj.previous_page_number }}" class="px-3 py-2 border border-gray-200 rounded-lg hover:bg-gray-50">Prev</a>
+                {% endif %}
+
+                <span class="px-3 py-2">Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</span>
+
+                {% if page_obj.has_next %}
+                    <a href="?page={{ page_obj.next_page_number }}" class="px-3 py-2 border border-gray-200 rounded-lg hover:bg-gray-50">Next</a>
+                    <a href="?page={{ page_obj.paginator.num_pages }}" class="px-3 py-2 border border-gray-200 rounded-lg hover:bg-gray-50">Last</a>
+                {% endif %}
+            </div>
+            {% endif %}
+        </div>
+
+    </div>
+
+    <!-- Add/Edit Modal -->
+    <div id="salaryModal" class="hidden fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+        <div class="bg-white rounded-lg shadow-lg p-8 max-w-md w-full">
+            <h2 id="modalTitle" class="text-2xl font-bold text-gray-900 mb-4">Add Salary</h2>
+            <form id="salaryForm" onsubmit="submitSalary(event)">
+                {% csrf_token %}
+                <input type="hidden" id="salaryId" name="salary_id">
+
+                <div class="mb-4">
+                    <label class="block text-sm font-bold text-gray-900 mb-2">Staff Member</label>
+                    <select id="staffId" name="staff_id" required class="w-full px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#273B30]">
+                        <option value="">Select Staff</option>
+                        {% for staff in staff_list %}
+                        <option value="{{ staff.id }}">{{ staff.full_name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <div class="mb-4">
+                    <label class="block text-sm font-bold text-gray-900 mb-2">Month</label>
+                    <input type="month" id="month" name="month" required class="w-full px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#273B30]">
+                </div>
+
+                <div class="mb-4">
+                    <label class="block text-sm font-bold text-gray-900 mb-2">Basic Salary (₹)</label>
+                    <input type="number" id="basicSalary" name="basic_salary" step="0.01" required class="w-full px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#273B30]">
+                </div>
+
+                <div class="mb-4">
+                    <label class="block text-sm font-bold text-gray-900 mb-2">Calculation Method</label>
+                    <div class="flex gap-4">
+                        <label class="flex items-center">
+                            <input type="radio" name="calculation_method" value="automatic" checked class="mr-2"> Automatic
+                        </label>
+                        <label class="flex items-center">
+                            <input type="radio" name="calculation_method" value="manual" class="mr-2"> Manual
+                        </label>
+                    </div>
+                </div>
+
+                <div id="attendedDaysDiv" class="mb-4 hidden">
+                    <label class="block text-sm font-bold text-gray-900 mb-2">Attended Days</label>
+                    <input type="number" id="attendedDays" name="attended_days" min="0" class="w-full px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#273B30]">
+                </div>
+
+                <div class="flex gap-2">
+                    <button type="submit" class="flex-1 bg-[#273B30] text-white font-bold py-2 rounded-lg hover:bg-[#1A2720] transition">Save</button>
+                    <button type="button" onclick="closeModal()" class="flex-1 bg-gray-200 text-gray-900 font-bold py-2 rounded-lg hover:bg-gray-300 transition">Cancel</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        // Toggle attended days field based on calculation method
+        document.querySelectorAll('input[name="calculation_method"]').forEach(radio => {
+            radio.addEventListener('change', (e) => {
+                document.getElementById('attendedDaysDiv').classList.toggle('hidden', e.target.value === 'automatic');
+            });
+        });
+
+        function openAddModal() {
+            document.getElementById('modalTitle').textContent = 'Add Salary';
+            document.getElementById('salaryForm').reset();
+            document.getElementById('salaryId').value = '';
+            document.getElementById('staffId').disabled = false;
+            document.getElementById('month').disabled = false;
+            document.getElementById('salaryModal').classList.remove('hidden');
+        }
+
+        function closeModal() {
+            document.getElementById('salaryModal').classList.add('hidden');
+        }
+
+        function editSalary(salaryId) {
+            document.getElementById('modalTitle').textContent = 'Edit Salary';
+            document.getElementById('salaryId').value = salaryId;
+            document.getElementById('staffId').disabled = true;
+            document.getElementById('month').disabled = true;
+            document.getElementById('salaryModal').classList.remove('hidden');
+            // Note: In production, fetch salary data and populate form
+        }
+
+        function submitSalary(e) {
+            e.preventDefault();
+            const formData = new FormData(document.getElementById('salaryForm'));
+            const salaryId = document.getElementById('salaryId').value;
+            const url = salaryId ? `/admin/salary/${salaryId}/edit-staff/` : '{% url "admin_salary_add_staff" %}';
+
+            fetch(url, {
+                method: 'POST',
+                headers: {'X-CSRFToken': '{{ csrf_token }}'},
+                body: formData
+            })
+            .then(r => r.json())
+            .then(data => {
+                if (data.success) {
+                    alert(data.message);
+                    location.reload();
+                } else {
+                    alert('Error: ' + data.error);
+                }
+            });
+        }
+
+        function deleteSalary(salaryId, staffName) {
+            if (confirm(`Delete salary for ${staffName}?`)) {
+                fetch(`/admin/salary/${salaryId}/delete/`, {
+                    method: 'POST',
+                    headers: {'X-CSRFToken': '{{ csrf_token }}'}
+                })
+                .then(r => r.json())
+                .then(data => {
+                    if (data.success) {
+                        alert(data.message);
+                        location.reload();
+                    }
+                });
+            }
+        }
+
+        function viewDetails(salaryId) {
+            window.location.href = `/admin/salary/${salaryId}/detail/`;
+        }
+    </script>
+
+    </div>
+</body>
+</html>

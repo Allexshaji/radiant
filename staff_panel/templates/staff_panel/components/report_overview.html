@@ -1,0 +1,37 @@
+{# Report overview card. Same design as the view page: date, status, branch, staff and one total. #}
+<div class="bg-white border border-gray-100 rounded-xl shadow-sm overflow-hidden mb-6">
+    <div class="px-6 py-5 border-b border-gray-100 flex justify-between items-center bg-white">
+        <h3 class="text-base font-bold text-gray-900">
+            Report Overview: <span class="text-gray-500 font-medium">{{ report.report_date|date:"M d, Y" }}</span>
+        </h3>
+        <div>
+            {% if report.status == 'APPROVED' %}
+                <span class="bg-emerald-50 text-emerald-700 border border-emerald-100 px-3 py-1.5 rounded-md text-[10px] uppercase font-bold tracking-wider flex items-center w-max gap-1.5">
+                    <i class="fa-solid fa-check-circle text-emerald-500"></i> Approved
+                </span>
+            {% elif report.status == 'REJECTED' %}
+                <span class="bg-[#FEF6F5] text-[#D06B5D] border border-[#FBE9E7] px-3 py-1.5 rounded-md text-[10px] uppercase font-bold tracking-wider flex items-center w-max gap-1.5">
+                    <i class="fa-solid fa-xmark-circle text-[#D06B5D]"></i> Rejected
+                </span>
+            {% else %}
+                <span class="bg-amber-50 text-amber-700 border border-amber-100 px-3 py-1.5 rounded-md text-[10px] uppercase font-bold tracking-wider flex items-center w-max gap-1.5">
+                    <i class="fa-solid fa-clock text-amber-500"></i> Submitted
+                </span>
+            {% endif %}
+        </div>
+    </div>
+    <div class="px-6 py-5 bg-[#F8F9FA] grid grid-cols-1 sm:grid-cols-3 gap-6">
+        <div>
+            <p class="text-xs text-gray-500 uppercase font-semibold mb-1">Branch</p>
+            <p class="text-sm font-bold text-gray-900">{{ report.branch.name|default:"-" }}</p>
+        </div>
+        <div>
+            <p class="text-xs text-gray-500 uppercase font-semibold mb-1">Staff Member</p>
+            <p class="text-sm font-bold text-gray-900">{{ report.staff.username }}</p>
+        </div>
+        <div>
+            <p class="text-xs text-gray-500 uppercase font-semibold mb-1">{{ total_label }}</p>
+            <p class="text-sm font-bold {{ total_class|default:'text-[#273B30]' }}" {% if total_id %}id="{{ total_id }}"{% endif %}>{{ total_value }}</p>
+        </div>
+    </div>
+</div>

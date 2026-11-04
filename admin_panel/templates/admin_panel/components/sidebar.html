@@ -1,0 +1,62 @@
+{% with cur=request.resolver_match.url_name on="flex items-center gap-4 px-6 py-1.5 bg-[#F0F3F1] text-gray-900 rounded-r-lg border-l-4 border-[#273B30] font-semibold text-sm transition" off="flex items-center gap-4 px-6 py-1.5 text-gray-500 hover:bg-gray-50 hover:text-gray-900 rounded-r-lg border-l-4 border-transparent font-medium text-sm transition" %}
+<aside id="sidebar" class="w-64 bg-white border-r border-gray-200 flex flex-col justify-between h-screen fixed md:sticky top-0 z-30 transform -translate-x-full md:translate-x-0 transition-transform duration-300">
+
+    <div id="admin-sidebar-scroll" class="py-4 overflow-y-auto h-full">
+        <!-- Branding -->
+        <div class="px-6 mb-5 flex justify-between items-center">
+            <div>
+                <h2 class="text-xl font-bold text-gray-900 tracking-tight">Radiant Ayurveda</h2>
+                <p class="text-xs text-gray-500 font-medium mt-0.5">{% if can.super_admin %}Super Admin Portal{% else %}Admin Portal{% endif %}</p>
+            </div>
+            <button onclick="toggleSidebar()" class="md:hidden text-gray-400 hover:text-gray-900 transition-colors" aria-label="Close Menu">
+                <i class="fa-solid fa-xmark text-xl"></i>
+            </button>
+        </div>
+
+        <!-- Navigation: built from admin_panel/nav.py, so every admin page shows the same list -->
+        <nav class="space-y-0.5 pr-4">
+            {% for group in nav_groups %}
+                {% if group.heading %}
+                    <p class="px-6 pt-3 pb-1 text-[10px] font-bold uppercase tracking-wider text-gray-400">{{ group.heading }}</p>
+                {% endif %}
+                {% for item in group.items %}
+                    <a href="{{ item.url }}" class="{% if cur in item.highlight %}{{ on }}{% else %}{{ off }}{% endif %}">
+                        <i class="{{ item.icon }} {% if cur in item.highlight %}text-gray-700{% else %}text-gray-400{% endif %} w-5 text-center"></i>
+                        <span>{{ item.label }}</span>
+                    </a>
+                {% endfor %}
+            {% endfor %}
+        </nav>
+    </div>
+
+    <!-- Logged-in user and logout -->
+    <div class="border-t border-gray-100 p-4 px-6 flex items-center justify-between shrink-0 bg-white">
+        <div class="overflow-hidden">
+            <p class="text-sm font-semibold text-gray-900 capitalize truncate">{{ request.user.full_name|default:request.user.username }}</p>
+            <p class="text-xs text-gray-500 truncate">{% if can.super_admin %}Super Administrator{% elif request.user.branch %}Administrator · {{ request.user.branch.name }}{% else %}Administrator · No branch{% endif %}</p>
+        </div>
+        <a href="/logout/" class="text-gray-400 hover:text-red-500 transition-colors ml-3" title="Logout">
+            <i class="fa-solid fa-arrow-right-from-bracket text-sm"></i>
+        </a>
+    </div>
+
+</aside>
+<script>
+    // Keep the sidebar's scroll position when another admin page opens,
+    // so the lower items (Admins) stay in reach without scrolling again.
+    (function () {
+        var box = document.getElementById('admin-sidebar-scroll');
+        if (!box) return;
+        var key = 'adminSidebarScrollTop';
+        try {
+            var saved = sessionStorage.getItem(key);
+            if (saved !== null) box.scrollTop = parseInt(saved, 10) || 0;
+        } catch (e) {}
+        var save = function () {
+            try { sessionStorage.setItem(key, String(box.scrollTop)); } catch (e) {}
+        };
+        box.addEventListener('scroll', save);
+        box.addEventListener('click', save);
+    })();
+</script>
+{% endwith %}

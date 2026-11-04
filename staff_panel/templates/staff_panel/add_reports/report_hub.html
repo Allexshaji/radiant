@@ -1,0 +1,237 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Report #{{ report.id }} - Radiant Ayurveda</title>
+
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+
+    <style>
+        body {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            background-color: #F8F9FA;
+        }
+        ::-webkit-scrollbar {
+            width: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #E5E7EB;
+            border-radius: 10px;
+        }
+    </style>
+</head>
+
+<body class="min-h-screen flex text-gray-800 relative">
+
+    <!-- Mobile Sidebar Overlay -->
+    <div id="mobile-overlay" class="fixed inset-0 bg-gray-900/50 z-20 hidden md:hidden transition-opacity" onclick="toggleSidebar()"></div>
+
+    <!-- Sidebar Navigation -->
+    <aside id="sidebar" class="w-64 bg-white border-r border-gray-200 flex flex-col justify-between h-screen fixed md:sticky top-0 z-30 transform -translate-x-full md:translate-x-0 transition-transform duration-300">
+        
+        <div class="py-6 overflow-y-auto h-full">
+            <!-- Branding -->
+            <div class="px-6 mb-8 flex justify-between items-center">
+                <div>
+                    <h2 class="text-xl font-bold text-gray-900 tracking-tight">Radiant Ayurveda</h2>
+                    <p class="text-xs text-gray-500 font-medium mt-0.5">Staff Portal</p>
+                </div>
+                <!-- Close Button (Mobile Only) -->
+                <button onclick="toggleSidebar()" class="md:hidden text-gray-400 hover:text-gray-900 transition-colors" aria-label="Close Menu">
+                    <i class="fa-solid fa-xmark text-xl"></i>
+                </button>
+            </div>
+
+            <!-- Nav Links -->
+            <nav class="space-y-1 pr-4">
+                <a href="{% url 'staff_dashboard' %}" class="flex items-center gap-4 px-6 py-3 text-gray-500 hover:bg-gray-50 hover:text-gray-900 rounded-r-lg border-l-4 border-transparent font-medium text-sm transition">
+                    <i class="fa-solid fa-chart-pie text-gray-400 text-base w-5 text-center"></i>
+                    <span>Dashboard</span>
+                </a>
+                <!-- Active Link (Reports) -->
+                {% if can.reports %}<a href="{% url 'report_dashboard' %}" class="flex items-center gap-4 px-6 py-3 bg-[#F0F3F1] text-gray-900 rounded-r-lg border-l-4 border-[#273B30] font-semibold text-sm transition">
+                    <i class="fa-solid fa-file-invoice text-gray-700 w-5 text-center"></i>
+                    <span>Reports Dashboard</span>
+                </a>{% endif %}
+                {% if can.attendance %}<a href="{% url 'attendance_page' %}" class="flex items-center gap-4 px-6 py-3 text-gray-500 hover:bg-gray-50 hover:text-gray-900 rounded-r-lg border-l-4 border-transparent font-medium text-sm transition">
+                    <i class="fa-regular fa-clock text-gray-400 w-5 text-center"></i>
+                    <span>Attendance</span>
+                </a>{% endif %}
+                {% if can.leave %}<a href="{% url 'staff_leave_dashboard' %}" class="flex items-center gap-4 px-6 py-3 text-gray-500 hover:bg-gray-50 hover:text-gray-900 rounded-r-lg border-l-4 border-transparent font-medium text-sm transition">
+                    <i class="fa-regular fa-calendar-check text-gray-400 w-5 text-center"></i>
+                    <span>Leave Management</span>
+                </a>{% endif %}
+                {% if can.salary %}<a href="{% url 'staff_salary_management' %}" class="flex items-center gap-4 px-6 py-3 text-gray-500 hover:bg-gray-50 hover:text-gray-900 rounded-r-lg border-l-4 border-transparent font-medium text-sm transition">
+                    <i class="fa-solid fa-money-bill-wave text-gray-400 w-5 text-center"></i>
+                    <span>Salary Management</span>
+                </a>{% endif %}
+                {% if can.requirements %}<a href="{% url 'staff_requirements' %}" class="flex items-center gap-4 px-6 py-3 text-gray-500 hover:bg-gray-50 hover:text-gray-900 rounded-r-lg border-l-4 border-transparent font-medium text-sm transition">
+                    <i class="fa-solid fa-clipboard-list text-gray-400 w-5 text-center"></i>
+                    <span>Requirements</span>
+                </a>{% endif %}
+                <a href="{% url 'staff_profile' %}" class="flex items-center gap-4 px-6 py-3 text-gray-500 hover:bg-gray-50 hover:text-gray-900 rounded-r-lg border-l-4 border-transparent font-medium text-sm transition">
+                    <i class="fa-regular fa-user text-gray-400 w-5 text-center"></i>
+                    <span>My Profile</span>
+                </a>
+            </nav>
+        </div>
+
+        <!-- Logout and Active Profile -->
+        <div class="border-t border-gray-100 p-4 px-6 flex items-center justify-between shrink-0 bg-white">
+            <div class="overflow-hidden">
+                <p class="text-sm font-semibold text-gray-900 capitalize truncate">{{ request.user.full_name|default:request.user.username }}</p>
+                <p class="text-xs text-gray-500 truncate">{{ request.user.branch }}</p>
+            </div>
+            <a href="/logout/" class="text-gray-400 hover:text-red-500 transition-colors ml-3" title="Logout">
+                <i class="fa-solid fa-arrow-right-from-bracket text-sm"></i>
+            </a>
+        </div>
+
+    </aside>
+
+    <!-- Main Page Work Area -->
+    <div class="flex-1 flex flex-col min-h-screen min-w-0">
+        
+        <!-- Header -->
+        <header class="px-6 sm:px-10 py-8 flex flex-col md:flex-row md:items-start justify-between gap-6 z-10 sticky top-0 md:static bg-[#F8F9FA]">
+            
+            <div class="flex items-start gap-4">
+                <!-- Hamburger Menu Button (Mobile Only) -->
+                <button onclick="toggleSidebar()" class="md:hidden text-gray-700 mt-1 p-2 -ml-2 rounded-lg hover:bg-gray-200 transition-colors" aria-label="Open Menu">
+                    <i class="fa-solid fa-bars text-xl"></i>
+                </button>
+
+                <div>
+                    <h1 class="text-3xl font-bold text-gray-900 tracking-tight">Report Details</h1>
+                    <p class="text-sm text-gray-500 font-medium mt-2">Manage daily entries for Report #{{ report.id }}</p>
+                </div>
+            </div>
+
+            <!-- Back Button -->
+            <div class="flex items-center w-full md:w-auto">
+                {% if can.reports %}<a href="{% url 'reports_add' %}" class="w-full md:w-auto bg-white border border-gray-200 hover:bg-gray-50 text-gray-700 text-sm font-semibold px-5 py-2.5 rounded-lg shadow-sm transition flex items-center justify-center">
+                    <i class="fa-solid fa-arrow-left mr-2"></i> Back to Reports
+                </a>{% endif %}
+            </div>
+        </header>
+
+        <!-- Main Content Work -->
+        <main class="flex-1 px-6 sm:px-10 pb-12">
+
+            <!-- REPORT INFORMATION SUMMARY CARD -->
+            <div class="bg-white border border-gray-100 rounded-xl p-6 shadow-sm mb-6 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                <div class="flex items-center gap-5">
+                    <!-- Icon -->
+                    <div class="w-12 h-12 rounded-full bg-[#F0F3F1] flex items-center justify-center text-[#273B30] shrink-0 hidden sm:flex">
+                        <i class="fa-regular fa-calendar-check text-xl"></i>
+                    </div>
+                    <!-- Details -->
+                    <div>
+                        <h2 class="text-xl font-bold text-gray-900 flex items-center gap-2">
+                            Daily Report #{{ report.id }}
+                        </h2>
+                        <div class="flex flex-wrap items-center gap-x-4 gap-y-2 mt-2 text-sm text-gray-500 font-medium">
+                            <span class="flex items-center gap-1.5"><i class="fa-regular fa-calendar"></i> {{ report.report_date|date:"M d, Y" }}</span>
+                            <span class="hidden sm:inline text-gray-300">|</span>
+                            <span class="flex items-center gap-1.5"><i class="fa-regular fa-user"></i> {{ report.staff.username }}</span>
+                            <span class="hidden sm:inline text-gray-300">|</span>
+                            <span class="flex items-center gap-1.5"><i class="fa-solid fa-location-dot"></i> {{ report.branch }}</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- STATUS BADGE -->
+                <div class="shrink-0">
+                    {% if report.status == "APPROVED" %}
+                        <span class="px-4 py-2 bg-emerald-50 text-emerald-700 border border-emerald-100 rounded-lg text-sm font-bold flex items-center gap-2">
+                            <i class="fa-solid fa-circle-check"></i> Approved
+                        </span>
+                    {% elif report.status == "REJECTED" %}
+                        <span class="px-4 py-2 bg-rose-50 text-rose-700 border border-rose-100 rounded-lg text-sm font-bold flex items-center gap-2">
+                            <i class="fa-solid fa-circle-xmark"></i> Rejected
+                        </span>
+                    {% else %}
+                        <span class="px-4 py-2 bg-amber-50 text-amber-700 border border-amber-100 rounded-lg text-sm font-bold flex items-center gap-2">
+                            <i class="fa-regular fa-clock"></i> Submitted
+                        </span>
+                    {% endif %}
+                </div>
+            </div>
+
+
+            <!-- REPORT SECTIONS (GRID) -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+
+                <!-- WALK-INS -->
+                {% if can.reports %}<a href="{% url 'add_walkins' report.id %}" class="group bg-white border border-gray-100 rounded-xl p-6 shadow-sm hover:shadow-md transition-all flex flex-col justify-between h-40">
+                    <div class="flex justify-between items-start">
+                        <div>
+                            <h2 class="text-lg font-bold text-gray-900 group-hover:text-[#273B30] transition-colors">Walk-ins & Payments</h2>
+                            <p class="text-sm text-gray-500 mt-1">Add walk-in counts and the payments received, on one sheet.</p>
+                        </div>
+                        <div class="w-10 h-10 rounded-lg bg-[#EEF0EF] flex items-center justify-center text-gray-700 shrink-0 group-hover:bg-[#E3EAE6] transition-colors">
+                            <i class="fa-solid fa-users text-sm"></i>
+                        </div>
+                    </div>
+                    <div class="text-[#273B30] text-sm font-bold flex items-center mt-4">
+                        Open Entry <i class="fa-solid fa-arrow-right ml-2 transition-transform group-hover:translate-x-1"></i>
+                    </div>
+                </a>{% endif %}
+
+                <!-- REVENUE -->
+                {% if can.reports %}<a href="{% url 'add_revenues' report.id %}" class="group bg-white border border-gray-100 rounded-xl p-6 shadow-sm hover:shadow-md transition-all flex flex-col justify-between h-40">
+                    <div class="flex justify-between items-start">
+                        <div>
+                            <h2 class="text-lg font-bold text-gray-900 group-hover:text-[#273B30] transition-colors">Revenue</h2>
+                            <p class="text-sm text-gray-500 mt-1">Add treatment, massage, and packages.</p>
+                        </div>
+                        <div class="w-10 h-10 rounded-lg bg-[#EEF0EF] flex items-center justify-center text-gray-700 shrink-0 group-hover:bg-[#E3EAE6] transition-colors">
+                            <i class="fa-solid fa-indian-rupee-sign text-sm"></i>
+                        </div>
+                    </div>
+                    <div class="text-[#273B30] text-sm font-bold flex items-center mt-4">
+                        Open Entry <i class="fa-solid fa-arrow-right ml-2 transition-transform group-hover:translate-x-1"></i>
+                    </div>
+                </a>{% endif %}
+
+
+                <!-- EXPENSES (Red tinted design as per MIS dashboard) -->
+                {% if can.reports %}<a href="{% url 'add_expenses' report.id %}" class="group bg-[#FEF6F5] border border-[#FBE9E7] rounded-xl p-6 shadow-sm hover:shadow-md transition-all flex flex-col justify-between h-40">
+                    <div class="flex justify-between items-start">
+                        <div>
+                            <h2 class="text-lg font-bold text-gray-900 group-hover:text-[#D06B5D] transition-colors">Expenses</h2>
+                            <p class="text-sm text-gray-500 mt-1">Add expenses for this report.</p>
+                        </div>
+                        <div class="w-10 h-10 rounded-lg bg-[#F5D7D3] flex items-center justify-center text-[#D06B5D] shrink-0">
+                            <i class="fa-solid fa-wallet text-sm"></i>
+                        </div>
+                    </div>
+                    <div class="text-[#D06B5D] text-sm font-bold flex items-center mt-4">
+                        Open Entry <i class="fa-solid fa-arrow-right ml-2 transition-transform group-hover:translate-x-1"></i>
+                    </div>
+                </a>{% endif %}
+
+            </div>
+        </main>
+    </div>
+
+    <!-- Script for Mobile Sidebar Toggle -->
+    <script>
+        function toggleSidebar() {
+            const sidebar = document.getElementById('sidebar');
+            const overlay = document.getElementById('mobile-overlay');
+            
+            sidebar.classList.toggle('-translate-x-full');
+            overlay.classList.toggle('hidden');
+            document.body.classList.toggle('overflow-hidden');
+        }
+    </script>
+
+</body>
+</html>

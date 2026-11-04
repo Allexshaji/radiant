@@ -1,0 +1,153 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ title }} - Leave Type</title>
+
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+
+        <style>
+        body {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+        }
+        </style>
+</head>
+
+<body class="bg-[#F8F9FA] min-h-screen flex text-gray-800 relative">
+
+    <!-- Mobile Sidebar Overlay -->
+    <div id="mobile-overlay" class="fixed inset-0 bg-gray-900/50 z-20 hidden md:hidden transition-opacity" onclick="toggleSidebar()"></div>
+
+    <!-- Sidebar Navigation -->
+    {% include "admin_panel/components/sidebar.html" %}
+
+    <!-- Main Page Work Area -->
+    <div class="flex-1 flex flex-col min-h-screen min-w-0">
+        
+        <!-- Header -->
+        <header class="px-4 sm:px-8 py-5 flex flex-col md:flex-row md:items-center justify-between gap-4 bg-[#F8F9FA] z-10 sticky top-0 md:static">
+            
+            <div class="flex items-center gap-3">
+                <!-- Hamburger Menu Button (Mobile Only) -->
+                <button onclick="toggleSidebar()" class="md:hidden text-gray-700 p-2 -ml-2 rounded-lg hover:bg-gray-200 transition-colors">
+                    <i class="fa-solid fa-bars text-xl"></i>
+                </button>
+
+                <div>
+                    <h1 class="text-xl sm:text-2xl font-extrabold text-gray-950 tracking-tight">{{ title }}</h1>
+                    <p class="text-xs sm:text-sm text-gray-500 font-medium">
+                        <a href="{% url 'leavetype_list' %}" class="hover:text-gray-700 transition">Leave Management</a> 
+                        / {{ title }}
+                    </p>
+                </div>
+            </div>
+
+            <!-- Back Button -->
+            <div class="flex items-center w-full md:w-auto">
+                <a href="{% url 'leavetype_list' %}" class="w-full md:w-auto bg-white border border-gray-200 hover:bg-gray-50 text-gray-700 text-sm font-semibold px-5 py-2.5 rounded-lg shadow-sm transition flex items-center justify-center gap-2">
+                    <i class="fa-solid fa-arrow-left"></i> Back
+                </a>
+            </div>
+        </header>
+
+        <!-- Main Content -->
+        <main class="flex-1 px-4 sm:px-8 pb-10">
+
+            <div class="max-w-2xl">
+                <div class="bg-white border border-gray-100 rounded-xl shadow-sm p-8">
+                    
+                    <form method="POST" class="space-y-6">
+                        {% csrf_token %}
+                        
+                        <!-- Leave Type Name -->
+                        <div>
+                            <label for="{{ form.name.id_for_label }}" class="block text-sm font-semibold text-gray-900 mb-2">
+                                Leave Type Name <span class="text-red-500">*</span>
+                            </label>
+                            {{ form.name }}
+                            {% if form.name.errors %}
+                                <p class="text-red-600 text-sm mt-1 flex items-center gap-1">
+                                    <i class="fa-solid fa-circle-exclamation"></i> {{ form.name.errors }}
+                                </p>
+                            {% endif %}
+                        </div>
+
+                        <!-- Days Per Year -->
+                        <div>
+                            <label for="{{ form.days_per_year.id_for_label }}" class="block text-sm font-semibold text-gray-900 mb-2">
+                                Days Per Year <span class="text-red-500">*</span>
+                            </label>
+                            {{ form.days_per_year }}
+                            {% if form.days_per_year.errors %}
+                                <p class="text-red-600 text-sm mt-1 flex items-center gap-1">
+                                    <i class="fa-solid fa-circle-exclamation"></i> {{ form.days_per_year.errors }}
+                                </p>
+                            {% endif %}
+                        </div>
+
+                        <!-- Description -->
+                        <div>
+                            <label for="{{ form.description.id_for_label }}" class="block text-sm font-semibold text-gray-900 mb-2">
+                                Description
+                            </label>
+                            {{ form.description }}
+                            {% if form.description.errors %}
+                                <p class="text-red-600 text-sm mt-1 flex items-center gap-1">
+                                    <i class="fa-solid fa-circle-exclamation"></i> {{ form.description.errors }}
+                                </p>
+                            {% endif %}
+                        </div>
+
+                        <!-- Active Status -->
+                        <div class="flex items-center gap-3 p-4 bg-gray-50 rounded-lg">
+                            <input type="checkbox" id="{{ form.is_active.id_for_label }}" name="{{ form.is_active.name }}" class="w-4 h-4 accent-blue-600 cursor-pointer" {% if form.is_active.value %}checked{% endif %}>
+                            <label for="{{ form.is_active.id_for_label }}" class="text-sm font-semibold text-gray-900 cursor-pointer">
+                                Mark as Active
+                            </label>
+                        </div>
+
+                        <!-- Form Errors -->
+                        <div class="flex items-center gap-3 mt-4">
+                            <input type="checkbox" id="{{ form.is_paid.id_for_label }}" name="{{ form.is_paid.name }}" {% if form.is_paid.value %}checked{% endif %} class="w-4 h-4 accent-blue-600 cursor-pointer">
+                            <label for="{{ form.is_paid.id_for_label }}" class="text-sm font-semibold text-gray-900 cursor-pointer">Paid leave (not deducted from salary)</label>
+                        </div>
+                        {% if form.non_field_errors %}
+                            <div class="p-4 bg-red-50 border border-red-200 text-red-800 rounded-lg">
+                                {{ form.non_field_errors }}
+                            </div>
+                        {% endif %}
+
+                        <!-- Buttons -->
+                        <div class="flex items-center gap-3 pt-4 border-t border-gray-100">
+                            <a href="{% url 'leavetype_list' %}" class="px-5 py-2.5 bg-gray-100 text-gray-900 font-semibold rounded-lg hover:bg-gray-200 transition">
+                                Cancel
+                            </a>
+                            <button type="submit" class="px-5 py-2.5 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-700 transition flex items-center gap-2">
+                                <i class="fa-solid fa-check"></i> Save Leave Type
+                            </button>
+                        </div>
+                    </form>
+
+                </div>
+            </div>
+
+        </main>
+    </div>
+
+    <!-- Script for Mobile Sidebar Toggle -->
+    <script>
+        function toggleSidebar() {
+            const sidebar = document.getElementById('sidebar');
+            const overlay = document.getElementById('mobile-overlay');
+            
+            sidebar.classList.toggle('-translate-x-full');
+            overlay.classList.toggle('hidden');
+            document.body.classList.toggle('overflow-hidden');
+        }
+    </script>
+
+</body>
+</html>

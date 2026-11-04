@@ -1,0 +1,316 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Payment Summary - Radiant Ayurveda</title>
+
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+
+    <style>
+        body {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            background-color: #F8F9FA;
+        }
+        /* Custom scrollbar for sidebar */
+        ::-webkit-scrollbar {
+            width: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #E5E7EB;
+            border-radius: 10px;
+        }
+    </style>
+</head>
+
+<body class="min-h-screen flex text-gray-800 relative">
+
+    <!-- Mobile Sidebar Overlay -->
+    <div id="mobile-overlay" class="fixed inset-0 bg-gray-900/50 z-20 hidden md:hidden transition-opacity" onclick="toggleSidebar()"></div>
+
+    <!-- Sidebar Navigation -->
+    <aside id="sidebar" class="w-64 bg-white border-r border-gray-200 flex flex-col justify-between h-screen fixed md:sticky top-0 z-30 transform -translate-x-full md:translate-x-0 transition-transform duration-300">
+        
+        <div class="py-6 overflow-y-auto h-full">
+            <!-- Branding -->
+            <div class="px-6 mb-8 flex justify-between items-center">
+                <div>
+                    <h2 class="text-xl font-bold text-gray-900 tracking-tight">Radiant Ayurveda</h2>
+                    <p class="text-xs text-gray-500 font-medium mt-0.5">Staff Portal</p>
+                </div>
+                <!-- Close Button (Mobile Only) -->
+                <button onclick="toggleSidebar()" class="md:hidden text-gray-400 hover:text-gray-900 transition-colors" aria-label="Close Menu">
+                    <i class="fa-solid fa-xmark text-xl"></i>
+                </button>
+            </div>
+
+            <!-- Nav Links -->
+            <nav class="space-y-1 pr-4">
+                <a href="{% url 'staff_dashboard' %}" class="flex items-center gap-4 px-6 py-3 text-gray-500 hover:bg-gray-50 hover:text-gray-900 rounded-r-lg border-l-4 border-transparent font-medium text-sm transition">
+                    <i class="fa-solid fa-chart-pie text-gray-400 text-base w-5 text-center"></i>
+                    <span>Dashboard</span>
+                </a>
+                {% if can.attendance %}<a href="{% url 'attendance_page' %}" class="flex items-center gap-4 px-6 py-3 text-gray-500 hover:bg-gray-50 hover:text-gray-900 rounded-r-lg border-l-4 border-transparent font-medium text-sm transition">
+                    <i class="fa-regular fa-clock text-gray-400 w-5 text-center"></i>
+                    <span>Attendance</span>
+                </a>{% endif %}
+                <!-- Active Link for Reports -->
+                {% if can.reports %}<a href="{% url 'report_dashboard' %}" class="flex items-center gap-4 px-6 py-3 bg-[#F0F3F1] text-gray-900 rounded-r-lg border-l-4 border-[#273B30] font-semibold text-sm transition">
+                    <i class="fa-solid fa-file-invoice text-gray-700 w-5 text-center"></i>
+                    <span>Reports Dashboard</span>
+                </a>{% endif %}
+                {% if can.leave %}<a href="{% url 'staff_leave_dashboard' %}" class="flex items-center gap-4 px-6 py-3 text-gray-500 hover:bg-gray-50 hover:text-gray-900 rounded-r-lg border-l-4 border-transparent font-medium text-sm transition">
+                    <i class="fa-regular fa-calendar-check text-gray-400 w-5 text-center"></i>
+                    <span>Leave Management</span>
+                </a>{% endif %}
+                {% if can.salary %}<a href="{% url 'staff_salary_management' %}" class="flex items-center gap-4 px-6 py-3 text-gray-500 hover:bg-gray-50 hover:text-gray-900 rounded-r-lg border-l-4 border-transparent font-medium text-sm transition">
+                    <i class="fa-solid fa-money-bill-wave text-gray-400 w-5 text-center"></i>
+                    <span>Salary Management</span>
+                </a>{% endif %}
+                {% if can.requirements %}<a href="{% url 'staff_requirements' %}" class="flex items-center gap-4 px-6 py-3 text-gray-500 hover:bg-gray-50 hover:text-gray-900 rounded-r-lg border-l-4 border-transparent font-medium text-sm transition">
+                    <i class="fa-solid fa-clipboard-list text-gray-400 w-5 text-center"></i>
+                    <span>Requirements</span>
+                </a>{% endif %}
+                <a href="{% url 'staff_profile' %}" class="flex items-center gap-4 px-6 py-3 text-gray-500 hover:bg-gray-50 hover:text-gray-900 rounded-r-lg border-l-4 border-transparent font-medium text-sm transition">
+                    <i class="fa-regular fa-user text-gray-400 w-5 text-center"></i>
+                    <span>My Profile</span>
+                </a>
+            </nav>
+        </div>
+
+        <!-- Logout and Active Profile -->
+        <div class="border-t border-gray-100 p-4 px-6 flex items-center justify-between shrink-0 bg-white">
+            <div class="overflow-hidden">
+                <p class="text-sm font-semibold text-gray-900 capitalize truncate">{{ request.user.full_name|default:request.user.username }}</p>
+                <p class="text-xs text-gray-500 truncate">{{ request.user.branch }}</p>
+            </div>
+            <a href="/logout/" class="text-gray-400 hover:text-red-500 transition-colors ml-3" title="Logout">
+                <i class="fa-solid fa-arrow-right-from-bracket text-sm"></i>
+            </a>
+        </div>
+    </aside>
+
+    <!-- Main Page Work Area -->
+    <div class="flex-1 flex flex-col min-h-screen min-w-0">
+        
+        <!-- Header -->
+        <header class="px-6 sm:px-10 py-6 flex flex-col md:flex-row md:items-center justify-between gap-4 z-10 sticky top-0 md:static bg-[#F8F9FA] border-b border-gray-100">
+            <div class="flex items-center gap-4">
+                <!-- Hamburger Menu Button (Mobile Only) -->
+                <button onclick="toggleSidebar()" class="md:hidden text-gray-700 mt-1 p-2 -ml-2 rounded-lg hover:bg-gray-200 transition-colors" aria-label="Open Menu">
+                    <i class="fa-solid fa-bars text-xl"></i>
+                </button>
+
+                <!-- Back Navigation directly in header -->
+                {% if can.reports %}<a href="{% url 'report_hub' report.id %}" class="text-sm font-medium text-gray-500 hover:text-gray-900 transition flex items-center gap-2 bg-white border border-gray-200 px-3 py-2 rounded-lg hover:shadow-sm">
+                    <i class="fa-solid fa-arrow-left"></i> Back to Hub
+                </a>{% endif %}
+            </div>
+        </header>
+
+        <!-- Main Content Block -->
+        <main class="flex-1 px-6 sm:px-10 py-8">
+            {% block content %}
+            <div class="max-w-4xl mx-auto">
+                
+                <!-- Page Title & Report Date Badge -->
+                <div class="flex flex-col gap-4 mb-8 sm:flex-row sm:items-end sm:justify-between">
+                    <div>
+                        <h2 class="text-2xl font-bold text-gray-900 tracking-tight">
+                            Add / Update Payment Summary
+                        </h2>
+                        <p class="mt-1.5 text-sm text-gray-500 font-medium">
+                            Enter the payment amounts received for today's report.
+                        </p>
+                    </div>
+
+                    {% if report %}
+                        <div class="px-5 py-2.5 bg-white border border-gray-200 shadow-sm rounded-xl flex items-center gap-3">
+                            <div class="w-8 h-8 rounded-lg bg-[#EEF0EF] flex items-center justify-center text-gray-700 shrink-0">
+                                <i class="fa-regular fa-calendar text-sm"></i>
+                            </div>
+                            <div>
+                                <p class="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Report Date</p>
+                                <p class="text-sm font-bold text-gray-900">{{ report.report_date|date:"M d, Y" }}</p>
+                            </div>
+                        </div>
+                    {% endif %}
+                </div>
+
+                <!-- Approved Report Lock -->
+                {% if report.status == "APPROVED" %}
+                    <div class="p-5 mb-8 border border-emerald-200 rounded-xl bg-emerald-50 shadow-sm flex items-start gap-4">
+                        <div class="w-10 h-10 rounded-full bg-emerald-100 flex items-center justify-center text-emerald-600 shrink-0">
+                            <i class="fa-solid fa-lock text-sm"></i>
+                        </div>
+                        <div>
+                            <h3 class="font-bold text-emerald-900 text-base">Payment Report Approved</h3>
+                            <p class="mt-1 text-sm text-emerald-700 font-medium">
+                                This daily report has been approved and is now locked. Payment details cannot be changed.
+                            </p>
+                        </div>
+                    </div>
+                {% else %}
+
+                    <!-- Rejected Report Notice -->
+                    {% if report.status == "REJECTED" %}
+                        <div class="p-5 mb-8 border border-[#FBE9E7] rounded-xl bg-[#FEF6F5] shadow-sm flex items-start gap-4">
+                            <div class="w-10 h-10 rounded-full bg-[#F5D7D3] flex items-center justify-center text-[#D06B5D] shrink-0">
+                                <i class="fa-solid fa-triangle-exclamation text-sm"></i>
+                            </div>
+                            <div>
+                                <h3 class="font-bold text-[#b54b3d] text-base">Report Rejected</h3>
+                                <p class="mt-1 text-sm text-[#D06B5D] font-medium">
+                                    This report was rejected by an administrator. You can update the payment details and submit them again.
+                                </p>
+                            </div>
+                        </div>
+                    {% endif %}
+
+                    <!-- Main Form Container -->
+                    <div class="bg-white border border-gray-100 rounded-xl shadow-sm p-6 sm:p-8">
+                        <form method="POST">
+                            {% csrf_token %}
+
+                            <!-- Form Errors -->
+                            {% if form.non_field_errors %}
+                                <div class="p-4 mb-6 border border-red-200 rounded-lg bg-red-50">
+                                    {% for error in form.non_field_errors %}
+                                        <p class="text-sm font-medium text-red-700 flex items-center gap-2">
+                                            <i class="fa-solid fa-circle-exclamation text-red-500"></i> {{ error }}
+                                        </p>
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+
+                            <!-- Payment Fields Grid -->
+                            <div class="grid grid-cols-1 gap-6 md:grid-cols-3">
+
+                                <!-- Cash -->
+                                <div class="group">
+                                    <label for="{{ form.cash.id_for_label }}" class="block mb-2 text-sm font-semibold text-gray-700 group-focus-within:text-[#273B30] transition-colors">
+                                        <i class="fa-solid fa-money-bill-wave text-gray-400 mr-1.5"></i> Cash Payments
+                                    </label>
+                                    <div class="relative">
+                                        <span class="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-500 font-medium">₹</span>
+                                        <div class="[&>input]:w-full [&>input]:bg-[#F8F9FA] [&>input]:border [&>input]:border-gray-200 [&>input]:text-gray-900 [&>input]:text-sm [&>input]:font-semibold [&>input]:rounded-lg [&>input]:py-2.5 [&>input]:pl-8 [&>input]:pr-4 [&>input]:outline-none [&>input]:focus:border-[#273B30] [&>input]:focus:ring-1 [&>input]:focus:ring-[#273B30] [&>input]:focus:bg-white [&>input]:transition-all">
+                                            {{ form.cash }}
+                                        </div>
+                                    </div>
+                                    {% for error in form.cash.errors %}
+                                        <p class="mt-1.5 text-xs font-medium text-red-500">{{ error }}</p>
+                                    {% endfor %}
+                                </div>
+
+                                <!-- GPay -->
+                                <div class="group">
+                                    <label for="{{ form.gpay.id_for_label }}" class="block mb-2 text-sm font-semibold text-gray-700 group-focus-within:text-[#273B30] transition-colors">
+                                        <i class="fa-brands fa-google-pay text-gray-400 mr-1 text-lg leading-none align-middle"></i> / UPI Payments
+                                    </label>
+                                    <div class="relative">
+                                        <span class="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-500 font-medium">₹</span>
+                                        <div class="[&>input]:w-full [&>input]:bg-[#F8F9FA] [&>input]:border [&>input]:border-gray-200 [&>input]:text-gray-900 [&>input]:text-sm [&>input]:font-semibold [&>input]:rounded-lg [&>input]:py-2.5 [&>input]:pl-8 [&>input]:pr-4 [&>input]:outline-none [&>input]:focus:border-[#273B30] [&>input]:focus:ring-1 [&>input]:focus:ring-[#273B30] [&>input]:focus:bg-white [&>input]:transition-all">
+                                            {{ form.gpay }}
+                                        </div>
+                                    </div>
+                                    {% for error in form.gpay.errors %}
+                                        <p class="mt-1.5 text-xs font-medium text-red-500">{{ error }}</p>
+                                    {% endfor %}
+                                </div>
+
+                                <!-- Card -->
+                                <div class="group">
+                                    <label for="{{ form.card.id_for_label }}" class="block mb-2 text-sm font-semibold text-gray-700 group-focus-within:text-[#273B30] transition-colors">
+                                        <i class="fa-regular fa-credit-card text-gray-400 mr-1.5"></i> Card Payments
+                                    </label>
+                                    <div class="relative">
+                                        <span class="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-500 font-medium">₹</span>
+                                        <div class="[&>input]:w-full [&>input]:bg-[#F8F9FA] [&>input]:border [&>input]:border-gray-200 [&>input]:text-gray-900 [&>input]:text-sm [&>input]:font-semibold [&>input]:rounded-lg [&>input]:py-2.5 [&>input]:pl-8 [&>input]:pr-4 [&>input]:outline-none [&>input]:focus:border-[#273B30] [&>input]:focus:ring-1 [&>input]:focus:ring-[#273B30] [&>input]:focus:bg-white [&>input]:transition-all">
+                                            {{ form.card }}
+                                        </div>
+                                    </div>
+                                    {% for error in form.card.errors %}
+                                        <p class="mt-1.5 text-xs font-medium text-red-500">{{ error }}</p>
+                                    {% endfor %}
+                                </div>
+
+                            </div>
+
+                            <!-- Total Preview Section -->
+                            <div class="p-5 mt-8 border border-[#E3EAE6] rounded-xl bg-[#F0F3F1] flex items-center justify-between shadow-sm">
+                                <div class="flex items-center gap-3">
+                                    <div class="w-10 h-10 bg-white rounded-lg flex items-center justify-center text-[#273B30] shadow-sm">
+                                        <i class="fa-solid fa-calculator"></i>
+                                    </div>
+                                    <span class="text-sm font-bold text-[#273B30] uppercase tracking-wide">
+                                        Total Payments
+                                    </span>
+                                </div>
+                                <span id="total-payments" class="text-2xl font-extrabold text-[#273B30]">
+                                    ₹0.00
+                                </span>
+                            </div>
+
+                            <!-- Action Buttons -->
+                            <div class="flex flex-col-reverse sm:flex-row justify-end gap-3 pt-8 mt-8 border-t border-gray-100">
+                                {% if can.reports %}<a href="{% url 'reports_add' %}" class="px-6 py-2.5 text-sm font-bold text-gray-600 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 text-center transition shadow-sm">
+                                    Cancel
+                                </a>{% endif %}
+                                <button type="submit" class="px-8 py-2.5 text-sm font-bold text-white bg-[#273B30] border border-[#273B30] rounded-lg hover:bg-[#1A2720] transition shadow-sm flex items-center justify-center gap-2">
+                                    <i class="fa-solid fa-check"></i> Save Payments
+                                </button>
+                            </div>
+
+                        </form>
+                    </div>
+                {% endif %}
+
+            </div>
+
+            <script>
+            document.addEventListener("DOMContentLoaded", function () {
+                const cashInput = document.getElementById("id_cash");
+                const gpayInput = document.getElementById("id_gpay");
+                const cardInput = document.getElementById("id_card");
+                const totalElement = document.getElementById("total-payments");
+
+                function calculateTotal() {
+                    const cash = parseFloat(cashInput?.value) || 0;
+                    const gpay = parseFloat(gpayInput?.value) || 0;
+                    const card = parseFloat(cardInput?.value) || 0;
+                    const total = cash + gpay + card;
+
+                    // Adding Indian Comma format with toLocaleString
+                    totalElement.textContent = "₹" + total.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+                }
+
+                if (cashInput) cashInput.addEventListener("input", calculateTotal);
+                if (gpayInput) gpayInput.addEventListener("input", calculateTotal);
+                if (cardInput) cardInput.addEventListener("input", calculateTotal);
+
+                calculateTotal();
+            });
+            </script>
+            {% endblock %}
+        </main>
+    </div>
+
+    <!-- Script for Mobile Sidebar Toggle -->
+    <script>
+        function toggleSidebar() {
+            const sidebar = document.getElementById('sidebar');
+            const overlay = document.getElementById('mobile-overlay');
+            
+            sidebar.classList.toggle('-translate-x-full');
+            overlay.classList.toggle('hidden');
+            document.body.classList.toggle('overflow-hidden');
+        }
+    </script>
+
+</body>
+</html>

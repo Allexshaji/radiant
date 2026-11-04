@@ -1,0 +1,71 @@
+{% extends "staff_panel/staff_base.html" %}
+
+{% block title %}Leave Details{% endblock %}
+{% block page_title %}Leave Details{% endblock %}
+{% block page_subtitle %}{{ application.leave_type.name }} &middot; {{ application.start_date|date:"M d, Y" }}{% if application.end_date != application.start_date %} to {{ application.end_date|date:"M d, Y" }}{% endif %}{% endblock %}
+
+{% block back %}
+{% if can.leave %}<a href="{% url 'staff_leave_dashboard' %}" class="inline-flex items-center mb-6 text-sm font-medium text-gray-500 hover:text-gray-900 transition-colors">
+    <i class="fa-solid fa-arrow-left mr-2"></i> Back to Leave &amp; Salary
+</a>{% endif %}
+{% endblock %}
+
+{% block header_actions %}
+    {% if application.status == "approved" %}
+        <span class="inline-flex items-center px-3 py-1.5 text-xs font-bold text-green-800 bg-green-100 rounded-full">Approved</span>
+    {% elif application.status == "rejected" %}
+        <span class="inline-flex items-center px-3 py-1.5 text-xs font-bold text-red-800 bg-red-100 rounded-full">Rejected</span>
+    {% else %}
+        <span class="inline-flex items-center px-3 py-1.5 text-xs font-bold text-amber-800 bg-amber-100 rounded-full">Waiting for approval</span>
+    {% endif %}
+{% endblock %}
+
+{% block content %}
+<div class="bg-white border border-gray-100 rounded-xl shadow-sm p-6 sm:p-8">
+    <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
+        <div>
+            <p class="text-xs font-semibold text-gray-500 uppercase tracking-wide">Leave type</p>
+            <p class="mt-1 text-base font-semibold text-gray-900">{{ application.leave_type.name }}</p>
+        </div>
+        <div>
+            <p class="text-xs font-semibold text-gray-500 uppercase tracking-wide">Days</p>
+            <p class="mt-1 text-base font-semibold text-gray-900">{{ application.days_requested }}</p>
+        </div>
+        <div>
+            <p class="text-xs font-semibold text-gray-500 uppercase tracking-wide">From</p>
+            <p class="mt-1 text-base font-semibold text-gray-900">{{ application.start_date|date:"d M Y" }}</p>
+        </div>
+        <div>
+            <p class="text-xs font-semibold text-gray-500 uppercase tracking-wide">To</p>
+            <p class="mt-1 text-base font-semibold text-gray-900">{{ application.end_date|date:"d M Y" }}</p>
+        </div>
+        <div>
+            <p class="text-xs font-semibold text-gray-500 uppercase tracking-wide">Applied on</p>
+            <p class="mt-1 text-base font-semibold text-gray-900">{{ application.applied_date|date:"d M Y, h:i A" }}</p>
+        </div>
+        <div>
+            <p class="text-xs font-semibold text-gray-500 uppercase tracking-wide">Decision</p>
+            <p class="mt-1 text-base font-semibold text-gray-900">
+                {% if application.decision_date %}
+                    {{ application.decision_date|date:"d M Y, h:i A" }}
+                    {% if application.approved_by %} by {{ application.approved_by.get_full_name|default:application.approved_by.username }}{% endif %}
+                {% else %}
+                    <span class="text-gray-400 font-medium">Not decided yet</span>
+                {% endif %}
+            </p>
+        </div>
+    </div>
+
+    <div class="mt-6 pt-6 border-t border-gray-100">
+        <p class="text-xs font-semibold text-gray-500 uppercase tracking-wide">Reason</p>
+        <p class="mt-2 text-sm text-gray-700 leading-relaxed">{{ application.reason|linebreaksbr }}</p>
+    </div>
+
+    {% if application.status == "rejected" and application.rejection_reason %}
+        <div class="mt-6 p-4 rounded-lg border border-red-100 bg-red-50">
+            <p class="text-xs font-semibold text-red-700 uppercase tracking-wide">Reason for rejection</p>
+            <p class="mt-2 text-sm text-red-700">{{ application.rejection_reason|linebreaksbr }}</p>
+        </div>
+    {% endif %}
+</div>
+{% endblock %}

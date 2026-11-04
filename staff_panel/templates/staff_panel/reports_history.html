@@ -1,0 +1,56 @@
+{% extends "staff_panel/staff_base.html" %}
+
+{% block title %}Report History{% endblock %}
+{% block page_title %}Report History{% endblock %}
+{% block page_subtitle %}Open the history of each part of your daily reports.{% endblock %}
+
+{% block content %}
+<div class="grid grid-cols-1 md:grid-cols-3 gap-5">
+
+    {% if can.reports %}<a href="{% url 'walkins_history_list' %}" class="group bg-white border border-gray-100 rounded-xl p-6 shadow-sm hover:shadow-md transition-all flex flex-col justify-between h-44">
+        <div class="flex justify-between items-start">
+            <div>
+                <h2 class="text-lg font-bold text-gray-900 group-hover:text-[#273B30] transition-colors">Walk-ins &amp; Payments</h2>
+                <p class="text-sm text-gray-500 mt-1">Walk-in counts with the cash, GPay and card amounts.</p>
+            </div>
+            <div class="w-10 h-10 rounded-lg bg-[#EEF0EF] flex items-center justify-center text-gray-700 shrink-0">
+                <i class="fa-solid fa-users text-sm"></i>
+            </div>
+        </div>
+        <div class="text-[#273B30] text-sm font-bold flex items-center mt-4">Open history <i class="fa-solid fa-arrow-right ml-2 transition-transform group-hover:translate-x-1"></i></div>
+    </a>{% endif %}
+
+    {% if can.reports %}<a href="{% url 'revenue_history_list' %}" class="group bg-white border border-gray-100 rounded-xl p-6 shadow-sm hover:shadow-md transition-all flex flex-col justify-between h-44">
+        <div class="flex justify-between items-start">
+            <div>
+                <h2 class="text-lg font-bold text-gray-900 group-hover:text-[#273B30] transition-colors">Revenue</h2>
+                <p class="text-sm text-gray-500 mt-1">Revenue by treatment, massage, package, consultation and sales.</p>
+            </div>
+            <div class="w-10 h-10 rounded-lg bg-[#EEF0EF] flex items-center justify-center text-gray-700 shrink-0">
+                <i class="fa-solid fa-indian-rupee-sign text-sm"></i>
+            </div>
+        </div>
+        <div class="text-[#273B30] text-sm font-bold flex items-center mt-4">Open history <i class="fa-solid fa-arrow-right ml-2 transition-transform group-hover:translate-x-1"></i></div>
+    </a>{% endif %}
+
+    {% if can.reports %}<a href="{% url 'expenses_history_list' %}" class="group bg-white border border-gray-100 rounded-xl p-6 shadow-sm hover:shadow-md transition-all flex flex-col justify-between h-44">
+        <div class="flex justify-between items-start">
+            <div>
+                <h2 class="text-lg font-bold text-gray-900 group-hover:text-[#273B30] transition-colors">Expenses</h2>
+                <p class="text-sm text-gray-500 mt-1">Every expense entered for each day.</p>
+            </div>
+            <div class="w-10 h-10 rounded-lg bg-[#EEF0EF] flex items-center justify-center text-gray-700 shrink-0">
+                <i class="fa-solid fa-receipt text-sm"></i>
+            </div>
+        </div>
+        <div class="text-[#273B30] text-sm font-bold flex items-center mt-4">Open history <i class="fa-solid fa-arrow-right ml-2 transition-transform group-hover:translate-x-1"></i></div>
+    </a>{% endif %}
+
+</div>
+
+<div class="mt-8">
+    {% if can.reports %}<a href="{% url 'report_dashboard' %}" class="inline-flex items-center text-sm font-semibold text-gray-600 hover:text-gray-900 transition-colors">
+        <i class="fa-solid fa-arrow-left mr-2"></i> Back to Reports Dashboard
+    </a>{% endif %}
+</div>
+{% endblock %}

@@ -1,0 +1,13 @@
+{% extends "accounts/auth_base.html" %}
+
+{% block title %}Registration submitted - Radiant Ayurveda{% endblock %}
+
+{% block card_class %}center{% endblock %}
+
+{% block card %}
+  <div class="done"><i class="fa-solid fa-hourglass-half"></i></div>
+  <span class="kicker"><i class="fa-solid fa-user-clock"></i> Pending approval</span>
+  <h2>Registration submitted</h2>
+  <p class="sub">Your account is waiting for administrator approval. You can sign in once it is approved.</p>
+  <a class="btn" href="{% url 'login' %}">Back to sign in <i class="fa-solid fa-arrow-right"></i></a>
+{% endblock %}

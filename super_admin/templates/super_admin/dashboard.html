@@ -1,0 +1,205 @@
+{% extends "super_admin/base.html" %}
+
+{% block title %}Super Admin Dashboard{% endblock %}
+{% block heading %}Super Admin Dashboard{% endblock %}
+{% block subheading %}Welcome back, {{ request.user.full_name|default:request.user.username }}. Control admins and staff from here.{% endblock %}
+
+{% block actions %}
+    <a href="{% url 'super_admin_create' %}" class="w-full md:w-auto bg-[#273B30] hover:bg-[#1A2720] text-white text-sm font-medium px-5 py-2.5 rounded-lg shadow-sm transition flex items-center justify-center">
+        <i class="fa-solid fa-user-plus mr-2"></i> Add Account
+    </a>
+{% endblock %}
+
+{% block content %}
+    <!-- Money summary, with a branch filter -->
+    <form method="get" class="flex flex-col sm:flex-row sm:items-end gap-3 mb-6">
+        <div>
+            <label for="branch-filter" class="block text-xs font-semibold text-gray-600 mb-1.5">Show money for</label>
+            <select id="branch-filter" name="branch" class="px-3.5 py-2.5 border border-gray-300 rounded-lg text-sm text-gray-900 bg-white min-w-[240px] focus:outline-none focus:ring-2 focus:ring-[#273B30]/20 focus:border-[#273B30]">
+                <option value="">All branches</option>
+                {% for branch in branches %}
+                <option value="{{ branch.pk }}" {% if selected == branch.pk|stringformat:"s" %}selected{% endif %}>{{ branch.name }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <button type="submit" class="bg-[#273B30] hover:bg-[#1A2720] text-white text-sm font-semibold px-5 py-2.5 rounded-lg shadow-sm transition">Show</button>
+    </form>
+
+    <h2 class="text-xs font-bold uppercase tracking-wider text-gray-400 mb-3">Money summary: {{ scope_label }}</h2>
+    <div class="grid grid-cols-2 xl:grid-cols-5 gap-5 mb-8">
+        <div class="bg-white border border-gray-100 rounded-xl p-5 shadow-sm">
+            <p class="text-xs font-semibold text-gray-500">Total Revenue</p>
+            <p class="text-2xl font-bold text-gray-900 mt-2">₹{{ money.revenue|floatformat:2 }}</p>
+        </div>
+        <div class="bg-white border border-gray-100 rounded-xl p-5 shadow-sm">
+            <p class="text-xs font-semibold text-gray-500">Total Payments</p>
+            <p class="text-2xl font-bold text-gray-900 mt-2">₹{{ money.payments|floatformat:2 }}</p>
+        </div>
+        <div class="bg-white border border-gray-100 rounded-xl p-5 shadow-sm">
+            <p class="text-xs font-semibold text-gray-500">Total Expenses</p>
+            <p class="text-2xl font-bold text-gray-900 mt-2">₹{{ money.expenses|floatformat:2 }}</p>
+        </div>
+        <div class="bg-white border border-gray-100 rounded-xl p-5 shadow-sm">
+            <p class="text-xs font-semibold text-gray-500">Total Walk-ins</p>
+            <p class="text-2xl font-bold text-gray-900 mt-2">{{ money.walkins }}</p>
+        </div>
+        <div class="bg-white border border-gray-100 rounded-xl p-5 shadow-sm">
+            <p class="text-xs font-semibold text-gray-500">Net Amount</p>
+            <p class="text-2xl font-bold text-gray-900 mt-2">₹{{ money.net|floatformat:2 }}</p>
+            <p class="text-xs text-gray-400 mt-1">{{ money.reports }} daily reports</p>
+        </div>
+    </div>
+
+    {% if breakdown %}
+    <h2 class="text-xs font-bold uppercase tracking-wider text-gray-400 mb-3">Branch-wise totals</h2>
+    <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden mb-8">
+        <div class="overflow-x-auto">
+            <table class="w-full text-left text-sm">
+                <thead class="bg-gray-50/50 border-b border-gray-100">
+                    <tr>
+                        <th class="px-6 py-4 font-semibold text-gray-600 tracking-wide">Branch</th>
+                        <th class="px-6 py-4 font-semibold text-gray-600 tracking-wide text-right">Reports</th>
+                        <th class="px-6 py-4 font-semibold text-gray-600 tracking-wide text-right">Revenue</th>
+                        <th class="px-6 py-4 font-semibold text-gray-600 tracking-wide text-right">Payments</th>
+                        <th class="px-6 py-4 font-semibold text-gray-600 tracking-wide text-right">Expenses</th>
+                        <th class="px-6 py-4 font-semibold text-gray-600 tracking-wide text-right">Walk-ins</th>
+                        <th class="px-6 py-4 font-semibold text-gray-600 tracking-wide text-right">Net</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-gray-50">
+                    {% for row in breakdown %}
+                    <tr class="hover:bg-gray-50/50 transition-colors">
+                        <td class="px-6 py-4 font-bold text-gray-900">{{ row.name }}</td>
+                        <td class="px-6 py-4 text-right text-gray-600">{{ row.reports }}</td>
+                        <td class="px-6 py-4 text-right text-gray-900 font-semibold">₹{{ row.revenue|floatformat:2 }}</td>
+                        <td class="px-6 py-4 text-right text-gray-600">₹{{ row.payments|floatformat:2 }}</td>
+                        <td class="px-6 py-4 text-right text-gray-600">₹{{ row.expenses|floatformat:2 }}</td>
+                        <td class="px-6 py-4 text-right text-gray-600">{{ row.walkins }}</td>
+                        <td class="px-6 py-4 text-right text-gray-900 font-semibold">₹{{ row.net|floatformat:2 }}</td>
+                    </tr>
+                    {% endfor %}
+                    <tr class="bg-[#F0F3F1]">
+                        <td class="px-6 py-4 font-bold text-gray-900">All branches</td>
+                        <td class="px-6 py-4 text-right font-bold text-gray-900">{{ money.reports }}</td>
+                        <td class="px-6 py-4 text-right font-bold text-gray-900">₹{{ money.revenue|floatformat:2 }}</td>
+                        <td class="px-6 py-4 text-right font-bold text-gray-900">₹{{ money.payments|floatformat:2 }}</td>
+                        <td class="px-6 py-4 text-right font-bold text-gray-900">₹{{ money.expenses|floatformat:2 }}</td>
+                        <td class="px-6 py-4 text-right font-bold text-gray-900">{{ money.walkins }}</td>
+                        <td class="px-6 py-4 text-right font-bold text-gray-900">₹{{ money.net|floatformat:2 }}</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Admin accounts -->
+    <h2 class="text-xs font-bold uppercase tracking-wider text-gray-400 mb-3">Admin accounts</h2>
+    <div class="grid grid-cols-2 xl:grid-cols-4 gap-5 mb-8">
+        <div class="bg-white border border-gray-100 rounded-xl p-5 shadow-sm">
+            <p class="text-xs font-semibold text-gray-500">Admins</p>
+            <p class="text-2xl font-bold text-gray-900 mt-2">{{ admin_count }}</p>
+        </div>
+        <div class="bg-white border border-gray-100 rounded-xl p-5 shadow-sm">
+            <p class="text-xs font-semibold text-gray-500">Active admins</p>
+            <p class="text-2xl font-bold text-gray-900 mt-2">{{ active_admin_count }}</p>
+        </div>
+        <div class="bg-white border border-gray-100 rounded-xl p-5 shadow-sm">
+            <p class="text-xs font-semibold text-gray-500">Super Admins (active)</p>
+            <p class="text-2xl font-bold text-gray-900 mt-2">{{ super_admin_count }}</p>
+        </div>
+        <div class="bg-white border border-gray-100 rounded-xl p-5 shadow-sm">
+            <p class="text-xs font-semibold text-gray-500">Admins with areas turned off</p>
+            <p class="text-2xl font-bold text-amber-600 mt-2">{{ restricted_admin_count }}</p>
+        </div>
+    </div>
+
+    <!-- Staff -->
+    <h2 class="text-xs font-bold uppercase tracking-wider text-gray-400 mb-3">Staff and branches</h2>
+    <div class="grid grid-cols-2 xl:grid-cols-4 gap-5 mb-8">
+        <div class="bg-white border border-gray-100 rounded-xl p-5 shadow-sm">
+            <p class="text-xs font-semibold text-gray-500">Approved staff</p>
+            <p class="text-2xl font-bold text-gray-900 mt-2">{{ staff_count }}</p>
+        </div>
+        <div class="bg-white border border-gray-100 rounded-xl p-5 shadow-sm">
+            <p class="text-xs font-semibold text-gray-500">Pending approvals</p>
+            <p class="text-2xl font-bold text-amber-600 mt-2">{{ pending_count }}</p>
+        </div>
+        <div class="bg-white border border-gray-100 rounded-xl p-5 shadow-sm">
+            <p class="text-xs font-semibold text-gray-500">Branches</p>
+            <p class="text-2xl font-bold text-gray-900 mt-2">{{ branch_count }}</p>
+        </div>
+        <div class="bg-white border border-gray-100 rounded-xl p-5 shadow-sm">
+            <p class="text-xs font-semibold text-gray-500">Staff features switched on</p>
+            <p class="text-2xl font-bold text-gray-900 mt-2">{{ features_on }} <span class="text-sm font-semibold text-gray-400">of {{ features_total }}</span></p>
+        </div>
+    </div>
+
+    <!-- Module cards -->
+    <h2 class="text-xs font-bold uppercase tracking-wider text-gray-400 mb-3">Manage</h2>
+    <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5 mb-8">
+
+        <div class="bg-white border border-gray-100 rounded-xl p-6 shadow-sm flex flex-col justify-between hover:shadow-md transition-shadow">
+            <div class="flex justify-between items-start mb-6">
+                <div>
+                    <h3 class="text-lg font-bold text-gray-900">Admin Accounts</h3>
+                    <p class="text-sm text-gray-500 mt-1">Add admins, decide which areas each admin can open, switch accounts off.</p>
+                </div>
+                <div class="w-10 h-10 rounded-lg bg-[#EEF0EF] flex items-center justify-center text-gray-700 shrink-0"><i class="fa-solid fa-user-gear text-sm"></i></div>
+            </div>
+            <a href="{% url 'super_admin_list' %}" class="inline-flex items-center justify-center w-full sm:w-auto px-5 py-2.5 bg-[#F0F3F1] border border-gray-200 text-gray-900 text-sm font-semibold rounded-lg hover:bg-[#E3EAE6] transition">Open <i class="fa-solid fa-arrow-right ml-2 text-gray-500"></i></a>
+        </div>
+
+        <div class="bg-white border border-gray-100 rounded-xl p-6 shadow-sm flex flex-col justify-between hover:shadow-md transition-shadow">
+            <div class="flex justify-between items-start mb-6">
+                <div>
+                    <h3 class="text-lg font-bold text-gray-900">Staff Control</h3>
+                    <p class="text-sm text-gray-500 mt-1">Switch staff features on or off for every staff member.</p>
+                </div>
+                <div class="w-10 h-10 rounded-lg bg-[#EEF0EF] flex items-center justify-center text-gray-700 shrink-0"><i class="fa-solid fa-sliders text-sm"></i></div>
+            </div>
+            <a href="{% url 'super_staff_control' %}" class="inline-flex items-center justify-center w-full sm:w-auto px-5 py-2.5 bg-[#F0F3F1] border border-gray-200 text-gray-900 text-sm font-semibold rounded-lg hover:bg-[#E3EAE6] transition">Open <i class="fa-solid fa-arrow-right ml-2 text-gray-500"></i></a>
+        </div>
+
+        <div class="bg-white border border-gray-100 rounded-xl p-6 shadow-sm flex flex-col justify-between hover:shadow-md transition-shadow">
+            <div class="flex justify-between items-start mb-6">
+                <div>
+                    <h3 class="text-lg font-bold text-gray-900">Admin Module</h3>
+                    <p class="text-sm text-gray-500 mt-1">Every admin page is open to you, the same as an admin.</p>
+                </div>
+                <div class="w-10 h-10 rounded-lg bg-[#EEF0EF] flex items-center justify-center text-gray-700 shrink-0"><i class="fa-solid fa-chart-pie text-sm"></i></div>
+            </div>
+            <a href="{% url 'admin_dashboard' %}" class="inline-flex items-center justify-center w-full sm:w-auto px-5 py-2.5 bg-[#F0F3F1] border border-gray-200 text-gray-900 text-sm font-semibold rounded-lg hover:bg-[#E3EAE6] transition">Open <i class="fa-solid fa-arrow-right ml-2 text-gray-500"></i></a>
+        </div>
+
+    </div>
+
+    <!-- Staff features at a glance -->
+    <h2 class="text-xs font-bold uppercase tracking-wider text-gray-400 mb-3">Staff features</h2>
+    <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+        <table class="w-full text-left text-sm">
+            <thead class="bg-gray-50/50 border-b border-gray-100">
+                <tr>
+                    <th class="px-6 py-4 font-semibold text-gray-600 tracking-wide">Feature</th>
+                    <th class="px-6 py-4 font-semibold text-gray-600 tracking-wide">What staff can do</th>
+                    <th class="px-6 py-4 font-semibold text-gray-600 tracking-wide">Status</th>
+                </tr>
+            </thead>
+            <tbody class="divide-y divide-gray-50">
+                {% for feature in features %}
+                <tr class="hover:bg-gray-50/50 transition-colors">
+                    <td class="px-6 py-4 font-bold text-gray-900">{{ feature.label }}</td>
+                    <td class="px-6 py-4 text-gray-600 font-medium">{{ feature.text }}</td>
+                    <td class="px-6 py-4">
+                        {% if feature.enabled %}
+                            <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-100"><span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span> On</span>
+                        {% else %}
+                            <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-semibold bg-red-50 text-red-700 border border-red-100"><span class="w-1.5 h-1.5 rounded-full bg-red-500"></span> Off</span>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+{% endblock %}

@@ -1,0 +1,10 @@
+{% extends "accounts/auth_base.html" %}
+
+{% block title %}Not available - Radiant Ayurveda{% endblock %}
+
+{% block card %}
+  <span class="kicker"><i class="fa-solid fa-lock"></i> Not available</span>
+  <h2>This page is closed</h2>
+  <p class="sub">{{ reason }}</p>
+  <a class="btn" href="{{ home_url }}" style="display:flex;justify-content:center;text-decoration:none;">Back to my dashboard <i class="fa-solid fa-arrow-right" style="margin-left:8px;"></i></a>
+{% endblock %}

@@ -1,0 +1,78 @@
+<!-- Navigation Bar Component -->
+<nav class="glass-panel sticky top-4 z-50 mb-8 mx-auto w-full max-w-6xl rounded-2xl px-6 py-4 transition-all duration-300">
+    <div class="flex items-center justify-between">
+        
+        <!-- Brand / Logo -->
+        <a href="{% url 'staff_dashboard' %}" class="flex items-center gap-2 group">
+            <span class="text-xl font-extrabold text-primary tracking-wide group-hover:text-accent transition-colors duration-300">
+                Staff Portal
+            </span>
+        </a>
+
+        <!-- Desktop Navigation Links -->
+        <div class="hidden md:flex items-center gap-6">
+            <a href="{% url 'staff_dashboard' %}" class="text-sm font-semibold text-primary hover:text-accent transition-colors duration-300">
+                Dashboard
+            </a>
+            {% if can.reports %}<a href="{% url 'report_dashboard' %}" class="text-sm font-semibold text-primary hover:text-accent transition-colors duration-300">
+                Reports
+            </a>{% endif %}
+            {% if can.attendance %}<a href="{% url 'attendance_page' %}" class="text-sm font-semibold text-primary hover:text-accent transition-colors duration-300">
+                Attendance
+            </a>{% endif %}
+            <a href="{% url 'staff_profile' %}" class="text-sm font-semibold text-primary hover:text-accent transition-colors duration-300">
+                My Profile
+            </a>
+        </div>
+
+        <!-- Desktop Action Buttons (Logout) -->
+        <div class="hidden md:flex items-center gap-3">
+            <a href="/logout/" 
+               class="inline-flex items-center px-4 py-2 text-xs font-semibold text-primary border-2 border-accent bg-transparent rounded-xl hover:bg-accent hover:text-background transition-all duration-300 focus:ring-2 focus:ring-primary focus:outline-none">
+                Logout
+            </a>
+        </div>
+
+        <!-- Mobile Menu Button (Hamburger) -->
+        <div class="flex md:hidden">
+            <button id="mobile-menu-button" type="button" class="text-primary hover:text-accent focus:outline-none focus:ring-2 focus:ring-accent p-2 rounded-xl">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16m-7 6h7"></path>
+                </svg>
+            </button>
+        </div>
+
+    </div>
+
+    <!-- Mobile Navigation Drawer (Hidden by default) -->
+    <div id="mobile-menu" class="hidden md:hidden mt-4 pt-4 border-t border-accent/30 flex flex-col gap-3">
+        <a href="{% url 'staff_dashboard' %}" class="px-3 py-2 text-sm font-semibold text-primary hover:bg-accent/20 rounded-xl transition-colors">
+            Dashboard
+        </a>
+        {% if can.reports %}<a href="{% url 'report_dashboard' %}" class="px-3 py-2 text-sm font-semibold text-primary hover:bg-accent/20 rounded-xl transition-colors">
+            Reports
+        </a>{% endif %}
+        {% if can.attendance %}<a href="{% url 'attendance_page' %}" class="px-3 py-2 text-sm font-semibold text-primary hover:bg-accent/20 rounded-xl transition-colors">
+            Attendance
+        </a>{% endif %}
+        <a href="{% url 'staff_profile' %}" class="px-3 py-2 text-sm font-semibold text-primary hover:bg-accent/20 rounded-xl transition-colors">
+            My Profile
+        </a>
+        <div class="pt-2 border-t border-accent/20 flex flex-col">
+            <a href="/logout/" 
+               class="w-full text-center px-4 py-2.5 text-xs font-semibold text-primary border-2 border-accent bg-transparent rounded-xl hover:bg-accent hover:text-background transition-all duration-300">
+                Logout
+            </a>
+        </div>
+    </div>
+</nav>
+
+<!-- JavaScript to toggle mobile menu dropdown -->
+<script>
+    const btn = document.getElementById('mobile-menu-button');
+    const menu = document.getElementById('mobile-menu');
+
+    btn.addEventListener('click', () => {
+        menu.classList.toggle('hidden');
+    });
+</script>

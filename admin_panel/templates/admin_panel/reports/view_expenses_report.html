@@ -1,0 +1,230 @@
+
+{% block content %}
+
+<div class="max-w-5xl mx-auto px-4 py-6">
+
+    <!-- Header -->
+    <div class="flex items-center justify-between mb-6">
+        <div>
+            <h1 class="text-2xl font-bold text-gray-800">
+                Expense Report
+            </h1>
+            <p class="text-sm text-gray-500 mt-1">
+                Complete expense details for this day
+            </p>
+        </div>
+
+        <a
+            href="{% url 'expenses_history_list' %}"
+            class="inline-flex items-center px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg transition"
+        >
+            ← Back
+        </a>
+    </div>
+
+
+    <!-- Report Information -->
+    <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-6">
+
+        <h2 class="text-lg font-semibold text-gray-800 mb-4">
+            Report Information
+        </h2>
+
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-5">
+
+            <!-- Date -->
+            <div>
+                <p class="text-sm text-gray-500">
+                    Date
+                </p>
+                <p class="text-base font-semibold text-gray-800 mt-1">
+                    {{ report.report_date|date:"d M Y" }}
+                </p>
+            </div>
+
+            <!-- Branch -->
+            <div>
+                <p class="text-sm text-gray-500">
+                    Branch
+                </p>
+                <p class="text-base font-semibold text-gray-800 mt-1">
+                    {{ report.branch.name }}
+                </p>
+            </div>
+
+            <!-- Staff -->
+            <div>
+                <p class="text-sm text-gray-500">
+                    Staff
+                </p>
+                <p class="text-base font-semibold text-gray-800 mt-1">
+                    {{ report.staff.username }}
+                </p>
+            </div>
+
+        </div>
+
+        <!-- Status -->
+        <div class="mt-5 pt-5 border-t border-gray-100">
+
+            <p class="text-sm text-gray-500 mb-2">
+                Status
+            </p>
+
+            {% if report.status == "APPROVED" %}
+
+                <span class="inline-flex px-3 py-1 text-sm font-medium rounded-full bg-green-100 text-green-700">
+                    Approved
+                </span>
+
+            {% elif report.status == "SUBMITTED" %}
+
+                <span class="inline-flex px-3 py-1 text-sm font-medium rounded-full bg-yellow-100 text-yellow-700">
+                    Submitted
+                </span>
+
+            {% else %}
+
+                <span class="inline-flex px-3 py-1 text-sm font-medium rounded-full bg-gray-100 text-gray-700">
+                    Draft
+                </span>
+
+            {% endif %}
+
+        </div>
+
+    </div>
+
+
+    <!-- Expenses -->
+    <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+
+        <div class="px-6 py-4 border-b border-gray-200">
+            <h2 class="text-lg font-semibold text-gray-800">
+                Expenses
+            </h2>
+        </div>
+
+
+        {% if report.expenses.all %}
+
+            <div class="overflow-x-auto">
+
+                <table class="w-full">
+
+                    <thead class="bg-gray-50">
+                        <tr>
+
+                            <th class="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase">
+                                #
+                            </th>
+
+                            <th class="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase">
+                                Description
+                            </th>
+
+                            <th class="px-6 py-3 text-right text-xs font-semibold text-gray-500 uppercase">
+                                Amount
+                            </th>
+
+                        </tr>
+                    </thead>
+
+                    <tbody class="divide-y divide-gray-100">
+
+                        {% for expense in report.expenses.all %}
+
+                        <tr class="hover:bg-gray-50">
+
+                            <td class="px-6 py-4 text-sm text-gray-500">
+                                {{ forloop.counter }}
+                            </td>
+
+                            <td class="px-6 py-4 text-sm font-medium text-gray-800">
+                                {{ expense.description }}
+                            </td>
+
+                            <td class="px-6 py-4 text-sm font-semibold text-gray-800 text-right">
+                                ₹{{ expense.amount|floatformat:2 }}
+                            </td>
+
+                        </tr>
+
+                        {% empty %}
+
+                        <tr>
+                            <td
+                                colspan="3"
+                                class="px-6 py-10 text-center text-gray-500"
+                            >
+                                No expenses recorded for this day.
+                            </td>
+                        </tr>
+
+                        {% endfor %}
+
+                    </tbody>
+
+                </table>
+
+            </div>
+
+
+            <!-- Total -->
+            <div class="border-t border-gray-200 bg-gray-50 px-6 py-5">
+
+                <div class="flex items-center justify-between">
+
+                    <span class="text-lg font-semibold text-gray-700">
+                        Total Expenses
+                    </span>
+
+                    <span class="text-2xl font-bold text-gray-900">
+                        ₹{{ report.total_expenses|floatformat:2 }}
+                    </span>
+
+                </div>
+
+            </div>
+
+        {% else %}
+
+            <div class="px-6 py-12 text-center">
+
+                <p class="text-gray-500">
+                    No expenses recorded for this day.
+                </p>
+
+            </div>
+
+        {% endif %}
+
+    </div>
+
+
+    <!-- Bottom Actions -->
+    <div class="flex justify-end gap-3 mt-6">
+
+        <a
+            href="{% url 'expenses_history_list' %}"
+            class="px-5 py-2.5 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg transition"
+        >
+            Back to History
+        </a>
+
+        {% if report.status != "APPROVED" or is_admin %}
+
+        <a
+            href="{% url 'edit_expenses_section' report.id %}"
+            class="px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition"
+        >
+            Edit Expenses
+        </a>
+
+        {% endif %}
+
+    </div>
+
+</div>
+
+{% endblock %}

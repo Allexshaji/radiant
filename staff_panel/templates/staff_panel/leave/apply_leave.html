@@ -1,0 +1,259 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Apply Leave - Radiant Ayurveda</title>
+
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+
+    <style>
+        body {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            background-color: #F8F9FA;
+        }
+        /* Custom scrollbar */
+        ::-webkit-scrollbar {
+            width: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #E5E7EB;
+            border-radius: 10px;
+        }
+        
+        /* Automatically style Django form fields using your 'form-control' class */
+        .form-control {
+            width: 100%;
+            padding: 0.75rem 1rem;
+            font-size: 0.875rem;
+            line-height: 1.25rem;
+            color: #374151;
+            background-color: #ffffff;
+            border: 1px solid #D1D5DB;
+            border-radius: 0.5rem;
+            transition: all 0.2s ease-in-out;
+            outline: none;
+            font-family: inherit;
+        }
+        .form-control:focus {
+            border-color: #273B30;
+            box-shadow: 0 0 0 3px rgba(39, 59, 48, 0.1);
+        }
+        
+        /* Custom dropdown arrow for Select fields */
+        select.form-control {
+            appearance: none;
+            background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e");
+            background-position: right 0.75rem center;
+            background-repeat: no-repeat;
+            background-size: 1.5em 1.5em;
+            padding-right: 2.5rem;
+        }
+    </style>
+</head>
+
+<body class="min-h-screen flex text-gray-800 relative">
+
+    <!-- Mobile Sidebar Overlay -->
+    <div id="mobile-overlay" class="fixed inset-0 bg-gray-900/50 z-20 hidden md:hidden transition-opacity" onclick="toggleSidebar()"></div>
+
+    <!-- Sidebar Navigation -->
+    <aside id="sidebar" class="w-64 bg-white border-r border-gray-200 flex flex-col justify-between h-screen fixed md:sticky top-0 z-30 transform -translate-x-full md:translate-x-0 transition-transform duration-300">
+        
+        <div class="py-6 overflow-y-auto h-full">
+            <!-- Branding -->
+            <div class="px-6 mb-8 flex justify-between items-center">
+                <div>
+                    <h2 class="text-xl font-bold text-gray-900 tracking-tight">Radiant Ayurveda</h2>
+                    <p class="text-xs text-gray-500 font-medium mt-0.5">Staff Portal</p>
+                </div>
+                <button onclick="toggleSidebar()" class="md:hidden text-gray-400 hover:text-gray-900 transition-colors" aria-label="Close Menu">
+                    <i class="fa-solid fa-xmark text-xl"></i>
+                </button>
+            </div>
+
+            <!-- Nav Links -->
+            <nav class="space-y-1 pr-4">
+                <a href="{% url 'staff_dashboard' %}" class="flex items-center gap-4 px-6 py-3 text-gray-500 hover:bg-gray-50 hover:text-gray-900 rounded-r-lg border-l-4 border-transparent font-medium text-sm transition">
+                    <i class="fa-solid fa-chart-pie text-gray-400 text-base w-5 text-center"></i>
+                    <span>Dashboard</span>
+                </a>
+                <!-- Keeping Attendance active since Leave is a sub-module of it -->
+                {% if can.attendance %}<a href="{% url 'attendance_page' %}" class="flex items-center gap-4 px-6 py-3 bg-[#F0F3F1] text-gray-900 rounded-r-lg border-l-4 border-[#273B30] font-semibold text-sm transition">
+                    <i class="fa-regular fa-clock text-gray-700 w-5 text-center"></i>
+                    <span>Attendance</span>
+                </a>{% endif %}
+                {% if can.reports %}<a href="{% url 'report_dashboard' %}" class="flex items-center gap-4 px-6 py-3 text-gray-500 hover:bg-gray-50 hover:text-gray-900 rounded-r-lg border-l-4 border-transparent font-medium text-sm transition">
+                    <i class="fa-solid fa-file-invoice text-gray-400 w-5 text-center"></i>
+                    <span>Reports Dashboard</span>
+                </a>{% endif %}
+                {% if can.leave %}<a href="{% url 'staff_leave_dashboard' %}" class="flex items-center gap-4 px-6 py-3 text-gray-500 hover:bg-gray-50 hover:text-gray-900 rounded-r-lg border-l-4 border-transparent font-medium text-sm transition">
+                    <i class="fa-regular fa-calendar-check text-gray-400 w-5 text-center"></i>
+                    <span>Leave Management</span>
+                </a>{% endif %}
+                {% if can.salary %}<a href="{% url 'staff_salary_management' %}" class="flex items-center gap-4 px-6 py-3 text-gray-500 hover:bg-gray-50 hover:text-gray-900 rounded-r-lg border-l-4 border-transparent font-medium text-sm transition">
+                    <i class="fa-solid fa-money-bill-wave text-gray-400 w-5 text-center"></i>
+                    <span>Salary Management</span>
+                </a>{% endif %}
+                {% if can.requirements %}<a href="{% url 'staff_requirements' %}" class="flex items-center gap-4 px-6 py-3 text-gray-500 hover:bg-gray-50 hover:text-gray-900 rounded-r-lg border-l-4 border-transparent font-medium text-sm transition">
+                    <i class="fa-solid fa-clipboard-list text-gray-400 w-5 text-center"></i>
+                    <span>Requirements</span>
+                </a>{% endif %}
+                <a href="{% url 'staff_profile' %}" class="flex items-center gap-4 px-6 py-3 text-gray-500 hover:bg-gray-50 hover:text-gray-900 rounded-r-lg border-l-4 border-transparent font-medium text-sm transition">
+                    <i class="fa-regular fa-user text-gray-400 w-5 text-center"></i>
+                    <span>My Profile</span>
+                </a>
+            </nav>
+        </div>
+
+        <!-- Logout and Active Profile -->
+        <div class="border-t border-gray-100 p-4 px-6 flex items-center justify-between shrink-0 bg-white">
+            <div class="overflow-hidden">
+                <p class="text-sm font-semibold text-gray-900 capitalize truncate">{{ request.user.full_name|default:request.user.username }}</p>
+                <p class="text-xs text-gray-500 truncate">{{ request.user.branch }}</p>
+            </div>
+            <a href="/logout/" class="text-gray-400 hover:text-red-500 transition-colors ml-3" title="Logout">
+                <i class="fa-solid fa-arrow-right-from-bracket text-sm"></i>
+            </a>
+        </div>
+    </aside>
+
+    <!-- Main Page Work Area -->
+    <div class="flex-1 flex flex-col min-h-screen min-w-0">
+        
+        <!-- Header -->
+        <header class="px-6 sm:px-10 py-8 flex flex-col md:flex-row md:items-start justify-between gap-6 z-10 sticky top-0 md:static bg-[#F8F9FA]">
+            
+            <div class="flex items-start gap-4">
+                <button onclick="toggleSidebar()" class="md:hidden text-gray-700 mt-1 p-2 -ml-2 rounded-lg hover:bg-gray-200 transition-colors" aria-label="Open Menu">
+                    <i class="fa-solid fa-bars text-xl"></i>
+                </button>
+
+                <div>
+                    <h1 class="text-3xl font-bold text-gray-900 tracking-tight">Apply Leave</h1>
+                    <p class="text-sm text-gray-500 font-medium mt-2">Submit your leave request for approval.</p>
+                </div>
+            </div>
+
+            <!-- Back Button -->
+            <div class="flex items-center w-full md:w-auto">
+                {% if can.attendance %}<a href="{% url 'attendance_page' %}" class="w-full md:w-auto bg-white border border-gray-200 hover:bg-gray-50 text-gray-700 text-sm font-semibold px-5 py-2.5 rounded-lg shadow-sm transition flex items-center justify-center">
+                    <i class="fa-solid fa-arrow-left-long mr-2"></i> Back to Attendance
+                </a>{% endif %}
+            </div>
+        </header>
+
+        <!-- Main Content -->
+        <main class="flex-1 px-6 sm:px-10 pb-12">
+            
+            <!-- Central Form Container -->
+            <div class="max-w-3xl mx-auto bg-white border border-gray-100 rounded-xl p-6 sm:p-8 shadow-sm">
+                
+                <div class="flex items-center gap-3 mb-8 pb-4 border-b border-gray-100">
+                    <div class="w-10 h-10 rounded-lg bg-[#EEF0EF] flex items-center justify-center text-[#273B30] shrink-0">
+                        <i class="fa-solid fa-calendar-plus text-sm"></i>
+                    </div>
+                    <div>
+                        <h2 class="text-lg font-bold text-gray-900">Leave Details</h2>
+                        <p class="text-sm text-gray-500">Please fill out all required fields carefully.</p>
+                    </div>
+                </div>
+
+                <!-- Form Start -->
+                <form method="POST" action="{% url 'apply_leave' %}" class="space-y-6">
+                    {% csrf_token %}
+
+                    <!-- Form Level Errors (like the clean method validation) -->
+                    {% if form.non_field_errors %}
+                        <div class="bg-red-50 border border-red-100 text-red-600 px-4 py-3 rounded-lg text-sm mb-4">
+                            {% for error in form.non_field_errors %}
+                                <div class="flex items-start gap-2">
+                                    <i class="fa-solid fa-circle-exclamation mt-0.5"></i>
+                                    <p class="font-medium">{{ error }}</p>
+                                </div>
+                            {% endfor %}
+                        </div>
+                    {% endif %}
+
+                    <!-- Leave Type Field -->
+                    <div>
+                        <label for="{{ form.leave_type.id_for_label }}" class="block text-sm font-semibold text-gray-700 mb-1.5">
+                            Leave Type <span class="text-red-500">*</span>
+                        </label>
+                        {{ form.leave_type }}
+                        {% if form.leave_type.errors %}
+                            <p class="text-red-500 text-xs mt-1">{{ form.leave_type.errors.0 }}</p>
+                        {% endif %}
+                    </div>
+
+                    <!-- Dates Row -->
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <!-- Start Date -->
+                        <div>
+                            <label for="{{ form.start_date.id_for_label }}" class="block text-sm font-semibold text-gray-700 mb-1.5">
+                                Start Date <span class="text-red-500">*</span>
+                            </label>
+                            {{ form.start_date }}
+                            {% if form.start_date.errors %}
+                                <p class="text-red-500 text-xs mt-1">{{ form.start_date.errors.0 }}</p>
+                            {% endif %}
+                        </div>
+
+                        <!-- End Date -->
+                        <div>
+                            <label for="{{ form.end_date.id_for_label }}" class="block text-sm font-semibold text-gray-700 mb-1.5">
+                                End Date <span class="text-red-500">*</span>
+                            </label>
+                            {{ form.end_date }}
+                            {% if form.end_date.errors %}
+                                <p class="text-red-500 text-xs mt-1">{{ form.end_date.errors.0 }}</p>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <!-- Reason Field -->
+                    <div>
+                        <label for="{{ form.reason.id_for_label }}" class="block text-sm font-semibold text-gray-700 mb-1.5">
+                            Reason for Leave <span class="text-red-500">*</span>
+                        </label>
+                        {{ form.reason }}
+                        {% if form.reason.errors %}
+                            <p class="text-red-500 text-xs mt-1">{{ form.reason.errors.0 }}</p>
+                        {% endif %}
+                    </div>
+
+                    <!-- Action Buttons -->
+                    <div class="pt-4 mt-6 border-t border-gray-100 flex flex-col sm:flex-row items-center justify-end gap-3">
+                        {% if can.attendance %}<a href="{% url 'attendance_page' %}" class="w-full sm:w-auto px-6 py-2.5 text-sm font-semibold text-gray-600 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition text-center">
+                            Cancel
+                        </a>{% endif %}
+                        <button type="submit" class="w-full sm:w-auto px-6 py-2.5 text-sm font-semibold text-white bg-[#273B30] rounded-lg hover:bg-[#1A2720] shadow-sm transition flex items-center justify-center">
+                            <i class="fa-solid fa-paper-plane mr-2"></i> Submit Request
+                        </button>
+                    </div>
+
+                </form>
+            </div>
+
+        </main>
+    </div>
+
+    <!-- Script for Mobile Sidebar Toggle -->
+    <script>
+        function toggleSidebar() {
+            const sidebar = document.getElementById('sidebar');
+            const overlay = document.getElementById('mobile-overlay');
+            
+            sidebar.classList.toggle('-translate-x-full');
+            overlay.classList.toggle('hidden');
+            document.body.classList.toggle('overflow-hidden');
+        }
+    </script>
+
+</body>
+</html>

@@ -1,0 +1,139 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% if branch %}Edit Branch{% else %}Add Branch{% endif %} - Admin Dashboard</title>
+
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+
+    <style>
+        body {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+        }
+        /* Style for Django rendered input fields */
+        .django-form-field input, .django-form-field select, .django-form-field textarea {
+            width: 100%;
+            padding: 0.625rem 0.75rem;
+            font-size: 0.875rem;
+            line-height: 1.25rem;
+            border-radius: 0.5rem;
+            border: 1px solid #e5e7eb;
+            background-color: #ffffff;
+            box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+            transition: all 0.2s;
+        }
+        .django-form-field input:focus, .django-form-field select:focus, .django-form-field textarea:focus {
+            outline: none;
+            border-color: #9ca3af;
+            box-shadow: 0 0 0 1px #9ca3af;
+        }
+    </style>
+</head>
+
+<body class="bg-[#F8F9FA] min-h-screen flex text-gray-800 relative">
+
+    <!-- Mobile Sidebar Overlay -->
+    <div id="mobile-overlay" class="fixed inset-0 bg-gray-900/50 z-20 hidden md:hidden transition-opacity" onclick="toggleSidebar()"></div>
+
+    <!-- Sidebar Navigation -->
+    {% include "admin_panel/components/sidebar.html" %}
+
+
+    <!-- Main Page Work Area -->
+    <div class="flex-1 flex flex-col min-h-screen min-w-0">
+        
+        <!-- Header -->
+        <header class="px-4 sm:px-8 py-5 flex flex-col md:flex-row md:items-center justify-between gap-4 bg-[#F8F9FA] z-10 sticky top-0 md:static border-b border-gray-100/50">
+            
+            <div class="flex items-center gap-3">
+                <!-- Hamburger Menu Button (Mobile Only) -->
+                <button onclick="toggleSidebar()" class="md:hidden text-gray-700 p-2 -ml-2 rounded-lg hover:bg-gray-200 transition-colors">
+                    <i class="fa-solid fa-bars text-xl"></i>
+                </button>
+
+                <div>
+                    <h1 class="text-xl sm:text-2xl font-extrabold text-gray-950 tracking-tight">{% if branch %}Edit Branch{% else %}Add Branch{% endif %}</h1>
+                    <p class="text-xs sm:text-sm text-gray-500 font-medium">Create a new clinic location</p>
+                </div>
+            </div>
+
+            <!-- Header Actions -->
+            <div class="flex items-center gap-3">
+                <a href="{% url 'branch_list' %}" class="text-sm font-semibold text-gray-600 hover:text-gray-900 transition-colors flex items-center gap-2">
+                    <i class="fa-solid fa-arrow-left"></i> Back to Branches
+                </a>
+            </div>
+        </header>
+
+
+        <!-- Main Content (Form Area) -->
+        <main class="flex-1 px-4 sm:px-8 py-10 flex justify-center items-start">
+
+            <div class="w-full max-w-xl">
+                
+                <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6 sm:p-8">
+                    
+                    <div class="mb-8">
+                        <div class="w-12 h-12 bg-emerald-50 text-emerald-600 rounded-xl flex items-center justify-center mb-4">
+                            <i class="fa-solid fa-building text-xl"></i>
+                        </div>
+                        <h2 class="text-xl font-bold text-gray-900">{% if branch %}Edit Branch{% else %}Branch Details{% endif %}</h2>
+                        <p class="text-sm text-gray-500 mt-1">{% if branch %}Change the official name of this branch location.{% else %}Enter the official name of the new branch location.{% endif %}</p>
+                    </div>
+
+                    <form method="POST">
+                        {% csrf_token %}
+
+                        <div class="mb-6">
+                            <label class="block text-sm font-semibold text-gray-700 mb-2">
+                                Branch Name <span class="text-red-500">*</span>
+                            </label>
+                            
+                            <!-- Django Form Field Wrapper -->
+                            <div class="django-form-field">
+                                {{ form.name }}
+                            </div>
+
+                            <!-- Error Handling -->
+                            {% if form.name.errors %}
+                                <div class="flex items-center gap-2 mt-2 text-red-500 text-xs font-medium">
+                                    <i class="fa-solid fa-circle-exclamation"></i>
+                                    <span>{{ form.name.errors|striptags }}</span>
+                                </div>
+                            {% endif %}
+                        </div>
+
+                        <!-- Form Actions -->
+                        <div class="flex items-center gap-3 pt-4 mt-6 border-t border-gray-100">
+                            <button type="submit" class="px-5 py-2.5 bg-gray-900 text-white text-sm font-semibold rounded-lg hover:bg-gray-800 transition-colors shadow-sm">
+                                {% if branch %}Save Changes{% else %}Save Branch{% endif %}
+                            </button>
+                            <a href="{% url 'branch_list' %}" class="px-5 py-2.5 bg-white border border-gray-200 text-gray-700 text-sm font-semibold rounded-lg hover:bg-gray-50 transition-colors">
+                                Cancel
+                            </a>
+                        </div>
+                    </form>
+
+                </div>
+            </div>
+
+        </main>
+    </div>
+
+    <!-- Script for Mobile Sidebar Toggle -->
+    <script>
+        function toggleSidebar() {
+            const sidebar = document.getElementById('sidebar');
+            const overlay = document.getElementById('mobile-overlay');
+            
+            sidebar.classList.toggle('-translate-x-full');
+            overlay.classList.toggle('hidden');
+            document.body.classList.toggle('overflow-hidden');
+        }
+    </script>
+
+</body>
+</html>

@@ -1,0 +1,12 @@
+<!-- Mobile overlay and menu button, for admin pages that have no built-in ones -->
+<div id="mobile-overlay" class="fixed inset-0 bg-gray-900/50 z-20 hidden md:hidden transition-opacity" onclick="toggleSidebar()"></div>
+<button onclick="toggleSidebar()" class="md:hidden fixed top-3 left-3 z-10 bg-white border border-gray-200 rounded-lg p-2 shadow-sm text-gray-700" aria-label="Open Menu">
+    <i class="fa-solid fa-bars"></i>
+</button>
+<script>
+    function toggleSidebar() {
+        document.getElementById('sidebar').classList.toggle('-translate-x-full');
+        document.getElementById('mobile-overlay').classList.toggle('hidden');
+        document.body.classList.toggle('overflow-hidden');
+    }
+</script>

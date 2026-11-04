@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Salary Allowance - Radiant Ayurveda</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Plus Jakarta Sans', sans-serif; background-color: #F8F9FA; }
+    </style>
+</head>
+<body class="bg-[#F8F9FA] min-h-screen flex text-gray-800 relative">
+    {% include "admin_panel/components/sidebar.html" %}
+    {% include "admin_panel/components/sidebar_script.html" %}
+
+    <div class="flex-1 min-w-0 px-6 sm:px-10 py-8">
+        <header class="mb-8">
+            <a href="{{ back_url }}" class="text-sm font-semibold text-gray-600 hover:underline"><i class="fa-solid fa-arrow-left mr-1"></i>Back to Salary Management</a>
+            <h1 class="text-3xl font-bold text-gray-900 tracking-tight mt-3">Salary Allowance</h1>
+            <p class="text-sm text-gray-500 font-medium mt-2">{{ staff.full_name|default:staff.username }} &middot; {{ payroll_month|date:"F Y" }}</p>
+        </header>
+
+        {% if messages %}
+            <div class="space-y-2 mb-6 max-w-xl">
+                {% for message in messages %}
+                    <div class="{% if message.tags == 'error' %}bg-red-50 text-red-700 border-red-100{% else %}bg-emerald-50 text-emerald-700 border-emerald-100{% endif %} text-sm font-medium px-4 py-3 rounded-lg border">{{ message }}</div>
+                {% endfor %}
+            </div>
+        {% endif %}
+
+        <div class="bg-white border border-gray-100 rounded-xl p-6 shadow-sm max-w-xl">
+            <p class="text-sm text-gray-600 mb-4">
+                Current allowance:
+                {% if allowance is not None %}<span class="font-bold text-gray-900">₹{{ allowance|floatformat:2 }}</span>{% else %}<span class="text-gray-500">none (hidden from the staff profile)</span>{% endif %}
+            </p>
+
+            <form method="POST" action="{% url 'admin_salary_allowance' staff.id %}" class="space-y-4">
+                {% csrf_token %}
+                <input type="hidden" name="payroll_month" value="{{ payroll_month|date:'Y-m' }}">
+                <label class="block text-sm font-semibold text-gray-700">Allowance amount (₹)
+                    <input type="number" name="allowance" value="{{ allowance|default_if_none:'' }}" min="0" step="0.01" required class="mt-1 w-full px-3 py-2.5 border border-gray-200 rounded-lg text-sm">
+                </label>
+                <p class="text-xs text-gray-500">This amount is added to the monthly salary total. It is not reduced by leave.</p>
+                <button type="submit" class="bg-[#273B30] hover:bg-[#1A2720] text-white text-sm font-medium px-5 py-2.5 rounded-lg shadow-sm transition"><i class="fa-solid fa-floppy-disk mr-2"></i>Save allowance</button>
+            </form>
+
+            {% if allowance is not None %}
+                <form method="POST" action="{% url 'admin_salary_allowance' staff.id %}" class="mt-6 pt-4 border-t border-gray-100" onsubmit="return confirm('Remove this allowance? The staff profile will stop showing it.');">
+                    {% csrf_token %}
+                    <input type="hidden" name="payroll_month" value="{{ payroll_month|date:'Y-m' }}">
+                    <input type="hidden" name="action" value="remove">
+                    <button type="submit" class="text-red-600 bg-red-50 border border-red-200 hover:bg-red-100 px-4 py-2 rounded-lg text-sm font-semibold"><i class="fa-solid fa-trash mr-2"></i>Remove allowance</button>
+                </form>
+            {% endif %}
+        </div>
+    </div>
+</body>
+</html>

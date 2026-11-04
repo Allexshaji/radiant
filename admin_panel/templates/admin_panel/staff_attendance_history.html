@@ -1,0 +1,150 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Staff Attendance History - Admin Dashboard</title>
+
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+
+    <style>
+        body {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+        }
+    </style>
+</head>
+
+<body class="bg-[#F8F9FA] min-h-screen flex text-gray-800 relative">
+
+    <!-- Mobile Sidebar Overlay -->
+    <div id="mobile-overlay" class="fixed inset-0 bg-gray-900/50 z-20 hidden md:hidden transition-opacity" onclick="toggleSidebar()"></div>
+
+    <!-- Sidebar Navigation -->
+    {% include "admin_panel/components/sidebar.html" %}
+
+
+    <!-- Main Page Work Area -->
+    <div class="flex-1 flex flex-col min-h-screen min-w-0">
+        
+        <!-- Header -->
+        <header class="px-4 sm:px-8 py-5 flex flex-col md:flex-row md:items-center justify-between gap-4 bg-[#F8F9FA] z-10 sticky top-0 md:static">
+            
+            <div class="flex items-center gap-3">
+                <!-- Hamburger Menu Button (Mobile Only) -->
+                <button onclick="toggleSidebar()" class="md:hidden text-gray-700 p-2 -ml-2 rounded-lg hover:bg-gray-200 transition-colors">
+                    <i class="fa-solid fa-bars text-xl"></i>
+                </button>
+
+                <div>
+                    <h1 class="text-xl sm:text-2xl font-extrabold text-gray-950 tracking-tight">Attendance History</h1>
+                    <p class="text-xs sm:text-sm text-gray-500 font-medium">Viewing logs for {{ staff.username|title }}</p>
+                </div>
+            </div>
+
+            <!-- Header Actions -->
+            <div class="flex flex-wrap sm:flex-nowrap items-center gap-3">
+                <a href="{% url 'all_staff_attendance' %}" class="inline-flex items-center gap-2 px-4 py-2 bg-white border border-gray-200 text-sm font-medium text-gray-700 rounded-lg hover:bg-gray-50 hover:text-gray-900 transition-colors shadow-sm">
+                    <i class="fa-solid fa-arrow-left"></i>
+                    Back to Staff List
+                </a>
+            </div>
+        </header>
+
+
+        <!-- Main Grid Work -->
+        <main class="flex-1 px-4 sm:px-8 pb-10">
+            
+            <div class="max-w-5xl bg-white border border-gray-100 rounded-xl shadow-sm overflow-hidden">
+                
+                <div class="px-6 py-5 border-b border-gray-100 flex justify-between items-center">
+                    <h3 class="text-lg font-bold text-gray-900">
+                        Attendance Logs: <span class="text-[#2D5A27] ml-1">{{ staff.username|title }}</span>
+                    </h3>
+                </div>
+                
+                <div class="overflow-x-auto relative">
+                    <table class="w-full text-sm text-left">
+                        <thead class="bg-gray-50/50 border-b border-gray-100 text-xs text-gray-500 uppercase tracking-wider font-semibold">
+                            <tr>
+                                <th scope="col" class="px-6 py-4">Date</th>
+                                <th scope="col" class="px-6 py-4">Check In</th>
+                                <th scope="col" class="px-6 py-4">Check Out</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-gray-100">
+                            {% for record in history %}
+                            <tr class="hover:bg-gray-50/50 transition-colors">
+                                
+                                <td class="px-6 py-4 font-medium text-gray-900">
+                                    <div class="flex items-center gap-3">
+                                        <div class="w-8 h-8 rounded bg-gray-100 flex items-center justify-center text-gray-500">
+                                            <i class="fa-regular fa-calendar text-xs"></i>
+                                        </div>
+                                        {{ record.date|date:"M d, Y" }}
+                                    </div>
+                                </td>
+                                
+                                <td class="px-6 py-4 text-gray-600 font-medium">
+                                    {{ record.check_in|time:"h:i A" }}
+                                    {% for act in record.activities.all %}{% if act.activity_type == 'check_in' and act.latitude is not None %}
+                                        <a href="https://www.google.com/maps?q={{ act.latitude }},{{ act.longitude }}" target="_blank" rel="noopener" class="block text-xs text-[#273B30] font-semibold hover:underline"><i class="fa-solid fa-location-dot mr-1"></i>Check-in location</a>
+                                    {% endif %}{% endfor %}
+                                </td>
+                                
+                                <td class="px-6 py-4">
+                                    {% if record.check_out %}
+                                        <span class="text-gray-600 font-medium">
+                                            {{ record.check_out|time:"h:i A" }}
+                                            {% for act in record.activities.all %}{% if act.activity_type == 'check_out' and act.latitude is not None %}
+                                                <a href="https://www.google.com/maps?q={{ act.latitude }},{{ act.longitude }}" target="_blank" rel="noopener" class="block text-xs text-[#273B30] font-semibold hover:underline"><i class="fa-solid fa-location-dot mr-1"></i>Check-out location</a>
+                                            {% endif %}{% endfor %}
+                                        </span>
+                                    {% else %}
+                                        <span class="inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-semibold rounded-md bg-emerald-50 text-emerald-700 border border-emerald-100">
+                                            <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+                                            Currently Working
+                                        </span>
+                                    {% endif %}
+                                </td>
+                                
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="3" class="px-6 py-12 text-center text-gray-500">
+                                    <div class="flex flex-col items-center justify-center">
+                                        <i class="fa-solid fa-clock-rotate-left text-3xl text-gray-300 mb-3"></i>
+                                        <p class="font-medium text-gray-900">No attendance history found.</p>
+                                        <p class="text-xs text-gray-500 mt-1">This employee hasn't logged any hours yet.</p>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+        </main>
+    </div>
+
+    <!-- Script for Mobile Sidebar Toggle -->
+    <script>
+        function toggleSidebar() {
+            const sidebar = document.getElementById('sidebar');
+            const overlay = document.getElementById('mobile-overlay');
+            
+            // Toggle translate classes for sidebar
+            sidebar.classList.toggle('-translate-x-full');
+            
+            // Toggle visibility for overlay
+            overlay.classList.toggle('hidden');
+            
+            // Prevent body scroll when sidebar is open on mobile
+            document.body.classList.toggle('overflow-hidden');
+        }
+    </script>
+
+</body>
+</html>

@@ -1,0 +1,10 @@
+# Never upload the database file, secrets or local environments to GitHub.
+db.sqlite3
+db.sqlite3-*
+*.backup
+.venv/
+venv/
+.env
+__pycache__/
+*.pyc
+.DS_Store

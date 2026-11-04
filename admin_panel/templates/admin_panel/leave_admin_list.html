@@ -1,0 +1,83 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Leave Reports - Radiant Ayurveda</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Plus Jakarta Sans', sans-serif; background-color: #F8F9FA; }
+    </style>
+</head>
+<body class="bg-[#F8F9FA] min-h-screen flex text-gray-800 relative">
+    {% include "admin_panel/components/sidebar.html" %}
+    {% include "admin_panel/components/sidebar_script.html" %}
+
+    <div class="flex-1 min-w-0 px-6 sm:px-10 py-8">
+        {% if messages %}
+            <div class="space-y-2 mb-6">
+                {% for message in messages %}
+                    <div class="px-4 py-3 rounded-lg border text-sm {% if message.tags == 'success' %}bg-emerald-50 text-emerald-700 border-emerald-100{% else %}bg-red-50 text-red-600 border-red-100{% endif %}">{{ message }}</div>
+                {% endfor %}
+            </div>
+        {% endif %}
+
+        <header class="mb-8">
+            <h1 class="text-3xl font-bold text-gray-900 tracking-tight">Leave Reports</h1>
+            <p class="text-sm text-gray-500 font-medium mt-2">Filter, review and update leave requests.</p>
+        </header>
+
+        <form method="get" class="bg-white border border-gray-100 rounded-xl p-5 shadow-sm mb-6 flex flex-col md:flex-row gap-3">
+            <select name="status" class="px-4 py-2 border border-gray-200 rounded-lg text-sm">
+                <option value="">All statuses</option>
+                {% for s in statuses %}
+                    <option value="{{ s }}" {% if status_filter == s %}selected{% endif %}>{{ s|capfirst }}</option>
+                {% endfor %}
+            </select>
+            <input type="text" name="staff" value="{{ staff_filter|default:'' }}" placeholder="Search by username" class="px-4 py-2 border border-gray-200 rounded-lg text-sm flex-1">
+            <button type="submit" class="bg-[#273B30] hover:bg-[#1A2720] text-white text-sm font-medium px-5 py-2 rounded-lg transition">Filter</button>
+        </form>
+
+        <div class="bg-white border border-gray-100 rounded-xl shadow-sm overflow-x-auto">
+            <table class="w-full text-sm">
+                <thead class="bg-gray-50 text-gray-500 text-xs uppercase tracking-wider">
+                    <tr>
+                        <th class="px-6 py-3 text-left">Staff</th>
+                        <th class="px-6 py-3 text-left">Leave type</th>
+                        <th class="px-6 py-3 text-left">Dates</th>
+                        <th class="px-6 py-3 text-left">Reason</th>
+                        <th class="px-6 py-3 text-left">Status</th>
+                        <th class="px-6 py-3 text-right">Action</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-gray-100">
+                    {% for app in applications %}
+                        <tr>
+                            <td class="px-6 py-3 font-medium text-gray-900">{{ app.staff.full_name|default:app.staff.username }}</td>
+                            <td class="px-6 py-3 text-gray-600">{{ app.leave_type.name }}</td>
+                            <td class="px-6 py-3 text-gray-600">{{ app.start_date|date:"d M Y" }} to {{ app.end_date|date:"d M Y" }}</td>
+                            <td class="px-6 py-3 text-gray-600 max-w-xs truncate">{{ app.reason }}</td>
+                            <td class="px-6 py-3 text-gray-700">{{ app.get_status_display }}</td>
+                            <td class="px-6 py-3 text-right whitespace-nowrap">
+                                <a href="{% url 'admin_review_leave' app.id %}" class="text-[#273B30] font-semibold hover:underline">Review</a>
+                                <span class="text-gray-300 mx-1">|</span>
+                                <a href="{% url 'edit_leave' app.id %}" class="text-gray-600 font-semibold hover:underline">Edit status</a>
+                                <span class="text-gray-300 mx-1">|</span>
+                                <form method="POST" action="{% url 'delete_leave_request' app.id %}" class="inline" onsubmit="return confirm('Delete this leave request permanently? This cannot be undone.');">
+                                    {% csrf_token %}
+                                    <input type="hidden" name="next" value="{{ request.get_full_path }}">
+                                    <button type="submit" class="text-red-600 font-semibold hover:underline">Delete</button>
+                                </form>
+                            </td>
+                        </tr>
+                    {% empty %}
+                        <tr><td colspan="6" class="px-6 py-8 text-center text-gray-500">No leave requests match these filters.</td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</body>
+</html>

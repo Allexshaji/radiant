@@ -1,0 +1,158 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Staff Portal{% endblock %} - Radiant Ayurveda</title>
+
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+
+    <style>
+        body {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            background-color: #F8F9FA;
+        }
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #E5E7EB; border-radius: 10px; }
+
+        /* Form inputs used by every staff page */
+        input[type="text"], input[type="number"], input[type="email"], input[type="date"], input[type="password"], select, textarea {
+            width: 100%;
+            background-color: #ffffff;
+            border: 1px solid #E5E7EB;
+            border-radius: 0.5rem;
+            padding: 0.625rem 1rem;
+            font-size: 0.875rem;
+            color: #374151;
+            outline: none;
+            transition: all 0.2s ease-in-out;
+            box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+        }
+        input:focus, select:focus, textarea:focus {
+            border-color: #9CA3AF;
+            box-shadow: 0 0 0 1px #E5E7EB;
+        }
+    </style>
+    {% block extra_head %}{% endblock %}
+</head>
+
+<body class="min-h-screen flex text-gray-800 relative">
+
+    <!-- Mobile overlay -->
+    <div id="mobile-overlay" class="fixed inset-0 bg-gray-900/50 z-20 hidden md:hidden transition-opacity" onclick="toggleSidebar()"></div>
+
+    <!-- Sidebar -->
+    <aside id="sidebar" class="w-64 bg-white border-r border-gray-200 flex flex-col justify-between h-screen fixed md:sticky top-0 z-30 transform -translate-x-full md:translate-x-0 transition-transform duration-300">
+
+        <div class="py-6 overflow-y-auto h-full">
+            <div class="px-6 mb-8 flex justify-between items-center">
+                <div>
+                    <h2 class="text-xl font-bold text-gray-900 tracking-tight">Radiant Ayurveda</h2>
+                    <p class="text-xs text-gray-500 font-medium mt-0.5">Staff Portal</p>
+                </div>
+                <button onclick="toggleSidebar()" class="md:hidden text-gray-400 hover:text-gray-900 transition-colors" aria-label="Close Menu">
+                    <i class="fa-solid fa-xmark text-xl"></i>
+                </button>
+            </div>
+
+            {% with cur=request.resolver_match.url_name %}
+            <nav class="space-y-1 pr-4">
+                <a href="{% url 'staff_dashboard' %}" class="flex items-center gap-4 px-6 py-3 rounded-r-lg border-l-4 font-medium text-sm transition {% if cur == 'staff_dashboard' %}bg-[#F0F3F1] text-gray-900 border-[#273B30] font-semibold{% else %}text-gray-500 hover:bg-gray-50 hover:text-gray-900 border-transparent{% endif %}">
+                    <i class="fa-solid fa-chart-pie {% if cur == 'staff_dashboard' %}text-gray-700{% else %}text-gray-400{% endif %} w-5 text-center"></i>
+                    <span>Dashboard</span>
+                </a>
+
+                {% if can.attendance %}<a href="{% url 'attendance_page' %}" class="flex items-center gap-4 px-6 py-3 rounded-r-lg border-l-4 font-medium text-sm transition {% if cur == 'attendance_page' %}bg-[#F0F3F1] text-gray-900 border-[#273B30] font-semibold{% else %}text-gray-500 hover:bg-gray-50 hover:text-gray-900 border-transparent{% endif %}">
+                    <i class="fa-regular fa-clock {% if cur == 'attendance_page' %}text-gray-700{% else %}text-gray-400{% endif %} w-5 text-center"></i>
+                    <span>Attendance</span>
+                </a>{% endif %}
+
+                {% if can.reports %}<a href="{% url 'report_dashboard' %}" class="flex items-center gap-4 px-6 py-3 rounded-r-lg border-l-4 font-medium text-sm transition {% if cur == 'report_dashboard' or cur == 'report_hub' or cur == 'reports_add' or cur == 'reports_history' or cur == 'walkins_history_list' or cur == 'revenue_history_list' or cur == 'payments_history_list' or cur == 'expenses_history_list' or cur == 'add_walkins' or cur == 'add_revenues' or cur == 'add_expenses' or cur == 'add_payments' or cur == 'edit_walkins_section' or cur == 'edit_revenue_section' or cur == 'edit_expenses_section' or cur == 'view_expense_report' %}bg-[#F0F3F1] text-gray-900 border-[#273B30] font-semibold{% else %}text-gray-500 hover:bg-gray-50 hover:text-gray-900 border-transparent{% endif %}">
+                    <i class="fa-solid fa-file-invoice text-gray-400 w-5 text-center"></i>
+                    <span>Reports Dashboard</span>
+                </a>{% endif %}
+
+                {% if can.leave %}<a href="{% url 'staff_leave_dashboard' %}" class="flex items-center gap-4 px-6 py-3 rounded-r-lg border-l-4 font-medium text-sm transition {% if cur == 'staff_leave_dashboard' or cur == 'apply_leave' or cur == 'leave_detail' %}bg-[#F0F3F1] text-gray-900 border-[#273B30] font-semibold{% else %}text-gray-500 hover:bg-gray-50 hover:text-gray-900 border-transparent{% endif %}">
+                    <i class="fa-regular fa-calendar-check text-gray-400 w-5 text-center"></i>
+                    <span>Leave Management</span>
+                </a>{% endif %}
+
+                {% if can.salary %}<a href="{% url 'staff_salary_management' %}" class="flex items-center gap-4 px-6 py-3 rounded-r-lg border-l-4 font-medium text-sm transition {% if cur == 'staff_salary_management' %}bg-[#F0F3F1] text-gray-900 border-[#273B30] font-semibold{% else %}text-gray-500 hover:bg-gray-50 hover:text-gray-900 border-transparent{% endif %}">
+                    <i class="fa-solid fa-money-bill-wave text-gray-400 w-5 text-center"></i>
+                    <span>Salary Management</span>
+                </a>{% endif %}
+                {% if can.requirements %}<a href="{% url 'staff_requirements' %}" class="flex items-center gap-4 px-6 py-3 rounded-r-lg border-l-4 font-medium text-sm transition {% if cur == 'staff_requirements' %}bg-[#F0F3F1] text-gray-900 border-[#273B30] font-semibold{% else %}text-gray-500 hover:bg-gray-50 hover:text-gray-900 border-transparent{% endif %}">
+                    <i class="fa-solid fa-clipboard-list text-gray-400 w-5 text-center"></i>
+                    <span>Requirements</span>
+                </a>{% endif %}
+                <a href="{% url 'staff_profile' %}" class="flex items-center gap-4 px-6 py-3 rounded-r-lg border-l-4 font-medium text-sm transition {% if cur == 'staff_profile' or cur == 'edit_staff_profile' %}bg-[#F0F3F1] text-gray-900 border-[#273B30] font-semibold{% else %}text-gray-500 hover:bg-gray-50 hover:text-gray-900 border-transparent{% endif %}">
+                    <i class="fa-regular fa-user text-gray-400 w-5 text-center"></i>
+                    <span>My Profile</span>
+                </a>
+            </nav>
+            {% endwith %}
+        </div>
+
+        <!-- User and logout -->
+        <div class="border-t border-gray-100 p-4 px-6 flex items-center justify-between shrink-0 bg-white">
+            <div class="overflow-hidden">
+                <p class="text-sm font-semibold text-gray-900 capitalize truncate">{{ request.user.full_name|default:request.user.username }}</p>
+                <p class="text-xs text-gray-500 truncate">{{ request.user.branch|default:"" }}</p>
+            </div>
+            <a href="/logout/" class="text-gray-400 hover:text-red-500 transition-colors ml-3" title="Logout" aria-label="Logout">
+                <i class="fa-solid fa-arrow-right-from-bracket text-sm"></i>
+            </a>
+        </div>
+    </aside>
+
+    <!-- Main area -->
+    <div class="flex-1 flex flex-col min-h-screen min-w-0">
+
+        <header class="px-6 sm:px-10 py-6 flex flex-col md:flex-row md:items-start justify-between gap-6 z-10 sticky top-0 md:static bg-[#F8F9FA]">
+            <div class="flex items-start gap-4">
+                <!-- Hamburger menu (mobile only) -->
+                <button onclick="toggleSidebar()" class="md:hidden text-gray-700 mt-1 p-2 -ml-2 rounded-lg hover:bg-gray-200 transition-colors" aria-label="Open Menu">
+                    <i class="fa-solid fa-bars text-xl"></i>
+                </button>
+                <div>
+                    {% block back %}{% endblock %}
+                    <h1 class="text-2xl sm:text-3xl font-bold text-gray-900 tracking-tight">{% block page_title %}{% endblock %}</h1>
+                    <p class="text-sm text-gray-500 font-medium mt-1">{% block page_subtitle %}{% endblock %}</p>
+                </div>
+            </div>
+            <div class="flex flex-wrap items-center gap-3">{% block header_actions %}{% endblock %}</div>
+        </header>
+
+        <main class="flex-1 px-6 sm:px-10 pb-12">
+
+            {% if messages %}
+                <div class="space-y-2 mb-6">
+                    {% for message in messages %}
+                        <div class="text-sm font-medium px-4 py-3 rounded-lg border flex items-start gap-2 {% if message.tags == 'error' %}bg-red-50 text-red-600 border-red-100{% else %}bg-emerald-50 text-emerald-700 border-emerald-100{% endif %}">
+                            <i class="fa-solid {% if message.tags == 'error' %}fa-circle-exclamation{% else %}fa-circle-check{% endif %} mt-0.5"></i>
+                            <span>{{ message }}</span>
+                        </div>
+                    {% endfor %}
+                </div>
+            {% endif %}
+
+            {% block content %}{% endblock %}
+        </main>
+    </div>
+
+    <script>
+        function toggleSidebar() {
+            const sidebar = document.getElementById('sidebar');
+            const overlay = document.getElementById('mobile-overlay');
+            sidebar.classList.toggle('-translate-x-full');
+            overlay.classList.toggle('hidden');
+            document.body.classList.toggle('overflow-hidden');
+        }
+    </script>
+    {% block extra_script %}{% endblock %}
+
+</body>
+</html>

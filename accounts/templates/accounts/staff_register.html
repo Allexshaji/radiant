@@ -1,0 +1,86 @@
+{% extends "accounts/auth_base.html" %}
+
+{% block title %}Create account - Radiant Ayurveda{% endblock %}
+
+{% block card %}
+  <span class="kicker"><i class="fa-solid fa-user-plus"></i> Staff registration</span>
+  <h2>Create your account</h2>
+  <p class="sub">Your account needs admin approval before you can sign in.</p>
+
+  {% for error in form.non_field_errors %}
+    <div class="alert" role="alert"><i class="fa-solid fa-circle-exclamation"></i><span>{{ error }}</span></div>
+  {% endfor %}
+
+  {% if google_enabled %}
+  <style>
+    .btn-google { display: flex; align-items: center; justify-content: center; gap: 10px; width: 100%; padding: 12px; margin-bottom: 14px; border: 1px solid #d6dbd8; border-radius: 12px; background: #fff; color: #1f2d26; font-weight: 600; text-decoration: none; }
+    .btn-google:hover { background: #f5f7f6; }
+    .or-line { display: flex; align-items: center; gap: 10px; margin: 6px 0 14px; color: #8a958f; font-size: 12px; }
+    .or-line::before, .or-line::after { content: ""; flex: 1; height: 1px; background: #e3e7e5; }
+  </style>
+  <a class="btn-google" href="{% url 'google_login' %}"><i class="fa-brands fa-google"></i> Sign up with Google</a>
+  <div class="or-line">or fill in the form</div>
+  {% endif %}
+
+  <form method="post" action="{% url 'staff_register' %}">
+    {% csrf_token %}
+
+    <div class="field">
+      <label for="{{ form.full_name.id_for_label }}">Full name</label>
+      <div class="input">
+        <i class="fa-solid fa-user lead"></i>
+        {{ form.full_name }}
+      </div>
+      {% for error in form.full_name.errors %}<p class="field-error">{{ error }}</p>{% endfor %}
+    </div>
+
+    <div class="field">
+      <label for="{{ form.email.id_for_label }}">Email (this is your username)</label>
+      <div class="input">
+        <i class="fa-solid fa-envelope lead"></i>
+        {{ form.email }}
+      </div>
+      {% for error in form.email.errors %}<p class="field-error">{{ error }}</p>{% endfor %}
+    </div>
+
+    <div class="field">
+      <label for="{{ form.branch.id_for_label }}">Branch</label>
+      <div class="input">
+        <i class="fa-solid fa-location-dot lead"></i>
+        {{ form.branch }}
+      </div>
+      {% for error in form.branch.errors %}<p class="field-error">{{ error }}</p>{% endfor %}
+    </div>
+
+    <div class="field">
+      <label for="{{ form.password1.id_for_label }}">Password</label>
+      <div class="input">
+        <i class="fa-solid fa-lock lead"></i>
+        {{ form.password1 }}
+        <button type="button" class="toggle" data-target="{{ form.password1.id_for_label }}" aria-label="Show password">
+          <i class="fa-regular fa-eye"></i>
+        </button>
+      </div>
+      <div class="hint">{{ form.password1.help_text|safe }}</div>
+      {% for error in form.password1.errors %}<p class="field-error">{{ error }}</p>{% endfor %}
+    </div>
+
+    <div class="field">
+      <label for="{{ form.password2.id_for_label }}">Confirm password</label>
+      <div class="input">
+        <i class="fa-solid fa-shield-halved lead"></i>
+        {{ form.password2 }}
+        <button type="button" class="toggle" data-target="{{ form.password2.id_for_label }}" aria-label="Show password">
+          <i class="fa-regular fa-eye"></i>
+        </button>
+      </div>
+      {% for error in form.password2.errors %}<p class="field-error">{{ error }}</p>{% endfor %}
+    </div>
+
+    <button type="submit" class="btn">Create account <i class="fa-solid fa-arrow-right"></i></button>
+  </form>
+
+  <div class="foot">
+    Already registered? <a href="{% url 'login' %}">Sign in</a>
+  </div>
+{% endblock %}

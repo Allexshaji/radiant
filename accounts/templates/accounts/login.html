@@ -1,0 +1,61 @@
+{% extends "accounts/auth_base.html" %}
+
+{% block title %}Login - Radiant Ayurveda{% endblock %}
+
+{% block card %}
+  <span class="kicker"><i class="fa-solid fa-shield-halved"></i> Secure sign in</span>
+  <h2>Welcome back</h2>
+  <p class="sub">Sign in with your username and password.</p>
+
+  {% for error in form.non_field_errors %}
+    <div class="alert" role="alert"><i class="fa-solid fa-circle-exclamation"></i><span>{{ error }}</span></div>
+  {% endfor %}
+  {% for field in form %}{% for error in field.errors %}
+    <div class="alert" role="alert"><i class="fa-solid fa-circle-exclamation"></i><span>{{ error }}</span></div>
+  {% endfor %}{% endfor %}
+
+  {% for message in messages %}
+    <div class="alert" role="alert"><i class="fa-solid fa-circle-exclamation"></i><span>{{ message }}</span></div>
+  {% endfor %}
+
+  {% if google_enabled %}
+  <style>
+    .btn-google { display: flex; align-items: center; justify-content: center; gap: 10px; width: 100%; padding: 12px; margin-bottom: 14px; border: 1px solid #d6dbd8; border-radius: 12px; background: #fff; color: #1f2d26; font-weight: 600; text-decoration: none; }
+    .btn-google:hover { background: #f5f7f6; }
+    .or-line { display: flex; align-items: center; gap: 10px; margin: 6px 0 14px; color: #8a958f; font-size: 12px; }
+    .or-line::before, .or-line::after { content: ""; flex: 1; height: 1px; background: #e3e7e5; }
+  </style>
+  <a class="btn-google" href="{% url 'google_login' %}"><i class="fa-brands fa-google"></i> Continue with Google</a>
+  <div class="or-line">or sign in with your username</div>
+  {% endif %}
+
+  <form method="post" action="{% url 'login' %}">
+    {% csrf_token %}
+    {% if next %}<input type="hidden" name="next" value="{{ next }}">{% endif %}
+
+    <div class="field">
+      <label for="{{ form.username.id_for_label }}">Username</label>
+      <div class="input">
+        <i class="fa-solid fa-user lead"></i>
+        {{ form.username }}
+      </div>
+    </div>
+
+    <div class="field">
+      <label for="{{ form.password.id_for_label }}">Password</label>
+      <div class="input">
+        <i class="fa-solid fa-lock lead"></i>
+        {{ form.password }}
+        <button type="button" class="toggle" data-target="{{ form.password.id_for_label }}" aria-label="Show password">
+          <i class="fa-regular fa-eye"></i>
+        </button>
+      </div>
+    </div>
+
+    <button type="submit" class="btn">Sign in <i class="fa-solid fa-arrow-right"></i></button>
+  </form>
+
+  <div class="foot">
+    New staff member? <a href="{% url 'staff_register' %}">Create an account</a>
+  </div>
+{% endblock %}
