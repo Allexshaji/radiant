@@ -167,6 +167,11 @@ class ReportSubmission(models.Model):
     )
     sent_at = models.DateTimeField(default=timezone.now)
 
+    # Filled in by the Super Admin when they approve or reject the report.
+    # The status itself lives on the report (DailyReport.status).
+    review_note = models.TextField(blank=True, default="")
+    reviewed_at = models.DateTimeField(null=True, blank=True)
+
     class Meta:
         ordering = ['-sent_at']
 

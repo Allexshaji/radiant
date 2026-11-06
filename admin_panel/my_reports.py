@@ -161,9 +161,17 @@ def send_report(request, report_id):
     """Send this report to the Super Admin. Sending it again only updates the time."""
     report = _my_report(request, report_id)
 
+    defaults = {"sent_by": request.user, "sent_at": timezone.now()}
+
+    # A rejected report goes back to "submitted" when it is sent again, and the old reason is cleared.
+    if report.status == DailyReport.REJECTED:
+        report.status = DailyReport.SUBMITTED
+        report.save(update_fields=["status", "updated_at"])
+        defaults.update(review_note="", reviewed_at=None)
+
     _, created = ReportSubmission.objects.update_or_create(
         report=report,
-        defaults={"sent_by": request.user, "sent_at": timezone.now()},
+        defaults=defaults,
     )
 
     if created:

@@ -5,8 +5,10 @@ from django.contrib import messages
 from django.contrib.auth import update_session_auth_hash
 from django.contrib.auth.decorators import login_required
 from django.core.exceptions import PermissionDenied
+from django.db import transaction
 from django.db.models import ProtectedError
 from django.shortcuts import get_object_or_404, redirect, render
+from django.utils import timezone
 from django.views.decorators.http import require_POST
 
 from accounts.access import ADMIN_ROLES, ADMIN_SECTIONS, STAFF_FEATURES, is_super_admin, staff_feature_states
@@ -309,4 +311,43 @@ def received_reports(request):
             "total_reports": sum(group["report_count"] for group in groups),
         },
     )
+
+
+@super_admin_required
+@require_POST
+def review_report(request, submission_id):
+    """Approve or reject a daily report that an admin sent.
+
+    Approve sets the report to APPROVED: the admin can no longer change or delete it.
+    Reject sets it to REJECTED and needs a reason, which the admin sees on the report.
+    """
+    submission = get_object_or_404(
+        ReportSubmission.objects.select_related("report"),
+        id=submission_id,
+    )
+    report = submission.report
+    action = request.POST.get("action")
+    note = request.POST.get("note", "").strip()
+
+    if action == "approve":
+        report.status = DailyReport.APPROVED
+        submission.review_note = ""
+        messages.success(request, f"Report #{report.id} approved.")
+    elif action == "reject":
+        if not note:
+            messages.error(request, f"Write a reason before rejecting report #{report.id}.")
+            return redirect("super_received_reports")
+        report.status = DailyReport.REJECTED
+        submission.review_note = note
+        messages.success(request, f"Report #{report.id} rejected. The admin can fix it and send it again.")
+    else:
+        messages.error(request, "Unknown action.")
+        return redirect("super_received_reports")
+
+    submission.reviewed_at = timezone.now()
+    with transaction.atomic():
+        report.save(update_fields=["status", "updated_at"])
+        submission.save(update_fields=["review_note", "reviewed_at"])
+
+    return redirect("super_received_reports")
 

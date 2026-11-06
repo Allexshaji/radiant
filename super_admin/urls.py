@@ -14,4 +14,5 @@ urlpatterns = [
     path("staff-control/", views.staff_control, name="super_staff_control"),
 
     path("received-reports/", views.received_reports, name="super_received_reports"),
+    path("received-reports/<int:submission_id>/review/", views.review_report, name="super_review_report"),
 ]

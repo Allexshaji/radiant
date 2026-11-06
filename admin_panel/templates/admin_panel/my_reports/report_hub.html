@@ -88,6 +88,15 @@
             </div>
 
 
+            <!-- REJECTION REASON FROM SUPER ADMIN -->
+            {% if report.status == "REJECTED" and submission.review_note %}
+            <div class="bg-rose-50 border border-rose-100 rounded-xl p-5 mb-6 text-sm text-rose-800">
+                <p class="font-bold flex items-center gap-2"><i class="fa-solid fa-circle-xmark"></i> The Super Admin rejected this report</p>
+                <p class="mt-1">Reason: {{ submission.review_note }}</p>
+                <p class="mt-2 text-rose-600">Fix the report, then click Send Again.</p>
+            </div>
+            {% endif %}
+
             <!-- SEND TO SUPER ADMIN -->
             <div class="bg-white border border-gray-100 rounded-xl p-6 shadow-sm mb-6 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                 <div>
