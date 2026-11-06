@@ -15,4 +15,7 @@ urlpatterns = [
 
     path("received-reports/", views.received_reports, name="super_received_reports"),
     path("received-reports/<int:submission_id>/review/", views.review_report, name="super_review_report"),
+
+    path("staff-access/", views.staff_access, name="super_staff_access"),
+    path("staff-access/<int:user_id>/", views.staff_access_edit, name="super_staff_access_edit"),
 ]

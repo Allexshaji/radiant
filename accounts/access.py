@@ -237,6 +237,10 @@ class Permissions:
         if role == User.ADMIN:
             return key not in (self.user.blocked_sections or [])
         if role == User.STAFF:
+            # A Super Admin can close an area for one staff member (blocked_sections),
+            # or for all staff at once (StaffFeatureSetting).
+            if key in (self.user.blocked_sections or []):
+                return False
             if self._features is None:
                 self._features = staff_feature_states()
             return self._features.get(key, True)

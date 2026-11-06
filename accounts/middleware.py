@@ -63,6 +63,8 @@ class RoleAccessMiddleware:
 
         if user.role == User.STAFF:
             feature = staff_feature_for(url_name)
+            if feature and feature in (user.blocked_sections or []):
+                return "A Super Admin has turned this part off for your account."
             if feature and not staff_feature_enabled(feature):
                 return "A Super Admin has turned this feature off for all staff."
 

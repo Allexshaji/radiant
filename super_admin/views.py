@@ -351,3 +351,54 @@ def review_report(request, submission_id):
 
     return redirect("super_received_reports")
 
+
+def _staff_areas_text(account):
+    """How many staff areas this staff member may open, e.g. '4 of 5 areas'."""
+    turned_off = sum(1 for key, _label, _text in STAFF_FEATURES if key in (account.blocked_sections or []))
+    return f"{len(STAFF_FEATURES) - turned_off} of {len(STAFF_FEATURES)} areas"
+
+
+@super_admin_required
+def staff_access(request):
+    """List of approved staff, with how many areas each one may open."""
+    accounts = (
+        User.objects.filter(role=User.STAFF, is_approved=True)
+        .select_related("branch")
+        .order_by("branch__name", "full_name", "username")
+    )
+    rows = [
+        {
+            "account": account,
+            "areas_text": _staff_areas_text(account),
+            "restricted": any(key in (account.blocked_sections or []) for key, _l, _t in STAFF_FEATURES),
+        }
+        for account in accounts
+    ]
+    return render(request, "super_admin/staff_access.html", {"rows": rows})
+
+
+@super_admin_required
+def staff_access_edit(request, user_id):
+    """Choose which staff areas one staff member may open. Areas not ticked are stored as blocked."""
+    account = get_object_or_404(User, id=user_id, role=User.STAFF, is_approved=True)
+
+    if request.method == "POST":
+        selected = set(request.POST.getlist("areas"))
+        account.blocked_sections = [key for key, _label, _text in STAFF_FEATURES if key not in selected]
+        account.save(update_fields=["blocked_sections"])
+        messages.success(request, f"Access for {account.full_name or account.username} was saved.")
+        return redirect("super_staff_access")
+
+    blocked = set(account.blocked_sections or [])
+    states = staff_feature_states()
+    areas = [
+        {
+            "key": key,
+            "label": label,
+            "text": text,
+            "allowed": key not in blocked,
+            "globally_on": states[key],
+        }
+        for key, label, text in STAFF_FEATURES
+    ]
+    return render(request, "super_admin/staff_access_edit.html", {"account": account, "areas": areas})
