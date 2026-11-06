@@ -55,6 +55,7 @@
                             <th class="px-6 py-3 font-semibold text-gray-600">Date</th>
                             <th class="px-6 py-3 font-semibold text-gray-600">Check in</th>
                             <th class="px-6 py-3 font-semibold text-gray-600">Check out</th>
+                            <th class="px-6 py-3 font-semibold text-gray-600">Where</th>
                             <th class="px-6 py-3 font-semibold text-gray-600">Leave</th>
                         </tr>
                     </thead>
@@ -65,8 +66,14 @@
                                 {% if row.type == "attendance" %}
                                     <td class="px-6 py-3 text-gray-700">{{ row.check_in|time:"h:i A" }}</td>
                                     <td class="px-6 py-3 text-gray-700">{{ row.check_out|time:"h:i A"|default:"-" }}</td>
+                                    <td class="px-6 py-3 text-xs text-gray-600">
+                                        {% for act in row.activity_list %}
+                                            <div>{{ act.label }}: {% if act.place %}{{ act.place }}{% elif act.coords %}{{ act.coords }}{% else %}Location not shared{% endif %}</div>
+                                        {% endfor %}
+                                    </td>
                                     <td class="px-6 py-3 text-gray-400">-</td>
                                 {% else %}
+                                    <td class="px-6 py-3 text-gray-400">-</td>
                                     <td class="px-6 py-3 text-gray-400">-</td>
                                     <td class="px-6 py-3 text-gray-400">-</td>
                                     <td class="px-6 py-3 text-gray-700">{{ row.leave_type }} · {{ row.status|capfirst }}</td>

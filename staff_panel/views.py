@@ -29,6 +29,7 @@ from staff_panel.models import LeaveApplication,CheckInCheckOut
 from admin_panel.models import LeaveType
 from staff_panel.forms import LeaveApplicationForm, RequirementForm
 from staff_panel.models import Requirement
+from .location import place_name_for
 
 
 def staff_required(view_func):
@@ -150,6 +151,8 @@ def _apply_check_action(staff, action, location=(None, None, None)):
         if action == 'check_in':
             if clocked_in:
                 return False, 'You are already checked in. Check out first.'
+            # Looked up only once the check-in is allowed. A refused action never waits for the lookup.
+            place = place_name_for(lat, lng) if lat is not None else ''
             CheckInCheckOut.objects.create(
                 attendance=attendance,
                 activity_type='check_in',
@@ -157,6 +160,7 @@ def _apply_check_action(staff, action, location=(None, None, None)):
                 latitude=lat,
                 longitude=lng,
                 accuracy_m=acc,
+                place_name=place,
             )
             attendance.check_in = now
             attendance.check_out = None
@@ -165,6 +169,7 @@ def _apply_check_action(staff, action, location=(None, None, None)):
 
         if not clocked_in:
             return False, 'You are already checked out. Check in first.'
+        place = place_name_for(lat, lng) if lat is not None else ''
         CheckInCheckOut.objects.create(
             attendance=attendance,
             activity_type='check_out',
@@ -172,6 +177,7 @@ def _apply_check_action(staff, action, location=(None, None, None)):
             latitude=lat,
             longitude=lng,
             accuracy_m=acc,
+            place_name=place,
         )
         attendance.check_out = now
         attendance.save(update_fields=['check_out'])
@@ -322,6 +328,19 @@ def attendance_context(staff, filter_type):
             'type': 'attendance',
             'date': record.date,
             'activities': activities,
+            # Each check-in and check-out, with its place. The page shows the name, or the coordinates if no name was found.
+            'activity_list': [
+                {
+                    'label': activity.get_activity_type_display(),
+                    'time': activity.timestamp,
+                    'place': activity.place_name,
+                    'coords': (
+                        f"{activity.latitude:.4f}, {activity.longitude:.4f}"
+                        if activity.latitude is not None and activity.longitude is not None else ''
+                    ),
+                }
+                for activity in activities
+            ],
             'record': record,
             'check_in': record.check_in,
             'check_out': record.check_out

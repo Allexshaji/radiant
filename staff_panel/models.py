@@ -59,6 +59,8 @@ class CheckInCheckOut(models.Model):
     latitude = models.FloatField(null=True, blank=True)
     longitude = models.FloatField(null=True, blank=True)
     accuracy_m = models.FloatField(null=True, blank=True, help_text='Accuracy radius in metres, as reported by the device')
+    # A short name for that place, looked up when the check-in is saved. Empty if it could not be found.
+    place_name = models.CharField(max_length=255, blank=True, default='')
     
     class Meta:
         ordering = ['timestamp']

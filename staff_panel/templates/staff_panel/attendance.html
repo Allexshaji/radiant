@@ -333,6 +333,11 @@
                                                     {% endif %}
                                                 </div>
                                             </div>
+                                            <div class="mt-2 space-y-0.5 text-xs text-gray-500">
+                                                {% for act in item.activity_list %}
+                                                    <p><span class="font-medium text-gray-600">{{ act.label }}:</span> {% if act.place %}{{ act.place }}{% elif act.coords %}{{ act.coords }}{% else %}Location not shared{% endif %}</p>
+                                                {% endfor %}
+                                            </div>
                                         </td>
 
                                     <!-- Leave Record -->
