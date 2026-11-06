@@ -1,0 +1,167 @@
+{% extends "admin_panel/admin_base.html" %}
+
+{% block title %}Report #{{ report.id }}{% endblock %}
+
+{% block extra_head %}
+<style>
+        body {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            background-color: #F8F9FA;
+        }
+        ::-webkit-scrollbar {
+            width: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #E5E7EB;
+            border-radius: 10px;
+        }
+    </style>
+{% endblock %}
+
+{% block header %}
+<header class="px-6 sm:px-10 py-8 flex flex-col md:flex-row md:items-start justify-between gap-6 z-10 sticky top-0 md:static bg-[#F8F9FA]">
+            
+            <div class="flex items-start gap-4">
+                <!-- Hamburger Menu Button (Mobile Only) -->
+                <button onclick="toggleSidebar()" class="md:hidden text-gray-700 mt-1 p-2 -ml-2 rounded-lg hover:bg-gray-200 transition-colors" aria-label="Open Menu">
+                    <i class="fa-solid fa-bars text-xl"></i>
+                </button>
+
+                <div>
+                    <h1 class="text-3xl font-bold text-gray-900 tracking-tight">Report Details</h1>
+                    <p class="text-sm text-gray-500 font-medium mt-2">Manage daily entries for Report #{{ report.id }}</p>
+                </div>
+            </div>
+
+            <!-- Back Button -->
+            <div class="flex items-center w-full md:w-auto">
+                {% if can.reports %}<a href="{% url 'admin_reports_add' %}" class="w-full md:w-auto bg-white border border-gray-200 hover:bg-gray-50 text-gray-700 text-sm font-semibold px-5 py-2.5 rounded-lg shadow-sm transition flex items-center justify-center">
+                    <i class="fa-solid fa-arrow-left mr-2"></i> Back to Reports
+                </a>{% endif %}
+            </div>
+        </header>
+{% endblock %}
+
+{% block content %}
+
+            <!-- REPORT INFORMATION SUMMARY CARD -->
+            <div class="bg-white border border-gray-100 rounded-xl p-6 shadow-sm mb-6 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                <div class="flex items-center gap-5">
+                    <!-- Icon -->
+                    <div class="w-12 h-12 rounded-full bg-[#F0F3F1] flex items-center justify-center text-[#273B30] shrink-0 hidden sm:flex">
+                        <i class="fa-regular fa-calendar-check text-xl"></i>
+                    </div>
+                    <!-- Details -->
+                    <div>
+                        <h2 class="text-xl font-bold text-gray-900 flex items-center gap-2">
+                            Daily Report #{{ report.id }}
+                        </h2>
+                        <div class="flex flex-wrap items-center gap-x-4 gap-y-2 mt-2 text-sm text-gray-500 font-medium">
+                            <span class="flex items-center gap-1.5"><i class="fa-regular fa-calendar"></i> {{ report.report_date|date:"M d, Y" }}</span>
+                            <span class="hidden sm:inline text-gray-300">|</span>
+                            <span class="flex items-center gap-1.5"><i class="fa-regular fa-user"></i> {{ report.staff.username }}</span>
+                            <span class="hidden sm:inline text-gray-300">|</span>
+                            <span class="flex items-center gap-1.5"><i class="fa-solid fa-location-dot"></i> {{ report.branch }}</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- STATUS BADGE -->
+                <div class="shrink-0">
+                    {% if report.status == "APPROVED" %}
+                        <span class="px-4 py-2 bg-emerald-50 text-emerald-700 border border-emerald-100 rounded-lg text-sm font-bold flex items-center gap-2">
+                            <i class="fa-solid fa-circle-check"></i> Approved
+                        </span>
+                    {% elif report.status == "REJECTED" %}
+                        <span class="px-4 py-2 bg-rose-50 text-rose-700 border border-rose-100 rounded-lg text-sm font-bold flex items-center gap-2">
+                            <i class="fa-solid fa-circle-xmark"></i> Rejected
+                        </span>
+                    {% else %}
+                        <span class="px-4 py-2 bg-amber-50 text-amber-700 border border-amber-100 rounded-lg text-sm font-bold flex items-center gap-2">
+                            <i class="fa-regular fa-clock"></i> Submitted
+                        </span>
+                    {% endif %}
+                </div>
+            </div>
+
+
+            <!-- SEND TO SUPER ADMIN -->
+            <div class="bg-white border border-gray-100 rounded-xl p-6 shadow-sm mb-6 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                <div>
+                    <h3 class="text-base font-bold text-gray-900">Send to Super Admin</h3>
+                    {% if submission %}
+                        <p class="text-sm text-gray-500 mt-1">
+                            Sent{% if submission.sent_by %} by {{ submission.sent_by.get_full_name|default:submission.sent_by.username }}{% endif %} on {{ submission.sent_at|date:"M d, Y, P" }}.
+                            The Super Admin sees this report as it is now, so later changes show there too.
+                        </p>
+                    {% else %}
+                        <p class="text-sm text-gray-500 mt-1">
+                            Not sent yet. Sending puts this report in the Super Admin's Received Reports, under your branch.
+                        </p>
+                    {% endif %}
+                </div>
+                {% if can.reports %}<form method="POST" action="{% url 'admin_send_report' report.id %}" class="m-0 shrink-0">
+                    {% csrf_token %}
+                    <button type="submit" class="inline-flex items-center justify-center gap-2 px-5 py-2.5 text-sm font-semibold text-white bg-[#273B30] rounded-lg hover:bg-[#1f2d25] shadow-sm transition">
+                        <i class="fa-solid fa-paper-plane"></i> {% if submission %}Send Again{% else %}Send to Super Admin{% endif %}
+                    </button>
+                </form>{% endif %}
+            </div>
+
+            <!-- REPORT SECTIONS (GRID) -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+
+                <!-- WALK-INS -->
+                {% if can.reports %}<a href="{% url 'admin_add_walkins' report.id %}" class="group bg-white border border-gray-100 rounded-xl p-6 shadow-sm hover:shadow-md transition-all flex flex-col justify-between h-40">
+                    <div class="flex justify-between items-start">
+                        <div>
+                            <h2 class="text-lg font-bold text-gray-900 group-hover:text-[#273B30] transition-colors">Walk-ins & Payments</h2>
+                            <p class="text-sm text-gray-500 mt-1">Add walk-in counts and the payments received, on one sheet.</p>
+                        </div>
+                        <div class="w-10 h-10 rounded-lg bg-[#EEF0EF] flex items-center justify-center text-gray-700 shrink-0 group-hover:bg-[#E3EAE6] transition-colors">
+                            <i class="fa-solid fa-users text-sm"></i>
+                        </div>
+                    </div>
+                    <div class="text-[#273B30] text-sm font-bold flex items-center mt-4">
+                        Open Entry <i class="fa-solid fa-arrow-right ml-2 transition-transform group-hover:translate-x-1"></i>
+                    </div>
+                </a>{% endif %}
+
+                <!-- REVENUE -->
+                {% if can.reports %}<a href="{% url 'admin_add_revenues' report.id %}" class="group bg-white border border-gray-100 rounded-xl p-6 shadow-sm hover:shadow-md transition-all flex flex-col justify-between h-40">
+                    <div class="flex justify-between items-start">
+                        <div>
+                            <h2 class="text-lg font-bold text-gray-900 group-hover:text-[#273B30] transition-colors">Revenue</h2>
+                            <p class="text-sm text-gray-500 mt-1">Add treatment, massage, and packages.</p>
+                        </div>
+                        <div class="w-10 h-10 rounded-lg bg-[#EEF0EF] flex items-center justify-center text-gray-700 shrink-0 group-hover:bg-[#E3EAE6] transition-colors">
+                            <i class="fa-solid fa-indian-rupee-sign text-sm"></i>
+                        </div>
+                    </div>
+                    <div class="text-[#273B30] text-sm font-bold flex items-center mt-4">
+                        Open Entry <i class="fa-solid fa-arrow-right ml-2 transition-transform group-hover:translate-x-1"></i>
+                    </div>
+                </a>{% endif %}
+
+
+                <!-- EXPENSES (Red tinted design as per MIS dashboard) -->
+                {% if can.reports %}<a href="{% url 'admin_add_expenses' report.id %}" class="group bg-[#FEF6F5] border border-[#FBE9E7] rounded-xl p-6 shadow-sm hover:shadow-md transition-all flex flex-col justify-between h-40">
+                    <div class="flex justify-between items-start">
+                        <div>
+                            <h2 class="text-lg font-bold text-gray-900 group-hover:text-[#D06B5D] transition-colors">Expenses</h2>
+                            <p class="text-sm text-gray-500 mt-1">Add expenses for this report.</p>
+                        </div>
+                        <div class="w-10 h-10 rounded-lg bg-[#F5D7D3] flex items-center justify-center text-[#D06B5D] shrink-0">
+                            <i class="fa-solid fa-wallet text-sm"></i>
+                        </div>
+                    </div>
+                    <div class="text-[#D06B5D] text-sm font-bold flex items-center mt-4">
+                        Open Entry <i class="fa-solid fa-arrow-right ml-2 transition-transform group-hover:translate-x-1"></i>
+                    </div>
+                </a>{% endif %}
+
+            </div>
+        {% endblock %}

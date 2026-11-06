@@ -11,6 +11,7 @@ from django.views.decorators.http import require_POST
 
 from accounts.access import ADMIN_ROLES, ADMIN_SECTIONS, STAFF_FEATURES, is_super_admin, staff_feature_states
 from accounts.models import Branch, StaffFeatureSetting, User
+from admin_panel.models import ReportSubmission
 from staff_panel.models import DailyReport
 
 from .forms import AdminAccountForm
@@ -245,3 +246,67 @@ def staff_control(request):
         "features": features,
         "staff_count": User.objects.filter(role=User.STAFF, is_approved=True).count(),
     })
+
+
+@super_admin_required
+def received_reports(request):
+    """Daily reports that admins have sent to the Super Admin, grouped by branch."""
+    submissions = ReportSubmission.objects.select_related(
+        "report",
+        "report__branch",
+        "report__staff",
+        "sent_by",
+    ).order_by(
+        "report__branch__name",
+        "-report__report_date",
+        "-sent_at",
+    )
+
+    groups = []
+    by_branch = {}
+
+    for submission in submissions:
+        report = submission.report
+        branch = report.branch
+
+        group = by_branch.get(branch.id)
+        if group is None:
+            group = {
+                "branch": branch,
+                "items": [],
+                "report_count": 0,
+                "walkins": 0,
+                "revenue": Decimal("0.00"),
+                "payments": Decimal("0.00"),
+                "expenses": Decimal("0.00"),
+            }
+            by_branch[branch.id] = group
+            groups.append(group)
+
+        item = {
+            "submission": submission,
+            "report": report,
+            "walkins": report.total_walkins,
+            "revenue": report.total_revenue,
+            "payments": report.total_payments,
+            "expenses": report.total_expenses,
+        }
+        group["items"].append(item)
+        group["report_count"] += 1
+        group["walkins"] += item["walkins"]
+        group["revenue"] += item["revenue"]
+        group["payments"] += item["payments"]
+        group["expenses"] += item["expenses"]
+
+    for group in groups:
+        group["net"] = group["revenue"] - group["expenses"]
+
+    return render(
+        request,
+        "super_admin/received_reports.html",
+        {
+            "groups": groups,
+            "total_reports": sum(group["report_count"] for group in groups),
+        },
+    )
+

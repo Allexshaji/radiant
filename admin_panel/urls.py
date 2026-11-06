@@ -1,5 +1,5 @@
 from django.urls import path
-from . import views
+from . import my_reports, views
 
 urlpatterns = [
     path("", views.dashboard, name="admin_dashboard"),
@@ -18,6 +18,26 @@ urlpatterns = [
     path('report/view/expenses/<int:report_id>/', views.view_expenses, name='view_expenses'),
 
     path("admin/staff/single/<int:staff_id>/reports/",views.single_staff_reports,name="single_staff_reports"),
+
+    # An admin's own daily reports, with the same pages as the staff report pages
+    path("my-reports/", my_reports.report_dashboard, name="admin_report_dashboard"),
+    path("my-reports/add/", my_reports.reports_add, name="admin_reports_add"),
+    path("my-reports/create/", my_reports.create_report, name="admin_create_report"),
+    path("my-reports/<int:report_id>/", my_reports.report_hub, name="admin_report_hub"),
+    path("my-reports/<int:report_id>/delete/", my_reports.delete_report, name="admin_delete_report"),
+    path("my-reports/<int:report_id>/send/", my_reports.send_report, name="admin_send_report"),
+    path("my-reports/<int:report_id>/walkins/", my_reports.add_walkins, name="admin_add_walkins"),
+    path("my-reports/<int:report_id>/revenue/", my_reports.add_revenues, name="admin_add_revenues"),
+    path("my-reports/<int:report_id>/expenses/", my_reports.add_expenses, name="admin_add_expenses"),
+    path("my-reports/<int:report_id>/walkins/edit/", my_reports.edit_walkins, name="admin_edit_walkins"),
+    path("my-reports/<int:report_id>/revenue/edit/", my_reports.edit_revenue, name="admin_edit_revenue"),
+    path("my-reports/<int:report_id>/expenses/edit/", my_reports.edit_expenses, name="admin_edit_expenses"),
+    path("my-reports/<int:report_id>/expenses/view/", my_reports.view_expense_report, name="admin_view_expense_report"),
+    path("my-reports/<int:report_id>/expenses/delete/", my_reports.delete_expense_report, name="admin_delete_expense_report"),
+    path("my-reports/history/", my_reports.reports_history, name="admin_reports_history"),
+    path("my-reports/history/walkins/", my_reports.walkins_history_list, name="admin_walkins_history"),
+    path("my-reports/history/revenue/", my_reports.revenue_history_list, name="admin_revenue_history"),
+    path("my-reports/history/expenses/", my_reports.expenses_history_list, name="admin_expenses_history"),
     path("report/<int:report_id>/approve/",views.approve_report,name="approve_report",),
     path("report/<int:report_id>/reject/",views.reject_report,name="reject_report",),
     path("report/<int:report_id>/edit/approval/",views.edit_approval,name="edit_approval",),

@@ -146,3 +146,29 @@ class Salary(models.Model):
         
         self.save()
         return self.net_salary
+
+class ReportSubmission(models.Model):
+    """A daily report that an admin has sent to the Super Admin.
+
+    One row per report. Sending the same report again only updates who sent it and when.
+    The row goes away with the report, so a report that is deleted also leaves the inbox.
+    """
+    report = models.OneToOneField(
+        'staff_panel.DailyReport',
+        on_delete=models.CASCADE,
+        related_name='super_admin_submission',
+    )
+    sent_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='sent_report_submissions',
+    )
+    sent_at = models.DateTimeField(default=timezone.now)
+
+    class Meta:
+        ordering = ['-sent_at']
+
+    def __str__(self):
+        return f"Report #{self.report_id} sent {self.sent_at:%d %b %Y}"

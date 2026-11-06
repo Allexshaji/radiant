@@ -1,0 +1,106 @@
+{% extends "admin_panel/admin_base.html" %}
+
+{% block title %}Edit Walk-ins & Payments{% endblock %}
+{% block page_title %}Edit Walk-ins &amp; Payments{% endblock %}
+
+{% block back %}
+<div class="flex items-center gap-2 mb-1.5">
+    {% if can.reports %}<a href="{% url 'admin_walkins_history' %}" class="text-sm font-medium text-gray-500 hover:text-gray-900 transition flex items-center gap-1.5">
+        <i class="fa-solid fa-arrow-left"></i> Back to Walk-in History
+    </a>{% endif %}
+</div>
+{% endblock %}
+
+{% block content %}
+
+    {% include "staff_panel/components/report_overview.html" with total_label="Total Walk-ins" total_value=report.total_walkins total_id="live-walkins" %}
+
+    <form method="POST" class="bg-white border border-gray-100 rounded-xl shadow-sm overflow-hidden mb-6">
+        {% csrf_token %}
+
+        <div class="px-6 py-5 border-b border-gray-100 bg-white">
+            <h3 class="text-base font-bold text-gray-900">
+                Editing: <span class="text-gray-500 font-medium">Walk-ins &amp; Payments</span>
+            </h3>
+        </div>
+
+        <div class="overflow-x-auto">
+            <table class="edit-table w-full text-sm text-left text-gray-600">
+                <thead class="text-xs text-gray-500 uppercase font-semibold bg-[#F8F9FA] border-b border-gray-100">
+                    <tr>
+                        <th class="px-2 py-4 text-center">Total Walkins</th>
+                        <th class="px-2 py-4 text-center">Treatment</th>
+                        <th class="px-2 py-4 text-center">Package</th>
+                        <th class="px-2 py-4 text-center">Normal Massage</th>
+                        <th class="px-2 py-4 text-center">Consultation</th>
+                        <th class="px-2 py-4 text-center">Sales</th>
+                        <th class="px-2 py-4 text-center">Cash</th>
+                        <th class="px-2 py-4 text-center">GPay / UPI</th>
+                        <th class="px-2 py-4 text-center">Card</th>
+                        <th class="px-2 py-4 text-center">Total Payments</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr class="bg-white">
+                        <td class="px-2 py-3 min-w-[90px]">{{ form.total_walkins }}{% for error in form.total_walkins.errors %}<p class="mt-1 text-xs text-red-600">{{ error }}</p>{% endfor %}</td>
+                        <td class="px-2 py-3 min-w-[90px]">{{ form.treatment_count }}{% for error in form.treatment_count.errors %}<p class="mt-1 text-xs text-red-600">{{ error }}</p>{% endfor %}</td>
+                        <td class="px-2 py-3 min-w-[90px]">{{ form.package_count }}{% for error in form.package_count.errors %}<p class="mt-1 text-xs text-red-600">{{ error }}</p>{% endfor %}</td>
+                        <td class="px-2 py-3 min-w-[90px]">{{ form.normal_massage_count }}{% for error in form.normal_massage_count.errors %}<p class="mt-1 text-xs text-red-600">{{ error }}</p>{% endfor %}</td>
+                        <td class="px-2 py-3 min-w-[90px]">{{ form.consultation_count }}{% for error in form.consultation_count.errors %}<p class="mt-1 text-xs text-red-600">{{ error }}</p>{% endfor %}</td>
+                        <td class="px-2 py-3 min-w-[90px]">{{ form.sales_count }}{% for error in form.sales_count.errors %}<p class="mt-1 text-xs text-red-600">{{ error }}</p>{% endfor %}</td>
+                        <td class="px-2 py-3 min-w-[130px]">{{ payment_form.cash }}{% for error in payment_form.cash.errors %}<p class="mt-1 text-xs text-red-600">{{ error }}</p>{% endfor %}</td>
+                        <td class="px-2 py-3 min-w-[130px]">{{ payment_form.gpay }}{% for error in payment_form.gpay.errors %}<p class="mt-1 text-xs text-red-600">{{ error }}</p>{% endfor %}</td>
+                        <td class="px-2 py-3 min-w-[130px]">{{ payment_form.card }}{% for error in payment_form.card.errors %}<p class="mt-1 text-xs text-red-600">{{ error }}</p>{% endfor %}</td>
+                        <td class="px-2 py-3 text-center font-bold text-[#273B30] whitespace-nowrap" id="live-payment-total">₹0.00</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <p class="px-6 py-3 text-xs text-gray-500 border-t border-gray-100">An empty payment box counts as 0.</p>
+
+        <div class="px-6 py-5 border-t border-gray-100 bg-[#F8F9FA] flex flex-col-reverse sm:flex-row justify-between gap-3">
+            {% if can.reports %}<a href="{% url 'admin_walkins_history' %}" class="px-6 py-2.5 bg-white border border-gray-200 text-gray-700 text-sm font-semibold rounded-lg hover:bg-gray-50 transition shadow-sm text-center">
+                Cancel
+            </a>{% endif %}
+            <button type="submit" class="px-6 py-2.5 text-sm font-semibold text-white bg-[#273B30] rounded-lg hover:bg-[#1A2720] transition shadow-sm">
+                <i class="fa-solid fa-check mr-1"></i> Save Walk-ins &amp; Payments
+            </button>
+        </div>
+    </form>
+
+{% endblock %}
+
+{% block extra_head %}
+<style>
+    .edit-table input[type="number"] { padding: 0.5rem 0.5rem; font-size: 0.85rem; text-align: center; }
+</style>
+{% endblock %}
+
+{% block extra_script %}
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+    function value(name) {
+        const input = document.querySelector('input[name="' + name + '"]');
+        const number = parseFloat(input ? input.value : "");
+        return isNaN(number) ? 0 : number;
+    }
+    function updateWalkinTotal() {
+        const input = document.querySelector('input[name="total_walkins"]');
+        const number = parseFloat(input ? input.value : "");
+        document.getElementById("live-walkins").textContent = isNaN(number) ? "0" : String(number);
+    }
+    function updatePaymentTotal() {
+        const total = value("cash") + value("gpay") + value("card");
+        document.getElementById("live-payment-total").textContent = "₹" + total.toFixed(2);
+    }
+    document.querySelectorAll('input[name="cash"], input[name="gpay"], input[name="card"]').forEach(function (input) {
+        input.addEventListener("input", updatePaymentTotal);
+    });
+    const walkinInput = document.querySelector('input[name="total_walkins"]');
+    if (walkinInput) { walkinInput.addEventListener("input", updateWalkinTotal); }
+    updatePaymentTotal();
+    updateWalkinTotal();
+});
+</script>
+{% endblock %}

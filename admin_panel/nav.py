@@ -6,6 +6,15 @@ the user's permissions allow that section (see accounts.access).
 """
 from django.urls import reverse
 
+# Every page of an admin's own daily reports. The sidebar item stays lit on all of them.
+MY_REPORT_PAGES = [
+    "admin_report_dashboard", "admin_reports_add", "admin_create_report", "admin_report_hub",
+    "admin_delete_report", "admin_send_report", "admin_add_walkins", "admin_add_revenues",
+    "admin_add_expenses", "admin_edit_walkins", "admin_edit_revenue", "admin_edit_expenses",
+    "admin_reports_history", "admin_walkins_history", "admin_revenue_history",
+    "admin_expenses_history", "admin_view_expense_report", "admin_delete_expense_report",
+]
+
 NAV_GROUPS = [  # (heading, items)
     (None, [
         (None, "Dashboard", "fa-solid fa-chart-pie", "admin_dashboard", ["admin_dashboard"]),
@@ -17,6 +26,8 @@ NAV_GROUPS = [  # (heading, items)
         ("super_admin", "Add Admin", "fa-solid fa-user-plus", "super_admin_create", ["super_admin_create"]),
         ("super_admin", "Add Branch", "fa-solid fa-plus", "branch_create", ["branch_create"]),
         ("super_admin", "Staff Control", "fa-solid fa-sliders", "super_staff_control", ["super_staff_control"]),
+        ("super_admin", "Received Reports", "fa-solid fa-inbox", "super_received_reports",
+         ["super_received_reports"]),
     ]),
     ("Staff", [
         ("staff", "Pending Approvals", "fa-solid fa-user-clock", "pending_staff_approval",
@@ -28,6 +39,7 @@ NAV_GROUPS = [  # (heading, items)
          ["all_staff_reports_list", "view_revenue", "view_payments", "view_expenses", "view_walkins"]),
         ("reports", "Staff Reports View", "fa-solid fa-chart-column", "all_staff_reports_view",
          ["all_staff_reports_view", "single_staff_reports"]),
+        ("reports", "My Reports", "fa-solid fa-pen-to-square", "admin_report_dashboard", MY_REPORT_PAGES),
         ("requirements", "Requirements", "fa-solid fa-clipboard-list", "admin_requirements",
          ["admin_requirements", "admin_approve_requirement"]),
     ]),

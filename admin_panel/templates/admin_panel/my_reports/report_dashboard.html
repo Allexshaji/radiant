@@ -1,0 +1,81 @@
+{% extends "admin_panel/admin_base.html" %}
+
+{% block title %}Reports Dashboard{% endblock %}
+
+{% block extra_head %}
+<style>
+        body {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            background-color: #F8F9FA;
+        }
+        /* Custom scrollbar for sidebar */
+        ::-webkit-scrollbar {
+            width: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #E5E7EB;
+            border-radius: 10px;
+        }
+    </style>
+{% endblock %}
+
+{% block header %}
+<header class="px-6 sm:px-10 pt-8 pb-4 flex flex-col md:flex-row md:items-start justify-between gap-6 z-10 sticky top-0 md:static bg-[#F8F9FA]">
+            
+            <div class="flex items-start gap-4">
+                <!-- Hamburger Menu Button (Mobile Only) -->
+                <button onclick="toggleSidebar()" class="md:hidden text-gray-700 mt-1 p-2 -ml-2 rounded-lg hover:bg-gray-200 transition-colors" aria-label="Open Menu">
+                    <i class="fa-solid fa-bars text-xl"></i>
+                </button>
+
+                <div>
+                    <!-- Back Link -->
+                    <a href="{% url 'admin_dashboard' %}" class="inline-flex items-center text-sm font-semibold text-gray-500 hover:text-gray-900 transition-colors mb-2">
+                        <i class="fa-solid fa-arrow-left-long mr-2"></i> Back to Dashboard
+                    </a>
+                    <h1 class="text-3xl font-bold text-gray-900 tracking-tight">Reports Dashboard</h1>
+                    <p class="text-sm text-gray-500 font-medium mt-2">Manage and view your report entries.</p>
+                </div>
+            </div>
+        </header>
+{% endblock %}
+
+{% block content %}
+
+            <!-- Reports History Section -->
+            <div class="bg-white border border-gray-100 rounded-xl p-6 md:p-8 shadow-sm mt-4">
+                
+                <h3 class="mb-6 text-xl font-bold text-gray-900">Reports Management</h3>
+                
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    
+                    <!-- Add Reports Action Card -->
+                    {% if can.reports %}<a href="{% url 'admin_reports_add' %}" class="group flex items-start gap-4 p-5 bg-white border border-gray-200 rounded-xl hover:border-[#D06B5D] hover:shadow-md transition-all">
+                        <div class="w-12 h-12 rounded-lg bg-[#FEF6F5] flex items-center justify-center text-[#D06B5D] shrink-0 group-hover:scale-105 transition-transform">
+                            <i class="fa-solid fa-hourglass-half text-lg"></i>
+                        </div>
+                        <div>
+                            <h4 class="text-base font-bold text-gray-900 group-hover:text-[#D06B5D] transition-colors">Add Reports</h4>
+                            <p class="text-sm text-gray-500 mt-1">Submit your new report entries here.</p>
+                        </div>
+                    </a>{% endif %}
+
+                    <!-- View Reports History Action Card -->
+                    {% if can.reports %}<a href="{% url 'admin_walkins_history' %}" class="group flex items-start gap-4 p-5 bg-white border border-gray-200 rounded-xl hover:border-emerald-500 hover:shadow-md transition-all">
+                        <div class="w-12 h-12 rounded-lg bg-emerald-50 flex items-center justify-center text-emerald-600 shrink-0 group-hover:scale-105 transition-transform">
+                            <i class="fa-solid fa-circle-check text-lg"></i>
+                        </div>
+                        <div>
+                            <h4 class="text-base font-bold text-gray-900 group-hover:text-emerald-700 transition-colors">View Reports History</h4>
+                            <p class="text-sm text-gray-500 mt-1">Check your past submitted reports.</p>
+                        </div>
+                    </a>{% endif %}
+
+                </div>
+                
+            </div>
+
+        {% endblock %}

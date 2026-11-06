@@ -12,4 +12,6 @@ urlpatterns = [
     path("admins/<int:user_id>/delete/", views.super_admin_delete, name="super_admin_delete"),
 
     path("staff-control/", views.staff_control, name="super_staff_control"),
+
+    path("received-reports/", views.received_reports, name="super_received_reports"),
 ]

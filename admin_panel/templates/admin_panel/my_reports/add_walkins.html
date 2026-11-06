@@ -1,0 +1,141 @@
+{% extends "admin_panel/admin_base.html" %}
+
+{% block title %}Walk-in Entry{% endblock %}
+
+{% block extra_head %}
+<style>
+        body {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            background-color: #F8F9FA;
+        }
+        /* Custom scrollbar for sidebar */
+        ::-webkit-scrollbar {
+            width: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #E5E7EB;
+            border-radius: 10px;
+        }
+        
+        /* Auto-styling for Django Form Inputs */
+        input[type="text"], input[type="number"], input[type="email"], input[type="password"], select, textarea {
+            width: 100%;
+            background-color: #ffffff;
+            border: 1px solid #E5E7EB;
+            border-radius: 0.5rem;
+            padding: 0.625rem 1rem;
+            font-size: 0.875rem;
+            color: #374151;
+            outline: none;
+            transition: all 0.2s ease-in-out;
+            box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+        }
+        input:focus, select:focus, textarea:focus {
+            border-color: #9CA3AF;
+            box-shadow: 0 0 0 1px #E5E7EB;
+        }
+    </style>
+{% endblock %}
+
+{% block header %}
+<header class="px-6 sm:px-10 py-8 flex items-center gap-4 z-10 sticky top-0 md:static bg-[#F8F9FA]">
+            <!-- Hamburger Menu Button (Mobile Only) -->
+            <button onclick="toggleSidebar()" class="md:hidden text-gray-700 p-2 -ml-2 rounded-lg hover:bg-gray-200 transition-colors" aria-label="Open Menu">
+                <i class="fa-solid fa-bars text-xl"></i>
+            </button>
+            <div>
+                <h1 class="text-3xl font-bold text-gray-900 tracking-tight">Walk-in Data Entry</h1>
+                <p class="text-sm text-gray-500 font-medium mt-2">Manage daily walk-ins and service details.</p>
+            </div>
+        </header>
+{% endblock %}
+
+{% block content %}
+            
+            <div class="max-w-4xl">
+                <!-- Back Navigation -->
+                {% if can.reports %}<a href="{% url 'admin_report_hub' report.id %}" class="inline-flex items-center mb-6 text-sm font-medium text-gray-500 hover:text-gray-900 transition-colors">
+                    <i class="fa-solid fa-arrow-left mr-2"></i> Back to Report Hub
+                </a>{% endif %}
+                
+                <!-- Form Card -->
+                <div class="bg-white border border-gray-100 rounded-xl shadow-sm p-6 sm:p-8">
+                    
+                    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
+                        <div>
+                            <h2 class="text-xl font-bold text-gray-900">Add Walk-ins & Services Details</h2>
+                            <p class="text-sm text-gray-500 mt-1">Please enter accurate data for the selected date.</p>
+                        </div>
+                        <span class="inline-flex items-center px-3.5 py-1.5 text-xs font-bold text-gray-700 bg-[#F0F3F1] border border-gray-200 rounded-lg">
+                            <i class="fa-regular fa-calendar mr-2 text-gray-500"></i> Date: {{ report.report_date|date:"M d, Y" }}
+                        </span>
+                    </div>
+
+                    <!-- Form for saving walk-ins to the database -->
+                    <form method="POST">
+                        {% csrf_token %}
+                        
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-5">
+                            <div>
+                                <label class="block mb-2 text-sm font-semibold text-gray-700">Total Walk-ins</label>
+                                {{ form.total_walkins }}
+                            </div>
+                            <div>
+                                <label class="block mb-2 text-sm font-semibold text-gray-700">Treatment Count</label>
+                                {{ form.treatment_count }}
+                            </div>
+                            <div>
+                                <label class="block mb-2 text-sm font-semibold text-gray-700">Package Count</label>
+                                {{ form.package_count }}
+                            </div>
+                            <div>
+                                <label class="block mb-2 text-sm font-semibold text-gray-700">Normal Massage Count</label>
+                                {{ form.normal_massage_count }}
+                            </div>
+                            <div>
+                                <label class="block mb-2 text-sm font-semibold text-gray-700">Consultation Count</label>
+                                {{ form.consultation_count }}
+                            </div>
+                            <div>
+                                <label class="block mb-2 text-sm font-semibold text-gray-700">Sales Count</label>
+                                {{ form.sales_count }}
+                            </div>
+                        </div>
+
+                        <!-- Payments received for these walk-ins -->
+                        <div class="mt-8 pt-6 border-t border-gray-100">
+                            <h3 class="text-base font-bold text-gray-900">Payments</h3>
+                            <p class="text-sm text-gray-500 mt-1 mb-5">Enter the amount received for these walk-ins by payment type. An empty box counts as 0.</p>
+                            <div class="grid grid-cols-1 sm:grid-cols-3 gap-x-6 gap-y-5">
+                                <div>
+                                    <label class="block mb-2 text-sm font-semibold text-gray-700"><i class="fa-solid fa-money-bill-wave text-gray-400 mr-1.5"></i>Cash</label>
+                                    {{ payment_form.cash }}
+                                </div>
+                                <div>
+                                    <label class="block mb-2 text-sm font-semibold text-gray-700"><i class="fa-brands fa-google-pay text-gray-400 mr-1"></i>GPay / UPI</label>
+                                    {{ payment_form.gpay }}
+                                </div>
+                                <div>
+                                    <label class="block mb-2 text-sm font-semibold text-gray-700"><i class="fa-regular fa-credit-card text-gray-400 mr-1.5"></i>Card</label>
+                                    {{ payment_form.card }}
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Action Buttons -->
+                        <div class="flex flex-col-reverse sm:flex-row justify-end gap-3 pt-8 mt-8 border-t border-gray-100">
+                            {% if can.reports %}<a href="{% url 'admin_reports_add' %}" class="w-full sm:w-auto px-6 py-2.5 text-sm font-semibold text-gray-600 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 text-center transition-colors">
+                                Cancel
+                            </a>{% endif %}
+                            <button type="submit" class="w-full sm:w-auto px-6 py-2.5 text-sm font-semibold text-white bg-[#273B30] rounded-lg hover:bg-[#1A2720] shadow-sm transition-colors flex items-center justify-center">
+                                <i class="fa-solid fa-check mr-2"></i> Save Walk-ins & Payments
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+        {% endblock %}

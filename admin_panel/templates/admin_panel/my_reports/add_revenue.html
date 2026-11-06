@@ -1,0 +1,235 @@
+{% extends "admin_panel/admin_base.html" %}
+
+{% block title %}Add Revenue{% endblock %}
+
+{% block extra_head %}
+<style>
+        body {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            background-color: #F8F9FA;
+        }
+        /* Custom scrollbar */
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #E5E7EB; border-radius: 10px; }
+
+        /* Styling for default Django form inputs */
+        .django-form input, .django-form select, .django-form textarea {
+            width: 100%;
+            padding: 0.625rem 1rem;
+            background-color: #F9FAFB;
+            border: 1px solid #E5E7EB;
+            border-radius: 0.5rem;
+            font-size: 0.875rem;
+            color: #111827;
+            transition: all 0.2s ease-in-out;
+        }
+        .django-form input:focus, .django-form select:focus, .django-form textarea:focus {
+            outline: none;
+            border-color: #273B30;
+            background-color: #ffffff;
+            box-shadow: 0 0 0 3px rgba(39, 59, 48, 0.1);
+        }
+    </style>
+{% endblock %}
+
+{% block header %}
+<header class="px-6 sm:px-10 py-6 flex items-center gap-4 z-10 sticky top-0 md:static bg-[#F8F9FA] border-b border-gray-200/50">
+            <button onclick="toggleSidebar()" class="md:hidden text-gray-700 p-2 -ml-2 rounded-lg hover:bg-gray-200 transition-colors">
+                <i class="fa-solid fa-bars text-xl"></i>
+            </button>
+            
+            <nav class="flex text-sm text-gray-500 font-medium">
+                {% if can.reports %}<a href="{% url 'admin_report_dashboard' %}" class="hover:text-gray-900 transition">Reports</a>{% endif %}
+                <span class="mx-2 text-gray-400">/</span>
+                {% if can.reports %}<a href="{% url 'admin_report_hub' report.id %}" class="hover:text-gray-900 transition">Report Hub</a>{% endif %}
+                <span class="mx-2 text-gray-400">/</span>
+                <span class="text-gray-900 font-semibold">Add Revenue</span>
+            </nav>
+        </header>
+{% endblock %}
+
+{% block main_class %}px-6 sm:px-10 py-8{% endblock %}
+
+{% block content %}
+            
+            <div class="max-w-4xl mx-auto">
+                
+                <!-- Page Title -->
+                <div class="mb-8 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                    <div>
+                        <h1 class="text-2xl font-bold text-gray-900 tracking-tight">Add Revenue</h1>
+                        <p class="text-sm text-gray-500 mt-1">Enter today's revenue details for your branch.</p>
+                    </div>
+                    {% if can.reports %}<a href="{% url 'admin_report_hub' report.id %}" class="inline-flex items-center text-sm font-semibold text-gray-600 hover:text-[#273B30] bg-white border border-gray-200 px-4 py-2 rounded-lg shadow-sm hover:bg-gray-50 transition">
+                        <i class="fa-solid fa-arrow-left mr-2"></i> Back to Hub
+                    </a>{% endif %}
+                </div>
+
+                <!-- Report Context Details -->
+                {% if report %}
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
+                    <div class="bg-white border border-gray-100 rounded-xl p-4 shadow-sm flex items-center gap-4">
+                        <div class="bg-[#EEF0EF] w-10 h-10 rounded-lg flex items-center justify-center text-gray-700 shrink-0">
+                            <i class="fa-regular fa-calendar text-sm"></i>
+                        </div>
+                        <div>
+                            <p class="text-[11px] uppercase font-bold text-gray-400 tracking-wider">Date</p>
+                            <p class="text-sm font-bold text-gray-900 mt-0.5">{{ report.report_date|date:"d M Y" }}</p>
+                        </div>
+                    </div>
+
+                    <div class="bg-white border border-gray-100 rounded-xl p-4 shadow-sm flex items-center gap-4">
+                        <div class="bg-[#EEF0EF] w-10 h-10 rounded-lg flex items-center justify-center text-gray-700 shrink-0">
+                            <i class="fa-solid fa-location-dot text-sm"></i>
+                        </div>
+                        <div>
+                            <p class="text-[11px] uppercase font-bold text-gray-400 tracking-wider">Branch</p>
+                            <p class="text-sm font-bold text-gray-900 mt-0.5">{{ report.branch.name }}</p>
+                        </div>
+                    </div>
+
+                    <div class="bg-white border border-gray-100 rounded-xl p-4 shadow-sm flex items-center gap-4">
+                        <div class="bg-[#EEF0EF] w-10 h-10 rounded-lg flex items-center justify-center text-gray-700 shrink-0">
+                            <i class="fa-regular fa-user text-sm"></i>
+                        </div>
+                        <div>
+                            <p class="text-[11px] uppercase font-bold text-gray-400 tracking-wider">Staff</p>
+                            <p class="text-sm font-bold text-gray-900 mt-0.5">{{ report.staff.username }}</p>
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
+
+                <!-- Revenue Form Card -->
+                <div class="bg-white border border-gray-100 rounded-2xl shadow-sm overflow-hidden">
+                    
+                    <div class="px-6 sm:px-8 py-5 border-b border-gray-100 bg-[#F0F3F1]/50">
+                        <h3 class="text-base font-bold text-gray-900">Revenue Entry Form</h3>
+                    </div>
+
+                    <div class="p-6 sm:p-8">
+                        <form method="POST" class="django-form">
+                            {% csrf_token %}
+
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6">
+                                
+                                <!-- Treatment Revenue -->
+                                <div>
+                                    <label for="{{ form.treatment_revenue.id_for_label }}" class="block text-sm font-semibold text-gray-700 mb-2">
+                                        Treatment Revenue
+                                    </label>
+                                    <div class="relative">
+                                        <span class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm font-medium">₹</span>
+                                        <!-- Adjusted padding for the rupee symbol -->
+                                        <div class="[&>input]:pl-8">
+                                            {{ form.treatment_revenue }}
+                                        </div>
+                                    </div>
+                                    {% if form.treatment_revenue.errors %}
+                                        <p class="text-xs text-red-500 mt-1.5 flex items-center font-medium">
+                                            <i class="fa-solid fa-circle-exclamation mr-1.5"></i>{{ form.treatment_revenue.errors|striptags }}
+                                        </p>
+                                    {% endif %}
+                                </div>
+
+                                <!-- Massage Revenue -->
+                                <div>
+                                    <label for="{{ form.massage_revenue.id_for_label }}" class="block text-sm font-semibold text-gray-700 mb-2">
+                                        Massage Revenue
+                                    </label>
+                                    <div class="relative">
+                                        <span class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm font-medium">₹</span>
+                                        <div class="[&>input]:pl-8">
+                                            {{ form.massage_revenue }}
+                                        </div>
+                                    </div>
+                                    {% if form.massage_revenue.errors %}
+                                        <p class="text-xs text-red-500 mt-1.5 flex items-center font-medium">
+                                            <i class="fa-solid fa-circle-exclamation mr-1.5"></i>{{ form.massage_revenue.errors|striptags }}
+                                        </p>
+                                    {% endif %}
+                                </div>
+
+                                <!-- New Package Revenue -->
+                                <div>
+                                    <label for="{{ form.new_package_revenue.id_for_label }}" class="block text-sm font-semibold text-gray-700 mb-2">
+                                        New Package Revenue
+                                    </label>
+                                    <div class="relative">
+                                        <span class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm font-medium">₹</span>
+                                        <div class="[&>input]:pl-8">
+                                            {{ form.new_package_revenue }}
+                                        </div>
+                                    </div>
+                                    {% if form.new_package_revenue.errors %}
+                                        <p class="text-xs text-red-500 mt-1.5 flex items-center font-medium">
+                                            <i class="fa-solid fa-circle-exclamation mr-1.5"></i>{{ form.new_package_revenue.errors|striptags }}
+                                        </p>
+                                    {% endif %}
+                                </div>
+
+                                <!-- Consultation Revenue -->
+                                <div>
+                                    <label for="{{ form.consultation_revenue.id_for_label }}" class="block text-sm font-semibold text-gray-700 mb-2">
+                                        Consultation Revenue
+                                    </label>
+                                    <div class="relative">
+                                        <span class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm font-medium">₹</span>
+                                        <div class="[&>input]:pl-8">
+                                            {{ form.consultation_revenue }}
+                                        </div>
+                                    </div>
+                                    {% if form.consultation_revenue.errors %}
+                                        <p class="text-xs text-red-500 mt-1.5 flex items-center font-medium">
+                                            <i class="fa-solid fa-circle-exclamation mr-1.5"></i>{{ form.consultation_revenue.errors|striptags }}
+                                        </p>
+                                    {% endif %}
+                                </div>
+
+                                <!-- Sales Revenue -->
+                                <div>
+                                    <label for="{{ form.sales_revenue.id_for_label }}" class="block text-sm font-semibold text-gray-700 mb-2">
+                                        Sales Revenue
+                                    </label>
+                                    <div class="relative">
+                                        <span class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm font-medium">₹</span>
+                                        <div class="[&>input]:pl-8">
+                                            {{ form.sales_revenue }}
+                                        </div>
+                                    </div>
+                                    {% if form.sales_revenue.errors %}
+                                        <p class="text-xs text-red-500 mt-1.5 flex items-center font-medium">
+                                            <i class="fa-solid fa-circle-exclamation mr-1.5"></i>{{ form.sales_revenue.errors|striptags }}
+                                        </p>
+                                    {% endif %}
+                                </div>
+                            </div>
+
+                            <!-- Non-field Errors -->
+                            {% if form.non_field_errors %}
+                                <div class="mt-6 p-4 bg-[#FEF6F5] border border-[#FBE9E7] rounded-xl flex items-start gap-3">
+                                    <i class="fa-solid fa-triangle-exclamation text-[#D06B5D] mt-0.5"></i>
+                                    <div class="text-sm font-medium text-[#D06B5D]">
+                                        {{ form.non_field_errors }}
+                                    </div>
+                                </div>
+                            {% endif %}
+
+                            <!-- Action Buttons -->
+                            <div class="mt-10 pt-6 border-t border-gray-100 flex flex-col-reverse sm:flex-row items-center justify-end gap-3">
+                                {% if can.reports %}<a href="{% url 'admin_revenue_history' %}" class="w-full sm:w-auto px-6 py-2.5 bg-white border border-gray-200 text-gray-700 text-sm font-semibold rounded-lg hover:bg-gray-50 transition text-center shadow-sm">
+                                    Cancel
+                                </a>{% endif %}
+                                <button type="submit" class="w-full sm:w-auto px-6 py-2.5 bg-[#273B30] hover:bg-[#1A2720] text-white text-sm font-semibold rounded-lg transition shadow-sm flex items-center justify-center gap-2">
+                                    <i class="fa-solid fa-check"></i> Save Revenue
+                                </button>
+                            </div>
+
+                        </form>
+                    </div>
+                </div>
+
+            </div>
+            
+        {% endblock %}
