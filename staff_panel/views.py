@@ -328,19 +328,6 @@ def attendance_context(staff, filter_type):
             'type': 'attendance',
             'date': record.date,
             'activities': activities,
-            # Each check-in and check-out, with its place. The page shows the name, or the coordinates if no name was found.
-            'activity_list': [
-                {
-                    'label': activity.get_activity_type_display(),
-                    'time': activity.timestamp,
-                    'place': activity.place_name,
-                    'coords': (
-                        f"{activity.latitude:.4f}, {activity.longitude:.4f}"
-                        if activity.latitude is not None and activity.longitude is not None else ''
-                    ),
-                }
-                for activity in activities
-            ],
             'record': record,
             'check_in': record.check_in,
             'check_out': record.check_out

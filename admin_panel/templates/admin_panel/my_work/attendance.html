@@ -255,9 +255,9 @@
                                                 </div>
                                             </div>
                                             <div class="mt-2 space-y-0.5 text-xs text-gray-500">
-                                                {% for act in item.activity_list %}
-                                                    <p><span class="font-medium text-gray-600">{{ act.label }}:</span> {% if act.place %}{{ act.place }}{% elif act.coords %}{{ act.coords }}{% else %}Location not shared{% endif %}</p>
-                                                {% endfor %}
+                                                {% with checkin=item.record.latest_checkin %}
+                                                    <p><span class="font-medium text-gray-600">Check-in location:</span> {% if checkin %}{{ checkin.location_text }}{% else %}Location not shared{% endif %}</p>
+                                                {% endwith %}
                                             </div>
                                         </td>
 

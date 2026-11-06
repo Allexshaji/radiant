@@ -42,6 +42,12 @@ class Attendance(models.Model):
     def __str__(self):
         return f"{self.staff} - {self.date}"
 
+    @property
+    def latest_checkin(self):
+        """The day's most recent check-in, or None. The history shows this check-in's location only."""
+        checkins = [a for a in self.activities.all() if a.activity_type == 'check_in']
+        return max(checkins, key=lambda a: a.timestamp, default=None)
+
 
 class CheckInCheckOut(models.Model):
     ACTIVITY_CHOICES = [
@@ -67,6 +73,15 @@ class CheckInCheckOut(models.Model):
     
     def __str__(self):
         return f"{self.attendance.staff.username} - {self.activity_type} - {self.timestamp.strftime('%H:%M:%S')}"
+
+    @property
+    def location_text(self):
+        """What the history shows for this check-in: the place name, else the coordinates, else a note."""
+        if self.place_name:
+            return self.place_name
+        if self.latitude is not None and self.longitude is not None:
+            return f"{self.latitude:.4f}, {self.longitude:.4f}"
+        return "Location not shared"
 
 class DailyReport(models.Model):
 

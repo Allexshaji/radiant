@@ -67,9 +67,7 @@
                                     <td class="px-6 py-3 text-gray-700">{{ row.check_in|time:"h:i A" }}</td>
                                     <td class="px-6 py-3 text-gray-700">{{ row.check_out|time:"h:i A"|default:"-" }}</td>
                                     <td class="px-6 py-3 text-xs text-gray-600">
-                                        {% for act in row.activity_list %}
-                                            <div>{{ act.label }}: {% if act.place %}{{ act.place }}{% elif act.coords %}{{ act.coords }}{% else %}Location not shared{% endif %}</div>
-                                        {% endfor %}
+                                        {% with checkin=row.record.latest_checkin %}{% if checkin %}{{ checkin.location_text }}{% else %}Location not shared{% endif %}{% endwith %}
                                     </td>
                                     <td class="px-6 py-3 text-gray-400">-</td>
                                 {% else %}

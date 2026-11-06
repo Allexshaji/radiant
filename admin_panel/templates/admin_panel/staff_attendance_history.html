@@ -88,21 +88,17 @@
                                 
                                 <td class="px-6 py-4 text-gray-600 font-medium">
                                     {{ record.check_in|time:"h:i A" }}
-                                    {% for act in record.activities.all %}{% if act.activity_type == 'check_in' and act.latitude is not None %}
-                                        {% if act.place_name %}<span class="block text-xs text-gray-600 font-medium">{{ act.place_name }}</span>{% endif %}
-                                        <a href="https://www.google.com/maps?q={{ act.latitude }},{{ act.longitude }}" target="_blank" rel="noopener" class="block text-xs text-[#273B30] font-semibold hover:underline"><i class="fa-solid fa-location-dot mr-1"></i>Check-in location</a>
-                                    {% endif %}{% endfor %}
+                                    {% with checkin=record.latest_checkin %}
+                                        <span class="block text-xs text-gray-600 font-medium">{% if checkin %}{{ checkin.location_text }}{% else %}Location not shared{% endif %}</span>
+                                        {% if checkin and checkin.latitude is not None %}<a href="https://www.google.com/maps?q={{ checkin.latitude }},{{ checkin.longitude }}" target="_blank" rel="noopener" class="block text-xs text-[#273B30] font-semibold hover:underline"><i class="fa-solid fa-location-dot mr-1"></i>View on map</a>{% endif %}
+                                    {% endwith %}
                                 </td>
                                 
                                 <td class="px-6 py-4">
                                     {% if record.check_out %}
                                         <span class="text-gray-600 font-medium">
                                             {{ record.check_out|time:"h:i A" }}
-                                            {% for act in record.activities.all %}{% if act.activity_type == 'check_out' and act.latitude is not None %}
-                                                {% if act.place_name %}<span class="block text-xs text-gray-600 font-medium">{{ act.place_name }}</span>{% endif %}
-                                                <a href="https://www.google.com/maps?q={{ act.latitude }},{{ act.longitude }}" target="_blank" rel="noopener" class="block text-xs text-[#273B30] font-semibold hover:underline"><i class="fa-solid fa-location-dot mr-1"></i>Check-out location</a>
-                                            {% endif %}{% endfor %}
-                                        </span>
+                                                                                    </span>
                                     {% else %}
                                         <span class="inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-semibold rounded-md bg-emerald-50 text-emerald-700 border border-emerald-100">
                                             <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
