@@ -89,6 +89,7 @@
                                 <td class="px-6 py-4 text-gray-600 font-medium">
                                     {{ record.check_in|time:"h:i A" }}
                                     {% for act in record.activities.all %}{% if act.activity_type == 'check_in' and act.latitude is not None %}
+                                        {% if act.place_name %}<span class="block text-xs text-gray-600 font-medium">{{ act.place_name }}</span>{% endif %}
                                         <a href="https://www.google.com/maps?q={{ act.latitude }},{{ act.longitude }}" target="_blank" rel="noopener" class="block text-xs text-[#273B30] font-semibold hover:underline"><i class="fa-solid fa-location-dot mr-1"></i>Check-in location</a>
                                     {% endif %}{% endfor %}
                                 </td>
@@ -98,6 +99,7 @@
                                         <span class="text-gray-600 font-medium">
                                             {{ record.check_out|time:"h:i A" }}
                                             {% for act in record.activities.all %}{% if act.activity_type == 'check_out' and act.latitude is not None %}
+                                                {% if act.place_name %}<span class="block text-xs text-gray-600 font-medium">{{ act.place_name }}</span>{% endif %}
                                                 <a href="https://www.google.com/maps?q={{ act.latitude }},{{ act.longitude }}" target="_blank" rel="noopener" class="block text-xs text-[#273B30] font-semibold hover:underline"><i class="fa-solid fa-location-dot mr-1"></i>Check-out location</a>
                                             {% endif %}{% endfor %}
                                         </span>
