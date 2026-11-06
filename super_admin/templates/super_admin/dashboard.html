@@ -153,17 +153,6 @@
         <div class="bg-white border border-gray-100 rounded-xl p-6 shadow-sm flex flex-col justify-between hover:shadow-md transition-shadow">
             <div class="flex justify-between items-start mb-6">
                 <div>
-                    <h3 class="text-lg font-bold text-gray-900">Staff Control</h3>
-                    <p class="text-sm text-gray-500 mt-1">Switch staff features on or off for every staff member.</p>
-                </div>
-                <div class="w-10 h-10 rounded-lg bg-[#EEF0EF] flex items-center justify-center text-gray-700 shrink-0"><i class="fa-solid fa-sliders text-sm"></i></div>
-            </div>
-            <a href="{% url 'super_staff_control' %}" class="inline-flex items-center justify-center w-full sm:w-auto px-5 py-2.5 bg-[#F0F3F1] border border-gray-200 text-gray-900 text-sm font-semibold rounded-lg hover:bg-[#E3EAE6] transition">Open <i class="fa-solid fa-arrow-right ml-2 text-gray-500"></i></a>
-        </div>
-
-        <div class="bg-white border border-gray-100 rounded-xl p-6 shadow-sm flex flex-col justify-between hover:shadow-md transition-shadow">
-            <div class="flex justify-between items-start mb-6">
-                <div>
                     <h3 class="text-lg font-bold text-gray-900">Admin Module</h3>
                     <p class="text-sm text-gray-500 mt-1">Every admin page is open to you, the same as an admin.</p>
                 </div>
@@ -176,6 +165,19 @@
 
     <!-- Staff features at a glance -->
     <h2 class="text-xs font-bold uppercase tracking-wider text-gray-400 mb-3">Staff features</h2>
+    <div class="bg-white border border-gray-100 rounded-xl p-6 shadow-sm mb-5 flex flex-col sm:flex-row sm:items-center justify-between gap-5">
+        <div class="flex items-start gap-4">
+            <div class="w-10 h-10 rounded-lg bg-[#EEF0EF] flex items-center justify-center text-gray-700 shrink-0"><i class="fa-solid fa-sliders text-sm"></i></div>
+            <div>
+                <h3 class="text-lg font-bold text-gray-900">Staff Control</h3>
+                <p class="text-sm text-gray-500 mt-1">Switch staff features on or off for every staff member, or choose which areas each staff member can open.</p>
+            </div>
+        </div>
+        <div class="flex flex-col sm:flex-row gap-3 shrink-0">
+            <a href="{% url 'super_staff_control' %}" class="inline-flex items-center justify-center px-5 py-2.5 bg-[#F0F3F1] border border-gray-200 text-gray-900 text-sm font-semibold rounded-lg hover:bg-[#E3EAE6] transition">Staff features <i class="fa-solid fa-arrow-right ml-2 text-gray-500"></i></a>
+            <a href="{% url 'super_staff_access' %}" class="inline-flex items-center justify-center px-5 py-2.5 bg-[#F0F3F1] border border-gray-200 text-gray-900 text-sm font-semibold rounded-lg hover:bg-[#E3EAE6] transition">Per-staff access <i class="fa-solid fa-arrow-right ml-2 text-gray-500"></i></a>
+        </div>
+    </div>
     <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
         <table class="w-full text-left text-sm">
             <thead class="bg-gray-50/50 border-b border-gray-100">
