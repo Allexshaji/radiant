@@ -1,0 +1,47 @@
+{% extends "super_admin/base.html" %}
+
+{% block title %}Admin Salary{% endblock %}
+{% block heading %}Admin Salary{% endblock %}
+{% block subheading %}This month's pay for each admin. Open an admin to set the monthly salary{% endblock %}
+
+{% block content %}
+    <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+        {% if rows %}
+            <table class="w-full text-left text-sm">
+                <thead class="bg-gray-50/50 border-b border-gray-100">
+                    <tr>
+                        <th class="px-6 py-4 font-semibold text-gray-600">Admin</th>
+                        <th class="px-6 py-4 font-semibold text-gray-600">Monthly salary</th>
+                        <th class="px-6 py-4 font-semibold text-gray-600">Allowance</th>
+                        <th class="px-6 py-4 font-semibold text-gray-600">Leave deduction</th>
+                        <th class="px-6 py-4 font-semibold text-gray-600">Total this month</th>
+                        <th class="px-6 py-4 font-semibold text-gray-600 text-right">Open</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-gray-50">
+                    {% for row in rows %}
+                        <tr class="hover:bg-gray-50/50">
+                            <td class="px-6 py-4">
+                                <div class="font-bold text-gray-900">{{ row.account.full_name|default:row.account.username }}</div>
+                                <div class="text-xs text-gray-500 font-medium mt-0.5">{{ row.account.branch.name|default:"No branch" }}</div>
+                            </td>
+                            {% if row.payroll.has_rate %}
+                                <td class="px-6 py-4 text-gray-700">₹{{ row.payroll.monthly }}</td>
+                                <td class="px-6 py-4 text-gray-700">{% if row.payroll.has_allowance %}₹{{ row.payroll.allowance }}{% else %}-{% endif %}</td>
+                                <td class="px-6 py-4 text-gray-700">₹{{ row.payroll.deduction }} <span class="text-xs text-gray-400">({{ row.payroll.deducted_days }} day(s))</span></td>
+                                <td class="px-6 py-4 font-bold text-gray-900">₹{{ row.payroll.total }}</td>
+                            {% else %}
+                                <td colspan="4" class="px-6 py-4 text-amber-700 text-sm font-medium">No monthly salary set yet</td>
+                            {% endif %}
+                            <td class="px-6 py-4 text-right">
+                                <a href="{% url 'super_admin_admin_salary_detail' row.account.pk %}" class="text-sm font-semibold text-[#273B30] hover:underline">Open</a>
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        {% else %}
+            <p class="px-6 py-10 text-center text-sm text-gray-500">No admin accounts yet.</p>
+        {% endif %}
+    </div>
+{% endblock %}

@@ -15,9 +15,21 @@ MY_REPORT_PAGES = [
     "admin_expenses_history", "admin_view_expense_report", "admin_delete_expense_report",
 ]
 
+# Every page of an admin's own work. The sidebar item stays lit on all of them.
+MY_WORK_ATTENDANCE_PAGES = ["admin_my_attendance"]
+MY_WORK_LEAVE_PAGES = ["admin_my_leave", "admin_my_apply_leave", "admin_my_leave_detail"]
+MY_WORK_PROFILE_PAGES = ["admin_my_profile", "admin_my_profile_edit"]
+
 NAV_GROUPS = [  # (heading, items)
     (None, [
         (None, "Dashboard", "fa-solid fa-chart-pie", "admin_dashboard", ["admin_dashboard"]),
+    ]),
+    ("My Work", [
+        ("my_attendance", "My Attendance", "fa-solid fa-user-check", "admin_my_attendance",
+         MY_WORK_ATTENDANCE_PAGES),
+        ("my_leave", "My Leave", "fa-solid fa-umbrella-beach", "admin_my_leave", MY_WORK_LEAVE_PAGES),
+        ("my_salary", "My Salary", "fa-solid fa-wallet", "admin_my_salary", ["admin_my_salary"]),
+        ("my_profile", "My Profile", "fa-solid fa-id-badge", "admin_my_profile", MY_WORK_PROFILE_PAGES),
     ]),
     ("Super Admin", [
         ("super_admin", "Super Dashboard", "fa-solid fa-crown", "super_dashboard", ["super_dashboard"]),
@@ -27,6 +39,14 @@ NAV_GROUPS = [  # (heading, items)
         ("super_admin", "Add Branch", "fa-solid fa-plus", "branch_create", ["branch_create"]),
         ("super_admin", "Received Reports", "fa-solid fa-inbox", "super_received_reports",
          ["super_received_reports"]),
+    ]),
+    ("Admin Work", [
+        ("super_admin", "Admin Attendance", "fa-solid fa-user-clock", "super_admin_attendance",
+         ["super_admin_attendance"]),
+        ("super_admin", "Admin Leave", "fa-solid fa-envelope-open", "super_admin_admin_leave",
+         ["super_admin_admin_leave"]),
+        ("super_admin", "Admin Salary", "fa-solid fa-money-check-dollar", "super_admin_admin_salary",
+         ["super_admin_admin_salary", "super_admin_admin_salary_detail"]),
     ]),
     ("Staff", [
         ("staff", "Pending Approvals", "fa-solid fa-user-clock", "pending_staff_approval",

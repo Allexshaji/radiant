@@ -1,0 +1,75 @@
+{% extends "super_admin/base.html" %}
+
+{% block title %}Admin Leave{% endblock %}
+{% block heading %}Admin Leave{% endblock %}
+{% block subheading %}Leave applied for by admins. Only a Super Admin approves these{% endblock %}
+
+{% block content %}
+    <div class="flex flex-wrap gap-2 mb-6">
+        {% for value in statuses %}
+            <a href="?status={{ value }}"
+               class="px-4 py-2 rounded-lg text-sm font-semibold border transition {% if status == value %}bg-[#273B30] text-white border-[#273B30]{% else %}bg-white text-gray-600 border-gray-200 hover:bg-gray-50{% endif %}">
+                {{ value|capfirst }}
+            </a>
+        {% endfor %}
+    </div>
+
+    <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+        {% if leaves %}
+            <table class="w-full text-left text-sm">
+                <thead class="bg-gray-50/50 border-b border-gray-100">
+                    <tr>
+                        <th class="px-6 py-4 font-semibold text-gray-600">Admin</th>
+                        <th class="px-6 py-4 font-semibold text-gray-600">Leave</th>
+                        <th class="px-6 py-4 font-semibold text-gray-600">Reason</th>
+                        <th class="px-6 py-4 font-semibold text-gray-600">Status</th>
+                        <th class="px-6 py-4 font-semibold text-gray-600 text-right">Decision</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-gray-50">
+                    {% for leave in leaves %}
+                        <tr class="hover:bg-gray-50/50 align-top">
+                            <td class="px-6 py-4">
+                                <div class="font-bold text-gray-900">{{ leave.staff.full_name|default:leave.staff.username }}</div>
+                                <div class="text-xs text-gray-500 font-medium mt-0.5">{{ leave.staff.branch.name|default:"No branch" }}</div>
+                            </td>
+                            <td class="px-6 py-4 text-gray-700">
+                                <div class="font-semibold">{{ leave.leave_type.name }}</div>
+                                <div class="text-xs text-gray-500">{{ leave.start_date|date:"d M Y" }} to {{ leave.end_date|date:"d M Y" }} · {{ leave.days_requested }} day(s)</div>
+                            </td>
+                            <td class="px-6 py-4 text-gray-700 max-w-xs">{{ leave.reason }}</td>
+                            <td class="px-6 py-4">
+                                {% if leave.status == "pending" %}
+                                    <span class="px-2.5 py-1 rounded-full text-xs font-semibold bg-amber-100 text-amber-800">Pending</span>
+                                {% elif leave.status == "approved" %}
+                                    <span class="px-2.5 py-1 rounded-full text-xs font-semibold bg-green-100 text-green-800">Approved</span>
+                                {% else %}
+                                    <span class="px-2.5 py-1 rounded-full text-xs font-semibold bg-red-100 text-red-800">Rejected</span>
+                                {% endif %}
+                            </td>
+                            <td class="px-6 py-4 text-right">
+                                {% if leave.status == "pending" %}
+                                    <form method="post" action="{% url 'approve_leave' leave.pk %}" class="inline">
+                                        {% csrf_token %}
+                                        <button type="submit" class="bg-green-600 hover:bg-green-700 text-white text-xs font-semibold px-3 py-2 rounded-lg transition">Approve</button>
+                                    </form>
+                                    <form method="post" action="{% url 'reject_leave' leave.pk %}" class="inline-flex gap-2 mt-2 items-center justify-end">
+                                        {% csrf_token %}
+                                        <input type="text" name="reason" placeholder="Reason (optional)" class="border border-gray-300 rounded-lg px-2 py-1.5 text-xs w-40">
+                                        <button type="submit" class="bg-red-600 hover:bg-red-700 text-white text-xs font-semibold px-3 py-2 rounded-lg transition">Reject</button>
+                                    </form>
+                                {% elif leave.status == "rejected" and leave.rejection_reason %}
+                                    <span class="text-xs text-gray-500">{{ leave.rejection_reason }}</span>
+                                {% else %}
+                                    <span class="text-xs text-gray-400">Decided</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        {% else %}
+            <p class="px-6 py-10 text-center text-sm text-gray-500">No leave in this list.</p>
+        {% endif %}
+    </div>
+{% endblock %}

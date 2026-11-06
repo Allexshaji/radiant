@@ -15,6 +15,10 @@ ADMIN_SECTIONS = [
     ("staff", "Staff", "Pending approvals, all staff, edit and remove staff"),
     ("attendance", "Attendance", "Staff attendance and attendance history"),
     ("reports", "Reports", "Staff reports, approvals, report views, and the admin's own daily reports"),
+    ("my_attendance", "My Attendance", "The admin's own check-in, check-out and attendance history"),
+    ("my_leave", "My Leave", "The admin's own leave applications and their status"),
+    ("my_salary", "My Salary", "The admin's own salary"),
+    ("my_profile", "My Profile", "The admin's own account details"),
     ("requirements", "Requirements", "Requirements sent by staff"),
     ("leave", "Leave", "Leave dashboard, leave requests and leave policies"),
     ("expenses", "Expenses", "Expense names that staff choose from"),
@@ -31,6 +35,10 @@ STAFF_FEATURES = [
     ("requirements", "Requirements", "Send requirements to the admin"),
     ("salary", "Salary", "View salary details"),
 ]
+
+# The personal work sections above. They belong to Admins: a Super Admin does not
+# use them, so they are hidden from the Super Admin's sidebar.
+MY_WORK_SECTIONS = ("my_attendance", "my_leave", "my_salary", "my_profile")
 
 # Admin page (URL name) -> admin section. Pages not listed here, such as the
 # dashboard, are open to every admin.
@@ -103,6 +111,15 @@ ADMIN_URL_SECTIONS = {
     "admin_salary_delete_staff": "salary",
     "admin_salary_detail": "salary",
     "admin_salary_save_rates": "salary",
+
+    # An admin's own work pages (see admin_panel/my_work.py)
+    "admin_my_attendance": "my_attendance",
+    "admin_my_leave": "my_leave",
+    "admin_my_apply_leave": "my_leave",
+    "admin_my_leave_detail": "my_leave",
+    "admin_my_salary": "my_salary",
+    "admin_my_profile": "my_profile",
+    "admin_my_profile_edit": "my_profile",
 
     "branch_list": "branches",
     "branch_create": "branches",
@@ -217,6 +234,7 @@ class Permissions:
     KEYS = {
         "staff", "attendance", "reports", "requirements", "leave",
         "expenses", "salary", "branches", "admins", "super_admin",
+        "my_attendance", "my_leave", "my_salary", "my_profile",
     }
 
     def __init__(self, user):
@@ -231,7 +249,7 @@ class Permissions:
     def _allowed(self, key):
         role = self.user.role
         if role == User.SUPER_ADMIN:
-            return True
+            return key not in MY_WORK_SECTIONS
         if key == "super_admin":
             return False
         if role == User.ADMIN:

@@ -1,0 +1,117 @@
+{% extends "super_admin/base.html" %}
+
+{% block title %}Admin Attendance{% endblock %}
+{% block heading %}Admin Attendance{% endblock %}
+{% block subheading %}Check-in, check-out and leave for each admin{% endblock %}
+
+{% block content %}
+    <form method="get" class="bg-white rounded-xl shadow-sm border border-gray-100 p-5 mb-6 flex flex-col md:flex-row gap-4 md:items-end">
+        <div class="flex-1">
+            <label for="admin" class="block text-xs font-semibold text-gray-600 mb-1">Admin</label>
+            <select id="admin" name="admin" class="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm text-gray-900 bg-white">
+                <option value="">Every admin (today)</option>
+                {% for admin in admins %}
+                    <option value="{{ admin.pk }}" {% if selected and selected.pk == admin.pk %}selected{% endif %}>
+                        {{ admin.full_name|default:admin.username }}{% if admin.branch %} · {{ admin.branch.name }}{% endif %}
+                    </option>
+                {% endfor %}
+            </select>
+        </div>
+        <div>
+            <label for="filter" class="block text-xs font-semibold text-gray-600 mb-1">Period</label>
+            <select id="filter" name="filter" class="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm text-gray-900 bg-white">
+                {% for value, label in periods %}
+                    <option value="{{ value }}" {% if value == period %}selected{% endif %}>{{ label }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <button type="submit" class="bg-[#273B30] text-white text-sm font-semibold px-5 py-2.5 rounded-lg shadow-sm hover:opacity-90 transition">Show</button>
+    </form>
+
+    {% if selected %}
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+            <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-5">
+                <p class="text-xs font-semibold text-gray-500 uppercase tracking-wide">Days checked in</p>
+                <p class="text-2xl font-bold text-gray-900 mt-1">{{ total_attendance }}</p>
+            </div>
+            <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-5">
+                <p class="text-xs font-semibold text-gray-500 uppercase tracking-wide">Approved leave days</p>
+                <p class="text-2xl font-bold text-gray-900 mt-1">{{ total_leave_days }}</p>
+            </div>
+            <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-5">
+                <p class="text-xs font-semibold text-gray-500 uppercase tracking-wide">Leave waiting for approval</p>
+                <p class="text-2xl font-bold text-gray-900 mt-1">{{ pending_leave_days }}</p>
+            </div>
+        </div>
+
+        <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+            <div class="px-6 py-4 border-b border-gray-100 flex items-center justify-between">
+                <h2 class="font-bold text-gray-900">{{ selected.full_name|default:selected.username }} · {{ range_label }}</h2>
+            </div>
+            {% if history %}
+                <table class="w-full text-left text-sm">
+                    <thead class="bg-gray-50/50 border-b border-gray-100">
+                        <tr>
+                            <th class="px-6 py-3 font-semibold text-gray-600">Date</th>
+                            <th class="px-6 py-3 font-semibold text-gray-600">Check in</th>
+                            <th class="px-6 py-3 font-semibold text-gray-600">Check out</th>
+                            <th class="px-6 py-3 font-semibold text-gray-600">Leave</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-gray-50">
+                        {% for row in history %}
+                            <tr class="hover:bg-gray-50/50">
+                                <td class="px-6 py-3 font-medium text-gray-900">{{ row.date|date:"d M Y" }}</td>
+                                {% if row.type == "attendance" %}
+                                    <td class="px-6 py-3 text-gray-700">{{ row.check_in|time:"h:i A" }}</td>
+                                    <td class="px-6 py-3 text-gray-700">{{ row.check_out|time:"h:i A"|default:"-" }}</td>
+                                    <td class="px-6 py-3 text-gray-400">-</td>
+                                {% else %}
+                                    <td class="px-6 py-3 text-gray-400">-</td>
+                                    <td class="px-6 py-3 text-gray-400">-</td>
+                                    <td class="px-6 py-3 text-gray-700">{{ row.leave_type }} · {{ row.status|capfirst }}</td>
+                                {% endif %}
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            {% else %}
+                <p class="px-6 py-10 text-center text-sm text-gray-500">No attendance or leave in this period.</p>
+            {% endif %}
+        </div>
+    {% else %}
+        <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+            {% if rows %}
+                <table class="w-full text-left text-sm">
+                    <thead class="bg-gray-50/50 border-b border-gray-100">
+                        <tr>
+                            <th class="px-6 py-4 font-semibold text-gray-600">Admin</th>
+                            <th class="px-6 py-4 font-semibold text-gray-600">Branch</th>
+                            <th class="px-6 py-4 font-semibold text-gray-600">Today</th>
+                            <th class="px-6 py-4 font-semibold text-gray-600 text-right">History</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-gray-50">
+                        {% for row in rows %}
+                            <tr class="hover:bg-gray-50/50">
+                                <td class="px-6 py-4">
+                                    <div class="font-bold text-gray-900">{{ row.account.full_name|default:row.account.username }}</div>
+                                    <div class="text-xs text-gray-500 font-medium mt-0.5">{{ row.account.username }}</div>
+                                </td>
+                                <td class="px-6 py-4 text-gray-700">{{ row.account.branch.name|default:"No branch" }}</td>
+                                <td class="px-6 py-4">
+                                    <span class="px-2.5 py-1 rounded-full text-xs font-semibold {{ row.color }}">{{ row.status }}</span>
+                                </td>
+                                <td class="px-6 py-4 text-right">
+                                    <a href="?admin={{ row.account.pk }}&filter={{ period }}" class="text-sm font-semibold text-[#273B30] hover:underline">View history</a>
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            {% else %}
+                <p class="px-6 py-10 text-center text-sm text-gray-500">No admin accounts yet.</p>
+            {% endif %}
+        </div>
+    {% endif %}
+{% endblock %}

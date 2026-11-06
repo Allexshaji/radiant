@@ -59,7 +59,7 @@ from admin_panel.models import LeaveType, ExpenseType
 from staff_panel.models import Requirement
 from admin_panel.forms import LeaveTypeForm, ExpenseTypeForm
 from admin_panel.payroll import parse_month, staff_payroll_rows
-from accounts.access import branches_for, in_my_branch, is_admin_role
+from accounts.access import branches_for, in_my_branch, is_admin_role, is_super_admin
 
 @login_required
 def dashboard(request):
@@ -192,11 +192,11 @@ def all_staff_attendance(request):
         })
 
     # Leave Approval and Leave Management boxes, from real leave records.
-    pending = in_my_branch(LeaveApplication.objects.filter(status='pending'), request.user, "staff").select_related('staff', 'leave_type').order_by('applied_date')
+    pending = reviewable_leaves(request.user).filter(status='pending').select_related('staff', 'leave_type').order_by('applied_date')
     pending_count = pending.count()
     pending_staff_count = pending.order_by().values('staff').distinct().count()
-    on_leave_today = in_my_branch(LeaveApplication.objects.filter(status='approved', start_date__lte=today, end_date__gte=today), request.user, "staff").count()
-    upcoming_leaves = in_my_branch(LeaveApplication.objects.filter(status='approved', start_date__gt=today), request.user, "staff").count()
+    on_leave_today = reviewable_leaves(request.user).filter(status='approved', start_date__lte=today, end_date__gte=today).count()
+    upcoming_leaves = reviewable_leaves(request.user).filter(status='approved', start_date__gt=today).count()
 
     return render(request, "admin_panel/all_staff_attendance.html", {
         "live_attendance": live_attendance,
@@ -854,16 +854,28 @@ def is_admin_or_staff(user):
     """Check if user is admin or has staff permission"""
     return is_admin_role(user) or user.is_staff or user.groups.filter(name__in=['Admin', 'HR']).exists()
 
+def reviewable_leaves(user):
+    """The leave rows this user may look at and decide on.
+
+    An Admin sees the staff leave of their own branch. A Super Admin sees all staff and
+    admin leave. Admin leave is decided by a Super Admin only, and nobody reviews their own leave.
+    """
+    rows = in_my_branch(LeaveApplication.objects.all(), user, "staff").exclude(staff=user)
+    if not is_super_admin(user):
+        rows = rows.filter(staff__role=User.STAFF)
+    return rows
+
+
 @login_required
 @user_passes_test(is_admin_or_staff)
 def admin_leave_dashboard(request):
     """Admin dashboard - overview of all leave applications"""
-    pending = in_my_branch(LeaveApplication.objects.filter(status='pending'), request.user, "staff").count()
-    approved = in_my_branch(LeaveApplication.objects.filter(status='approved'), request.user, "staff").count()
-    rejected = in_my_branch(LeaveApplication.objects.filter(status='rejected'), request.user, "staff").count()
+    pending = reviewable_leaves(request.user).filter(status='pending').count()
+    approved = reviewable_leaves(request.user).filter(status='approved').count()
+    rejected = reviewable_leaves(request.user).filter(status='rejected').count()
     
     # Recent applications
-    recent_applications = in_my_branch(LeaveApplication.objects.all(), request.user, "staff")[:10]
+    recent_applications = reviewable_leaves(request.user)[:10]
     
     context = {
         'pending_count': pending,
@@ -878,7 +890,7 @@ def admin_leave_dashboard(request):
 @user_passes_test(is_admin_or_staff)
 def admin_leave_list(request):
     """Admin view - list all leave applications with filters"""
-    applications = in_my_branch(LeaveApplication.objects.all(), request.user, "staff")
+    applications = reviewable_leaves(request.user)
     
     # Filters
     status_filter = request.GET.get('status')
@@ -907,7 +919,7 @@ def admin_leave_list(request):
 @user_passes_test(is_admin_or_staff)
 def admin_review_leave(request, application_id):
     """Admin reviews and approves/rejects leave application"""
-    application = get_object_or_404(in_my_branch(LeaveApplication.objects.all(), request.user, "staff"), id=application_id)
+    application = get_object_or_404(reviewable_leaves(request.user), id=application_id)
     
     if request.method == 'POST':
         form = LeaveApprovalForm(request.POST, instance=application)
@@ -942,9 +954,9 @@ def all_leave_requests(request):
     """
 
     # Get all leave requests with optimized database queries
-    leave_requests = in_my_branch(LeaveApplication.objects.select_related(
+    leave_requests = reviewable_leaves(request.user).select_related(
         'staff', 'staff__branch'
-    ), request.user, "staff").order_by('-applied_date')
+    ).order_by('-applied_date')
 
     # ===== SEARCH FUNCTIONALITY =====
     search_query = request.GET.get('search', '').strip()
@@ -986,7 +998,7 @@ def edit_leave(request, leave_id):
     Allows admin to change status from Pending to Approved or Rejected.
     """
     try:
-        leave = in_my_branch(LeaveApplication.objects.select_related('staff', 'staff__branch'), request.user, "staff").get(id=leave_id)
+        leave = reviewable_leaves(request.user).select_related('staff', 'staff__branch').get(id=leave_id)
     except LeaveApplication.DoesNotExist:
         return redirect('all_leave_requests')
 
@@ -1028,7 +1040,7 @@ def delete_leave_request(request, pk):
     if request.method != 'POST':
         return redirect('all_leave_requests')
 
-    leave = get_object_or_404(in_my_branch(LeaveApplication.objects.all(), request.user, "staff"), pk=pk)
+    leave = get_object_or_404(reviewable_leaves(request.user), pk=pk)
     staff_name = leave.staff.full_name or leave.staff.username
     summary = f"{leave.leave_type.name} ({leave.start_date:%d %b %Y} to {leave.end_date:%d %b %Y})"
     leave.delete()
@@ -1049,7 +1061,7 @@ def approve_leave(request, pk):  # ← CHANGED to pk
         raise PermissionDenied
     if request.method == 'POST':
         try:
-            leave = in_my_branch(LeaveApplication.objects.all(), request.user, "staff").get(id=pk)
+            leave = reviewable_leaves(request.user).get(id=pk)
             leave.status = 'approved'
             leave.approved_by = request.user
             leave.decision_date = timezone.now()
@@ -1067,7 +1079,7 @@ def reject_leave(request, pk):  # ← CHANGED to pk
         raise PermissionDenied
     if request.method == 'POST':
         try:
-            leave = in_my_branch(LeaveApplication.objects.all(), request.user, "staff").get(id=pk)
+            leave = reviewable_leaves(request.user).get(id=pk)
             leave.status = 'rejected'
             leave.approved_by = request.user
             leave.decision_date = timezone.now()

@@ -1,0 +1,158 @@
+{% extends "admin_panel/admin_base.html" %}
+
+{% block title %}My Profile{% endblock %}
+
+{% block extra_head %}
+<style>
+        body {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            background-color: #F8F9FA;
+        }
+        /* Custom scrollbar for sidebar */
+        ::-webkit-scrollbar {
+            width: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #E5E7EB;
+            border-radius: 10px;
+        }
+    </style>
+{% endblock %}
+
+{% block header %}
+<header class="px-6 sm:px-10 py-8 flex flex-col md:flex-row md:items-start justify-between gap-6 z-10 sticky top-0 md:static bg-[#F8F9FA]">
+
+            <div class="flex items-start gap-4">
+                <!-- Hamburger Menu Button (Mobile Only) -->
+                <button onclick="toggleSidebar()" class="md:hidden text-gray-700 mt-1 p-2 -ml-2 rounded-lg hover:bg-gray-200 transition-colors" aria-label="Open Menu">
+                    <i class="fa-solid fa-bars text-xl"></i>
+                </button>
+
+                <div>
+                    <!-- Back Breadcrumb -->
+                    {% if can.reports %}<a href="{% url 'admin_report_dashboard' %}" class="inline-flex items-center gap-1.5 text-sm font-semibold text-gray-400 hover:text-gray-700 transition-colors mb-2">
+                        <i class="fa-solid fa-arrow-left text-xs"></i> Back to Dashboard
+                    </a>{% endif %}
+                    <h1 class="text-3xl font-bold text-gray-900 tracking-tight">My Profile</h1>
+                    <p class="text-sm text-gray-500 font-medium mt-1">Your account information.</p>
+                </div>
+            </div>
+
+            <!-- Edit Button (Quick Action) -->
+            <div class="flex items-center w-full md:w-auto mt-2 md:mt-0">
+                <a href="{% url 'admin_my_profile_edit' %}" class="w-full md:w-auto bg-[#273B30] hover:bg-[#1A2720] text-white text-sm font-medium px-5 py-2.5 rounded-lg shadow-sm transition flex items-center justify-center">
+                    <i class="fa-solid fa-pen-to-square mr-2"></i> Edit Name
+                </a>
+            </div>
+        </header>
+{% endblock %}
+
+{% block content %}
+
+            <!-- Profile Information Grid -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+
+                <!-- Name Card -->
+                <div class="bg-white border border-gray-100 rounded-xl p-6 shadow-sm flex flex-col justify-center min-h-[120px]">
+                    <div class="flex justify-between items-start">
+                        <div class="text-sm font-medium text-gray-500">Name</div>
+                        <div class="w-9 h-9 rounded-lg bg-[#EEF0EF] flex items-center justify-center text-gray-700 shrink-0">
+                            <i class="fa-regular fa-id-badge text-sm"></i>
+                        </div>
+                    </div>
+                    <div class="mt-2 text-xl font-bold text-gray-900 break-words">
+                        {% if user.get_full_name %}
+                            {{ user.get_full_name }}
+                        {% else %}
+                            {{ user.username }}
+                        {% endif %}
+                    </div>
+                </div>
+
+                <!-- Role Card -->
+                <div class="bg-white border border-gray-100 rounded-xl p-6 shadow-sm flex flex-col justify-center min-h-[120px]">
+                    <div class="flex justify-between items-start">
+                        <div class="text-sm font-medium text-gray-500">Role</div>
+                        <div class="w-9 h-9 rounded-lg bg-[#EEF0EF] flex items-center justify-center text-gray-700 shrink-0">
+                            <i class="fa-solid fa-briefcase text-sm"></i>
+                        </div>
+                    </div>
+                    <div class="mt-2 text-xl font-bold text-gray-900 break-words">
+                        {{ user.get_role_display|default:user.role }}
+                    </div>
+                </div>
+
+                <!-- Email Card -->
+                <div class="bg-white border border-gray-100 rounded-xl p-6 shadow-sm flex flex-col justify-center min-h-[120px]">
+                    <div class="flex justify-between items-start">
+                        <div class="text-sm font-medium text-gray-500">Email</div>
+                        <div class="w-9 h-9 rounded-lg bg-[#EEF0EF] flex items-center justify-center text-gray-700 shrink-0">
+                            <i class="fa-regular fa-envelope text-sm"></i>
+                        </div>
+                    </div>
+                    <div class="mt-2 text-xl font-bold text-gray-900 break-all">
+                        {% if user.email %}
+                            {{ user.email }}
+                        {% else %}
+                            <span class="text-gray-400 italic text-lg">Not provided</span>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <!-- Branch Card -->
+                <div class="bg-white border border-gray-100 rounded-xl p-6 shadow-sm flex flex-col justify-center min-h-[120px]">
+                    <div class="flex justify-between items-start">
+                        <div class="text-sm font-medium text-gray-500">Branch</div>
+                        <div class="w-9 h-9 rounded-lg bg-[#EEF0EF] flex items-center justify-center text-gray-700 shrink-0">
+                            <i class="fa-regular fa-building text-sm"></i>
+                        </div>
+                    </div>
+                    <div class="mt-2 text-xl font-bold text-gray-900 break-words">
+                        {% if user.branch %}
+                            {{ user.branch.name }}
+                        {% else %}
+                            <span class="text-gray-400 italic text-lg">No branch assigned</span>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <!-- Username Card -->
+                <div class="bg-white border border-gray-100 rounded-xl p-6 shadow-sm flex flex-col justify-center min-h-[120px]">
+                    <div class="flex justify-between items-start">
+                        <div class="text-sm font-medium text-gray-500">Username</div>
+                        <div class="w-9 h-9 rounded-lg bg-[#EEF0EF] flex items-center justify-center text-gray-700 shrink-0">
+                            <i class="fa-solid fa-at text-sm"></i>
+                        </div>
+                    </div>
+                    <div class="mt-2 text-xl font-bold text-gray-900 break-words">
+                        {{ user.username }}
+                    </div>
+                </div>
+
+                <!-- Account Status Card -->
+                <div class="bg-white border border-gray-100 rounded-xl p-6 shadow-sm flex flex-col justify-center min-h-[120px]">
+                    <div class="flex justify-between items-start">
+                        <div class="text-sm font-medium text-gray-500">Account Status</div>
+                        <div class="w-9 h-9 rounded-lg bg-[#EEF0EF] flex items-center justify-center text-gray-700 shrink-0">
+                            <i class="fa-solid fa-shield-halved text-sm"></i>
+                        </div>
+                    </div>
+                    <div class="mt-3">
+                        {% if user.is_active %}
+                            <span class="inline-flex items-center px-3 py-1 text-xs font-bold tracking-wider text-emerald-700 uppercase bg-emerald-50 border border-emerald-100 rounded-md">
+                                <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 mr-2"></span> Active
+                            </span>
+                        {% else %}
+                            <span class="inline-flex items-center px-3 py-1 text-xs font-bold tracking-wider text-rose-700 uppercase bg-rose-50 border border-rose-100 rounded-md">
+                                <span class="w-1.5 h-1.5 rounded-full bg-rose-500 mr-2"></span> Inactive
+                            </span>
+                        {% endif %}
+                    </div>
+                </div>
+
+            </div>
+
+        {% endblock %}

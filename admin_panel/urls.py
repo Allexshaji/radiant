@@ -1,5 +1,5 @@
 from django.urls import path
-from . import my_reports, views
+from . import my_reports, my_work, views
 
 urlpatterns = [
     path("", views.dashboard, name="admin_dashboard"),
@@ -38,6 +38,15 @@ urlpatterns = [
     path("my-reports/history/walkins/", my_reports.walkins_history_list, name="admin_walkins_history"),
     path("my-reports/history/revenue/", my_reports.revenue_history_list, name="admin_revenue_history"),
     path("my-reports/history/expenses/", my_reports.expenses_history_list, name="admin_expenses_history"),
+    # An admin's own work (see admin_panel/my_work.py)
+    path("my-work/attendance/", my_work.my_attendance, name="admin_my_attendance"),
+    path("my-work/leave/", my_work.my_leave_dashboard, name="admin_my_leave"),
+    path("my-work/leave/apply/", my_work.my_apply_leave, name="admin_my_apply_leave"),
+    path("my-work/leave/<int:application_id>/", my_work.my_leave_detail, name="admin_my_leave_detail"),
+    path("my-work/profile/", my_work.my_profile, name="admin_my_profile"),
+    path("my-work/profile/edit/", my_work.my_profile_edit, name="admin_my_profile_edit"),
+    path("my-work/salary/", my_work.my_salary, name="admin_my_salary"),
+
     path("report/<int:report_id>/approve/",views.approve_report,name="approve_report",),
     path("report/<int:report_id>/reject/",views.reject_report,name="reject_report",),
     path("report/<int:report_id>/edit/approval/",views.edit_approval,name="edit_approval",),

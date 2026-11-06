@@ -245,25 +245,14 @@ User = get_user_model()
 
 
 
-@login_required
-def attendance_page(request):
-    staff = request.user
+def attendance_context(staff, filter_type):
+    """What the attendance page shows for one member of staff: today's shift, leave and history.
+
+    The staff attendance page and an admin's My Attendance page both use this, so they show
+    the same shift and history. The caller makes sure staff.branch is set.
+    """
     today = timezone.localdate()
-
-    # Check-in and check-out are sent as a normal form POST. Handle them here and
-    # redirect back to this page, so the user sees a message instead of raw JSON.
-    if request.method == 'POST':
-        action = request.POST.get('action')
-        if action in ('check_in', 'check_out'):
-            _flash_check_result(request, action)
-        else:
-            messages.error(request, 'Invalid action.')
-        return redirect('attendance_page')
-
     branch = staff.branch
-    if branch is None:
-        messages.error(request, 'Your account does not have a branch assigned.')
-        return redirect('staff_dashboard')
 
     current_shift = Attendance.objects.filter(
         staff=staff,
@@ -278,9 +267,6 @@ def attendance_page(request):
         is_checked_in = bool(last_activity and last_activity.activity_type == 'check_in')
 
     leave_today = _approved_leave_on(staff, today)
-
-    filter_type = request.GET.get('filter', 'month')
-    filter_date = request.GET.get('date')
 
     if filter_type == 'today':
         start_date = today
@@ -379,7 +365,31 @@ def attendance_page(request):
         'pending_leave_days': pending_leave_days,
     }
 
+    return context
+
+
+@login_required
+def attendance_page(request):
+    staff = request.user
+
+    # Check-in and check-out are sent as a normal form POST. Handle them here and
+    # redirect back to this page, so the user sees a message instead of raw JSON.
+    if request.method == 'POST':
+        action = request.POST.get('action')
+        if action in ('check_in', 'check_out'):
+            _flash_check_result(request, action)
+        else:
+            messages.error(request, 'Invalid action.')
+        return redirect('attendance_page')
+
+    if staff.branch is None:
+        messages.error(request, 'Your account does not have a branch assigned.')
+        return redirect('staff_dashboard')
+
+    context = attendance_context(staff, request.GET.get('filter', 'month'))
     return render(request, 'staff_panel/attendance.html', context)
+
+
 @login_required
 def report_dashboard(request):
 

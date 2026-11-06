@@ -1,6 +1,6 @@
 from django.urls import path
 
-from . import views
+from . import admin_work, views
 
 urlpatterns = [
     path("", views.super_dashboard, name="super_dashboard"),
@@ -18,4 +18,10 @@ urlpatterns = [
 
     path("staff-access/", views.staff_access, name="super_staff_access"),
     path("staff-access/<int:user_id>/", views.staff_access_edit, name="super_staff_access_edit"),
+
+    # Admin work: an admin's attendance, leave and salary (see super_admin/admin_work.py)
+    path("admin-attendance/", admin_work.admin_attendance, name="super_admin_attendance"),
+    path("admin-leave/", admin_work.admin_leave, name="super_admin_admin_leave"),
+    path("admin-salary/", admin_work.admin_salary, name="super_admin_admin_salary"),
+    path("admin-salary/<int:user_id>/", admin_work.admin_salary_detail, name="super_admin_admin_salary_detail"),
 ]

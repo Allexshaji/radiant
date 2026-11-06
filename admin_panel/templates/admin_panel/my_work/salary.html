@@ -1,0 +1,102 @@
+{% extends "admin_panel/admin_base.html" %}
+
+{% block title %}Salary Management{% endblock %}
+
+{% block extra_head %}
+<style>
+        body {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            background-color: #F8F9FA;
+        }
+        /* Custom scrollbar for sidebar */
+        ::-webkit-scrollbar {
+            width: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #E5E7EB;
+            border-radius: 10px;
+        }
+    </style>
+{% endblock %}
+
+{% block header %}
+<header class="px-6 sm:px-10 py-8 flex flex-col md:flex-row md:items-start justify-between gap-6 z-10 sticky top-0 md:static bg-[#F8F9FA]">
+
+            <div class="flex items-start gap-4">
+                <!-- Hamburger Menu Button (Mobile Only) -->
+                <button onclick="toggleSidebar()" class="md:hidden text-gray-700 mt-1 p-2 -ml-2 rounded-lg hover:bg-gray-200 transition-colors" aria-label="Open Menu">
+                    <i class="fa-solid fa-bars text-xl"></i>
+                </button>
+
+                <div>
+                    <!-- Back Breadcrumb -->
+                    {% if can.reports %}<a href="{% url 'admin_report_dashboard' %}" class="inline-flex items-center gap-1.5 text-sm font-semibold text-gray-400 hover:text-gray-700 transition-colors mb-2">
+                        <i class="fa-solid fa-arrow-left text-xs"></i> Back to Dashboard
+                    </a>{% endif %}
+                    <h1 class="text-3xl font-bold text-gray-900 tracking-tight">Salary Management</h1>
+                    <p class="text-sm text-gray-500 font-medium mt-1">Your monthly salary and salary history.</p>
+                </div>
+            </div>
+        </header>
+{% endblock %}
+
+{% block content %}
+
+            <!-- Salary card -->
+            <div class="bg-white border border-gray-100 rounded-xl p-6 shadow-sm">
+                <div class="flex items-center justify-between mb-4">
+                    <h2 class="text-lg font-bold text-gray-900"><i class="fa-solid fa-coins text-gray-500 mr-2"></i>Salary</h2>
+                    <span class="text-xs text-gray-500">{{ payroll.month|date:"F Y" }}</span>
+                </div>
+                {% if payroll.has_rate %}
+                    <dl class="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+                        <div><dt class="text-gray-500">Monthly salary</dt><dd class="font-semibold text-gray-900">₹{{ payroll.monthly|floatformat:2 }}</dd></div>
+                        <div><dt class="text-gray-500">Per day</dt><dd class="font-semibold text-gray-900">₹{{ payroll.per_day|floatformat:2 }}</dd></div>
+                        <div><dt class="text-gray-500">Other leave (days)</dt><dd class="font-semibold text-gray-900">{{ payroll.deducted_days }}</dd></div>
+                        <div><dt class="text-gray-500">Total leave (days)</dt><dd class="font-semibold text-gray-900">{{ payroll.total_leave_days }}</dd></div>
+                        <div><dt class="text-gray-500">Total paid leave (days)</dt><dd class="font-semibold text-gray-900">{{ payroll.no_deduction_days }}</dd></div>
+                        <div><dt class="text-gray-500">Deduction</dt><dd class="font-semibold text-gray-900">₹{{ payroll.deduction|floatformat:2 }}</dd></div>
+                        {% if payroll.has_allowance %}
+                        <div><dt class="text-gray-500">Allowance</dt><dd class="font-semibold text-gray-900">₹{{ payroll.allowance|floatformat:2 }}</dd></div>
+                        {% endif %}
+                        <div class="col-span-2 md:col-span-3"><dt class="text-gray-500">This month's salary</dt><dd class="text-2xl font-bold text-[#273B30]">₹{{ payroll.total|floatformat:2 }}</dd></div>
+                    </dl>
+                    <p class="text-xs text-gray-400 mt-4">Every approved leave in this month is counted, including days still to come.</p>
+                {% else %}
+                    <p class="text-sm text-gray-500">The monthly salary has not been set yet. Please ask the admin.</p>
+                {% endif %}
+            </div>
+
+            <!-- Salary History -->
+            {% if salary_history %}
+            <div class="mt-8 bg-white border border-gray-100 rounded-xl shadow-sm overflow-hidden">
+                <div class="px-6 py-4 border-b border-gray-100 bg-gray-50">
+                    <h3 class="font-semibold text-gray-900 flex items-center gap-2">
+                        <i class="fa-solid fa-clock-rotate-left text-green-600"></i> Salary History
+                    </h3>
+                </div>
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 divide-y sm:divide-y-0 divide-gray-100">
+                    {% for sal in salary_history %}
+                    <div class="px-6 py-4 border-b border-gray-100 hover:bg-gray-50 transition-colors">
+                        <div class="flex items-center justify-between">
+                            <p class="text-sm font-semibold text-gray-900">{{ sal.month|date:"M Y" }}</p>
+                            {% if sal.status %}
+                            <span class="inline-block bg-gray-100 text-gray-700 text-[10px] font-bold px-2 py-1 rounded uppercase">{{ sal.get_status_display }}</span>
+                            {% endif %}
+                        </div>
+                        <div class="mt-2 space-y-1 text-xs text-gray-600">
+                            <div class="flex justify-between"><span>Basic</span><span class="font-medium text-gray-900">₹ {{ sal.basic_salary|floatformat:0 }}</span></div>
+                            <div class="flex justify-between"><span>Days: {{ sal.attended_days }}/{{ sal.working_days }}</span><span class="text-gray-500">{{ sal.leave_days }} leaves</span></div>
+                            <div class="flex justify-between text-red-600"><span>Deduction</span><span class="font-medium">-₹ {{ sal.leave_deduction|floatformat:0 }}</span></div>
+                            <div class="border-t border-gray-200 pt-1 mt-1 flex justify-between font-bold text-gray-900"><span>Net</span><span class="text-green-600">₹ {{ sal.net_salary|floatformat:0 }}</span></div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endif %}
+
+        {% endblock %}
