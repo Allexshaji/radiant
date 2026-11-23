@@ -41,6 +41,7 @@ NAV_GROUPS = [  # (heading, items)
          ["super_received_reports"]),
         ("super_admin", "Branch Reports", "fa-solid fa-file-circle-plus", "super_reports",
          ["super_reports"]),
+        ("super_admin", "My Reports", "fa-solid fa-pen-to-square", "admin_report_dashboard", MY_REPORT_PAGES),
     ]),
     ("Admin Work", [
         ("super_admin", "Admin Attendance", "fa-solid fa-user-clock", "super_admin_attendance",
@@ -62,7 +63,7 @@ NAV_GROUPS = [  # (heading, items)
          ["all_staff_reports_list", "view_revenue", "view_payments", "view_expenses", "view_walkins"]),
         ("reports", "Staff Reports View", "fa-solid fa-chart-column", "all_staff_reports_view",
          ["all_staff_reports_view", "single_staff_reports"]),
-        ("reports", "My Reports", "fa-solid fa-pen-to-square", "admin_report_dashboard", MY_REPORT_PAGES),
+        ("my_reports", "My Reports", "fa-solid fa-pen-to-square", "admin_report_dashboard", MY_REPORT_PAGES),
         ("requirements", "Requirements", "fa-solid fa-clipboard-list", "admin_requirements",
          ["admin_requirements", "admin_approve_requirement"]),
     ]),
