@@ -1,3 +1,4 @@
+from datetime import date
 from decimal import Decimal
 from functools import wraps
 
@@ -72,6 +73,61 @@ def _section_rows(selected):
 
 
 @super_admin_required
+def super_reports(request):
+    """The Super Admin's own reports. Each one is for a branch, and that branch's totals include it."""
+    context = {
+        "branches": Branch.objects.order_by("name"),
+        "reports": (
+            DailyReport.objects.filter(staff=request.user)
+            .select_related("branch")
+            .order_by("-report_date", "-id")
+        ),
+        "today": timezone.localdate(),
+    }
+    return render(request, "super_admin/reports.html", context)
+
+
+@super_admin_required
+@require_POST
+def super_report_create(request):
+    """Make a report for one branch on one date. The date can be today or any day before it."""
+    branch_id = request.POST.get("branch", "")
+    branch = Branch.objects.filter(pk=int(branch_id)).first() if branch_id.isdigit() else None
+    try:
+        report_date = date.fromisoformat(request.POST.get("report_date", ""))
+    except ValueError:
+        report_date = None
+
+    if branch is None:
+        messages.error(request, "Choose a branch.")
+        return redirect("super_reports")
+    if report_date is None:
+        messages.error(request, "Choose a valid date.")
+        return redirect("super_reports")
+    if report_date > timezone.localdate():
+        messages.error(request, "A report cannot be made for a future date.")
+        return redirect("super_reports")
+
+    report = (
+        DailyReport.objects.filter(staff=request.user, branch=branch, report_date=report_date)
+        .order_by("-id")
+        .first()
+    )
+    if report:
+        messages.info(request, f"A report for {branch.name} on {report_date:%d %b %Y} already exists.")
+    else:
+        report = DailyReport.objects.create(
+            staff=request.user,
+            branch=branch,
+            report_date=report_date,
+            status=DailyReport.SUBMITTED,
+        )
+        messages.success(request, f"Report #{report.id} created for {branch.name} on {report_date:%d %b %Y}.")
+
+    return redirect("admin_report_hub", report_id=report.id)
+
+
+@super_admin_required
 def super_dashboard(request):
     admins = User.objects.filter(role=User.ADMIN)
     states = staff_feature_states()
@@ -83,20 +139,18 @@ def super_dashboard(request):
         selected = ""
     selected_branch = next((branch for branch in branches if str(branch.pk) == selected), None)
 
+    # A report counts toward the branch it was made for (DailyReport.branch), including the Super Admin's own.
     all_reports = DailyReport.objects.all()
     if selected_branch:
-        money = _money_totals(all_reports.filter(staff__branch=selected_branch))
+        money = _money_totals(all_reports.filter(branch=selected_branch))
         breakdown = []
     else:
         money = _money_totals(all_reports)
-        # One row per branch, plus reports of staff who have no branch, so the rows add up to the total.
+        # One row per branch, so the rows add up to the total.
         breakdown = [
-            {"name": branch.name, **_money_totals(all_reports.filter(staff__branch=branch))}
+            {"name": branch.name, **_money_totals(all_reports.filter(branch=branch))}
             for branch in branches
         ]
-        unassigned = _money_totals(all_reports.filter(staff__branch__isnull=True))
-        if unassigned["reports"]:
-            breakdown.append({"name": "No branch", **unassigned})
 
     context = {
         "branches": branches,

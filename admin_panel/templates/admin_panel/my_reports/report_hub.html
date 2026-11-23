@@ -97,7 +97,7 @@
             </div>
             {% endif %}
 
-            <!-- SEND TO SUPER ADMIN -->
+            {% if show_send %}<!-- SEND TO SUPER ADMIN -->
             <div class="bg-white border border-gray-100 rounded-xl p-6 shadow-sm mb-6 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                 <div>
                     <h3 class="text-base font-bold text-gray-900">Send to Super Admin</h3>
@@ -118,7 +118,7 @@
                         <i class="fa-solid fa-paper-plane"></i> {% if submission %}Send Again{% else %}Send to Super Admin{% endif %}
                     </button>
                 </form>{% endif %}
-            </div>
+            </div>{% endif %}
 
             <!-- REPORT SECTIONS (GRID) -->
             <div class="grid grid-cols-1 md:grid-cols-2 gap-5">

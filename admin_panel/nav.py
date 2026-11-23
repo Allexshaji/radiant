@@ -39,6 +39,8 @@ NAV_GROUPS = [  # (heading, items)
         ("super_admin", "Add Branch", "fa-solid fa-plus", "branch_create", ["branch_create"]),
         ("super_admin", "Received Reports", "fa-solid fa-inbox", "super_received_reports",
          ["super_received_reports"]),
+        ("super_admin", "Branch Reports", "fa-solid fa-file-circle-plus", "super_reports",
+         ["super_reports"]),
     ]),
     ("Admin Work", [
         ("super_admin", "Admin Attendance", "fa-solid fa-user-clock", "super_admin_attendance",

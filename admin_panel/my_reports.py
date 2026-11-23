@@ -20,7 +20,7 @@ from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
 from django.views.decorators.http import require_POST
 
-from accounts.access import ADMIN_ROLES
+from accounts.access import ADMIN_ROLES, is_super_admin
 from staff_panel.forms import (
     ExpenseFormSet,
     PaymentSummaryForm,
@@ -41,7 +41,8 @@ def my_reports_required(view):
         user = request.user
         if getattr(user, "role", None) not in ADMIN_ROLES:
             raise PermissionDenied
-        if not user.branch_id:
+        # A Super Admin has no branch of their own. Each of their reports carries the branch it is for.
+        if not user.branch_id and not is_super_admin(user):
             messages.error(request, "Your account has no branch, so daily reports cannot be used.")
             return redirect("admin_dashboard")
         return view(request, *args, **kwargs)
@@ -105,6 +106,10 @@ def create_report(request):
     if request.method != "POST":
         return redirect("admin_reports_add")
 
+    # Super Admin reports are made on the Super Admin's Branch Reports page, where the branch is chosen.
+    if is_super_admin(request.user):
+        return redirect("super_reports")
+
     report = DailyReport.objects.create(
         staff=request.user,
         branch=request.user.branch,
@@ -129,6 +134,8 @@ def report_hub(request, report_id):
         {
             "report": report,
             "submission": submission,
+            # The Super Admin's own reports are not sent anywhere, so the send section is hidden for them.
+            "show_send": not is_super_admin(request.user),
         },
     )
 
@@ -160,6 +167,10 @@ def delete_report(request, report_id):
 def send_report(request, report_id):
     """Send this report to the Super Admin. Sending it again only updates the time."""
     report = _my_report(request, report_id)
+
+    if is_super_admin(request.user):
+        messages.error(request, "Super Admin reports are not sent. They stay here.")
+        return redirect("admin_report_hub", report_id=report.id)
 
     defaults = {"sent_by": request.user, "sent_at": timezone.now()}
 
