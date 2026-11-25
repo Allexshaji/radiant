@@ -54,6 +54,14 @@ class Customer(models.Model):
     branch = models.ForeignKey(Branch, on_delete=models.PROTECT, related_name="package_customers")
     name = models.CharField(max_length=150)
     phone = models.CharField(max_length=20)
+    # Optional details, filled in on the Add Customer page.
+    email = models.EmailField(blank=True)
+    gender = models.CharField(
+        max_length=1, blank=True, choices=[("M", "Male"), ("F", "Female"), ("O", "Other")],
+    )
+    date_of_birth = models.DateField(null=True, blank=True)
+    address = models.CharField(max_length=255, blank=True)
+    notes = models.CharField(max_length=255, blank=True, help_text="Preferences, how they found us, and so on.")
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
@@ -61,6 +69,13 @@ class Customer(models.Model):
 
     def __str__(self):
         return f"{self.name} ({self.phone})"
+
+    @property
+    def age(self):
+        if not self.date_of_birth:
+            return None
+        today, born = timezone.localdate(), self.date_of_birth
+        return today.year - born.year - ((today.month, today.day) < (born.month, born.day))
 
 
 class CustomerPackage(models.Model):

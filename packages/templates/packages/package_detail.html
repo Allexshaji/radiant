@@ -2,8 +2,8 @@
 {% load package_tags %}
 
 {% block title %}{{ package.customer.name }} · Package{% endblock %}
-{% block back %}<a href="{% url 'package_list' %}" class="inline-flex items-center gap-1.5 text-sm font-semibold text-gray-400 hover:text-gray-700 mb-2"><i class="fa-solid fa-arrow-left text-xs"></i> Customers &amp; Packages</a>{% endblock %}
-{% block page_title %}{{ package.customer.name }}{% endblock %}
+{% block back %}<a href="{% url 'customer_detail' package.customer.pk %}" class="inline-flex items-center gap-1.5 text-sm font-semibold text-gray-400 hover:text-gray-700 mb-2"><i class="fa-solid fa-arrow-left text-xs"></i> {{ package.customer.name }}</a>{% endblock %}
+{% block page_title %}<a href="{% url 'customer_detail' package.customer.pk %}" class="hover:underline">{{ package.customer.name }}</a>{% endblock %}
 {% block page_subtitle %}<a href="tel:{{ package.customer.phone }}" class="hover:underline">{{ package.customer.phone }}</a> · {{ package.customer.branch.name }}{% endblock %}
 {% block header_actions %}
     <a href="{% url 'package_edit' package.pk %}" class="bg-white border border-gray-200 text-gray-800 text-sm font-semibold px-4 py-2.5 rounded-lg hover:bg-gray-50"><i class="fa-solid fa-pen mr-1"></i>Edit</a>

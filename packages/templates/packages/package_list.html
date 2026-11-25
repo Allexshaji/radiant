@@ -1,8 +1,8 @@
 {% extends "admin_panel/admin_base.html" %}
 {% load package_tags %}
 
-{% block title %}Customers & Packages{% endblock %}
-{% block page_title %}Customers &amp; Packages{% endblock %}
+{% block title %}All Packages{% endblock %}
+{% block page_title %}All Packages{% endblock %}
 {% block page_subtitle %}Every package sold. Open one to record a massage, take a payment or renew it.{% endblock %}
 {% block header_actions %}
     {% include "packages/_branch_filter.html" %}
@@ -31,7 +31,7 @@
             <tbody class="divide-y divide-gray-50">
             {% for p in rows %}
                 <tr class="hover:bg-gray-50/50">
-                    <td class="px-5 py-3"><span class="font-semibold text-gray-900">{{ p.customer.name }}</span>
+                    <td class="px-5 py-3"><a href="{% url 'customer_detail' p.customer.pk %}" class="font-semibold text-gray-900 hover:underline">{{ p.customer.name }}</a>
                         <span class="block text-xs text-gray-500">{{ p.customer.phone }}{% if is_super and not selected_branch %} · {{ p.customer.branch.name }}{% endif %}</span></td>
                     <td class="px-5 py-3">{{ p.package_type.name }}{% if p.renewed_from_id %}<span class="block text-xs text-indigo-600">Renewal</span>{% endif %}</td>
                     <td class="px-5 py-3">{{ p.purchase_date|date:"d M Y" }}</td>

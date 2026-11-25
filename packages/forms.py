@@ -3,7 +3,7 @@ from django.utils import timezone
 
 from accounts.models import Branch
 
-from .models import CustomerPackage, MassageVisit, PackageType
+from .models import Customer, CustomerPackage, MassageVisit, PackageType
 
 
 class DateInput(forms.DateInput):
@@ -13,12 +13,17 @@ class DateInput(forms.DateInput):
         super().__init__(format="%Y-%m-%d", **kwargs)
 
 
-class PackageSaleForm(forms.Form):
-    """Sell a package. Also used for a renewal, where the customer is already known."""
+def clean_phone_number(raw):
+    """Keep digits and a leading +. Shared by every form that takes a phone number."""
+    phone = "".join(ch for ch in raw if ch.isdigit() or ch == "+")
+    if len(phone.lstrip("+")) < 6:
+        raise forms.ValidationError("Enter a valid phone number.")
+    return phone
 
-    branch = forms.ModelChoiceField(queryset=Branch.objects.order_by("name"), required=False)
-    customer_name = forms.CharField(max_length=150)
-    phone = forms.CharField(max_length=20)
+
+class PackageDetailsForm(forms.Form):
+    """The package part of a sale: which package, when, and the money. The customer is chosen elsewhere."""
+
     package_type = forms.ModelChoiceField(queryset=PackageType.objects.filter(is_active=True))
     purchase_date = forms.DateField(widget=DateInput())
     expiry_date = forms.DateField(
@@ -32,23 +37,12 @@ class PackageSaleForm(forms.Form):
     amount_paid = forms.DecimalField(max_digits=10, decimal_places=2, min_value=0, initial=0)
     remarks = forms.CharField(max_length=255, required=False)
 
-    def __init__(self, *args, choose_branch=False, **kwargs):
+    def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.choose_branch = choose_branch
-        if choose_branch:
-            self.fields["branch"].required = True
-        else:
-            del self.fields["branch"]
         self.fields["package_type"].label_from_instance = (
             lambda t: f"{t.name} - {t.total_massages} massages - Rs. {t.rate:,.0f} - {t.validity_months} months"
         )
         self.fields["purchase_date"].initial = timezone.localdate()
-
-    def clean_phone(self):
-        phone = "".join(ch for ch in self.cleaned_data["phone"] if ch.isdigit() or ch == "+")
-        if len(phone.lstrip("+")) < 6:
-            raise forms.ValidationError("Enter a valid phone number.")
-        return phone
 
     def clean(self):
         data = super().clean()
@@ -58,6 +52,54 @@ class PackageSaleForm(forms.Form):
         if bought and ends and ends < bought:
             self.add_error("expiry_date", "The expiry date cannot be before the purchase date.")
         return data
+
+
+class PackageSaleForm(PackageDetailsForm):
+    """Sell a package with the customer typed in. Also used for a renewal, where the customer is already known."""
+
+    branch = forms.ModelChoiceField(queryset=Branch.objects.order_by("name"), required=False)
+    customer_name = forms.CharField(max_length=150)
+    phone = forms.CharField(max_length=20)
+
+    field_order = ["branch", "customer_name", "phone"]
+
+    def __init__(self, *args, choose_branch=False, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.choose_branch = choose_branch
+        if choose_branch:
+            self.fields["branch"].required = True
+        else:
+            del self.fields["branch"]
+
+    def clean_phone(self):
+        return clean_phone_number(self.cleaned_data["phone"])
+
+
+class CustomerForm(forms.ModelForm):
+    """A customer's name and details. The Super Admin also chooses the branch."""
+
+    class Meta:
+        model = Customer
+        fields = ["branch", "name", "phone", "email", "gender", "date_of_birth", "address", "notes"]
+        widgets = {"date_of_birth": DateInput()}
+        labels = {"name": "Customer name"}
+
+    def __init__(self, *args, choose_branch=False, **kwargs):
+        super().__init__(*args, **kwargs)
+        if choose_branch:
+            self.fields["branch"].queryset = Branch.objects.order_by("name")
+        else:
+            del self.fields["branch"]
+        self.fields["gender"].choices = [("", "Not given")] + list(Customer._meta.get_field("gender").choices)
+
+    def clean_phone(self):
+        return clean_phone_number(self.cleaned_data["phone"])
+
+    def clean_date_of_birth(self):
+        born = self.cleaned_data.get("date_of_birth")
+        if born and born > timezone.localdate():
+            raise forms.ValidationError("The date of birth cannot be in the future.")
+        return born
 
 
 class PackageEditForm(forms.ModelForm):
@@ -81,7 +123,7 @@ class PackageEditForm(forms.ModelForm):
         self.order_fields(["customer_name", "phone"])
 
     def clean_phone(self):
-        return PackageSaleForm.clean_phone(self)
+        return clean_phone_number(self.cleaned_data["phone"])
 
     def clean(self):
         data = super().clean()

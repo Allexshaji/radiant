@@ -1,0 +1,37 @@
+{% extends "admin_panel/admin_base.html" %}
+{% load package_tags %}
+
+{% block title %}Add Customer{% endblock %}
+{% block back %}<a href="{% url 'customer_list' %}" class="inline-flex items-center gap-1.5 text-sm font-semibold text-gray-400 hover:text-gray-700 mb-2"><i class="fa-solid fa-arrow-left text-xs"></i> Customers</a>{% endblock %}
+{% block page_title %}Add Customer{% endblock %}
+{% block page_subtitle %}The customer's details and the package they are buying, saved together.{% endblock %}
+
+{% block content %}
+<form method="post" class="grid grid-cols-1 xl:grid-cols-3 gap-6">
+    {% csrf_token %}
+    <div class="xl:col-span-2 space-y-6">
+        <section class="bg-white rounded-xl border border-gray-100 shadow-sm p-6">
+            <h2 class="font-bold text-gray-900 mb-1"><span class="inline-flex w-6 h-6 rounded-full bg-[#273B30] text-white text-xs items-center justify-center mr-2">1</span>Customer Details</h2>
+            <p class="text-xs text-gray-500 mb-4">Name and phone are needed. The rest is optional.</p>
+            {% if existing %}
+                <div class="mb-4 text-sm bg-amber-50 border border-amber-100 text-amber-800 rounded-lg px-4 py-3">
+                    {{ existing.name }} is already saved with this phone number.
+                    <a href="{% url 'customer_package_add' existing.pk %}" class="font-semibold underline">Add the package to {{ existing.name }}</a>
+                    or <a href="{% url 'customer_detail' existing.pk %}" class="font-semibold underline">open the customer</a>.
+                </div>
+            {% endif %}
+            {% include "packages/_fields.html" with form=customer_form wide="address notes" %}
+        </section>
+
+        <section class="bg-white rounded-xl border border-gray-100 shadow-sm p-6">
+            <h2 class="font-bold text-gray-900 mb-4"><span class="inline-flex w-6 h-6 rounded-full bg-[#273B30] text-white text-xs items-center justify-center mr-2">2</span>Package</h2>
+            {% if package_form.non_field_errors %}<div class="text-sm text-red-600 mb-3">{{ package_form.non_field_errors|join:" " }}</div>{% endif %}
+            {% include "packages/_fields.html" with form=package_form wide="package_type remarks" %}
+        </section>
+
+        <button type="submit" class="bg-[#273B30] text-white text-sm font-semibold px-6 py-3 rounded-lg shadow-sm hover:opacity-90"><i class="fa-solid fa-user-plus mr-1"></i>Save Customer &amp; Package</button>
+    </div>
+
+    {% include "packages/_rate_card.html" %}
+</form>
+{% endblock %}

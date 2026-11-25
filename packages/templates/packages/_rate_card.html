@@ -1,0 +1,11 @@
+{% load package_tags %}
+<div class="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden self-start">
+    <div class="px-5 py-4 border-b border-gray-100"><h2 class="font-bold text-gray-900">Package Rates</h2></div>
+    <table class="w-full text-sm text-left">
+        <thead class="bg-gray-50/60 text-gray-600"><tr><th class="px-5 py-2.5 font-semibold">Package</th><th class="px-5 py-2.5 font-semibold text-right">Rate</th><th class="px-5 py-2.5 font-semibold text-right">Validity</th></tr></thead>
+        <tbody class="divide-y divide-gray-50">
+        {% for t in rate_list %}<tr><td class="px-5 py-2.5">{{ t.name }}</td><td class="px-5 py-2.5 text-right">{{ t.rate|rs }}</td><td class="px-5 py-2.5 text-right">{{ t.validity_months }} mo</td></tr>
+        {% empty %}<tr><td colspan="3" class="px-5 py-4 text-gray-500">No packages on sale. A Super Admin adds them on Package Rates.</td></tr>{% endfor %}
+        </tbody>
+    </table>
+</div>

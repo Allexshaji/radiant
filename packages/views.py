@@ -18,7 +18,10 @@ from accounts.access import is_super_admin
 from accounts.models import Branch, User
 
 from . import stats
-from .forms import FollowUpForm, PackageEditForm, PackageSaleForm, PackageTypeForm, VisitForm
+from .forms import (
+    CustomerForm, FollowUpForm, PackageDetailsForm, PackageEditForm, PackageSaleForm, PackageTypeForm,
+    VisitForm,
+)
 from .models import Customer, CustomerPackage, MassageVisit, PackageType, add_months
 
 STATUS_FILTERS = [
@@ -128,8 +131,25 @@ def renewal_history(request):
 
 # --- selling, renewing, editing ---------------------------------------------------------------
 
+def _create_package(request, customer, data, previous=None):
+    """Save one package for `customer` from the cleaned package fields. Returns the new package."""
+    package_type = data["package_type"]
+    return CustomerPackage.objects.create(
+        customer=customer,
+        package_type=package_type,
+        total_massages=package_type.total_massages,
+        rate=data["rate"] if data.get("rate") is not None else package_type.rate,
+        amount_paid=data["amount_paid"],
+        purchase_date=data["purchase_date"],
+        expiry_date=data.get("expiry_date") or add_months(data["purchase_date"], package_type.validity_months),
+        renewed_from=previous,
+        remarks=data.get("remarks", ""),
+        created_by=request.user,
+    )
+
+
 def _sell(request, form, previous=None):
-    """Save a sale from a valid form. Returns the new package."""
+    """Save a sale from a valid PackageSaleForm (customer typed in). Returns the new package."""
     data = form.cleaned_data
     if previous is not None:
         branch = previous.customer.branch
@@ -138,7 +158,6 @@ def _sell(request, form, previous=None):
     else:
         branch = request.user.branch
 
-    package_type = data["package_type"]
     with transaction.atomic():
         if previous is not None:
             customer = previous.customer
@@ -149,18 +168,7 @@ def _sell(request, form, previous=None):
             customer = Customer.objects.filter(branch=branch, phone=data["phone"]).first()
             if customer is None:
                 customer = Customer.objects.create(branch=branch, name=data["customer_name"], phone=data["phone"])
-        return CustomerPackage.objects.create(
-            customer=customer,
-            package_type=package_type,
-            total_massages=package_type.total_massages,
-            rate=data["rate"] if data.get("rate") is not None else package_type.rate,
-            amount_paid=data["amount_paid"],
-            purchase_date=data["purchase_date"],
-            expiry_date=data.get("expiry_date") or add_months(data["purchase_date"], package_type.validity_months),
-            renewed_from=previous,
-            remarks=data.get("remarks", ""),
-            created_by=request.user,
-        )
+        return _create_package(request, customer, data, previous=previous)
 
 
 @packages_required
@@ -234,15 +242,21 @@ def package_edit(request, pk):
 def package_delete(request, pk):
     package = _package(request, pk)
     customer, name = package.customer, package.customer.name
-    with transaction.atomic():
-        package.delete()
-        if not customer.packages.exists():
-            customer.delete()
+    package.delete()
     messages.success(request, f"Package of {name} deleted.")
-    return redirect("package_list")
+    # The customer and their details stay; only this package is removed.
+    return redirect("customer_detail", pk=customer.pk)
 
 
 # --- visits and follow-up ---------------------------------------------------------------------
+
+def _back(request, package):
+    """Go back to the page the form was on (a path on this site), else to the package page."""
+    back = request.POST.get("next", "")
+    if back.startswith("/") and not back.startswith("//"):
+        return redirect(back)
+    return redirect("package_detail", pk=package.pk)
+
 
 @packages_required
 @require_POST
@@ -257,8 +271,8 @@ def visit_add(request, pk):
         visit = form.save(commit=False)
         visit.package, visit.recorded_by = package, request.user
         visit.save()
-        messages.success(request, f"Massage recorded. {package.massages_remaining} left.")
-    return redirect("package_detail", pk=package.pk)
+        messages.success(request, f"Massage recorded for {package.customer.name}. {package.massages_remaining} left.")
+    return _back(request, package)
 
 
 @packages_required
@@ -280,10 +294,7 @@ def follow_up_update(request, pk):
         messages.success(request, f"Follow-up saved for {package.customer.name}.")
     else:
         messages.error(request, "Could not save the follow-up. Check the date.")
-    back = request.POST.get("next", "")
-    if back.startswith("/") and not back.startswith("//"):
-        return redirect(back)
-    return redirect("package_detail", pk=package.pk)
+    return _back(request, package)
 
 
 # --- rate list ----------------------------------------------------------------------------------
@@ -313,3 +324,127 @@ def rates(request):
         "can_edit": can_edit,
     })
 
+
+
+# --- customers ----------------------------------------------------------------------------------
+
+def _customer(request, pk):
+    """A customer this user may open: their branch's, or any for the Super Admin. Others are 404."""
+    rows = Customer.objects.select_related("branch")
+    if not is_super_admin(request.user):
+        rows = rows.filter(branch_id=request.user.branch_id)
+    return get_object_or_404(rows, pk=pk)
+
+
+def _split_packages(customer):
+    """(running packages, earlier packages) of a customer. Running = Active or Renewal Due."""
+    running, earlier = [], []
+    for p in stats.packages_for(Customer.objects.filter(pk=customer.pk)):
+        (running if p.status in (CustomerPackage.ACTIVE, CustomerPackage.RENEWAL_DUE) else earlier).append(p)
+    running.sort(key=lambda p: p.expiry_date)
+    earlier.sort(key=lambda p: (p.purchase_date, p.pk), reverse=True)
+    return running, earlier
+
+
+@packages_required
+def customer_list(request):
+    customers, branch = _branch_filter(request)
+    query = request.GET.get("q", "").strip()
+    if query:
+        customers = customers.filter(Q(name__icontains=query) | Q(phone__icontains=query))
+
+    by_customer = {}
+    for p in stats.packages_for(customers):
+        by_customer.setdefault(p.customer_id, []).append(p)
+    rows = []
+    for customer in customers.select_related("branch").order_by("name"):
+        packages = by_customer.get(customer.pk, [])
+        running = [p for p in packages if p.status in (CustomerPackage.ACTIVE, CustomerPackage.RENEWAL_DUE)]
+        visits = [p.last_massage_date for p in packages if p.last_massage_date]
+        rows.append({
+            "customer": customer,
+            "running": running,
+            "remaining": sum(p.massages_remaining for p in running),
+            "packages": len(packages),
+            "last_visit": max(visits) if visits else None,
+            "balance": sum((p.balance for p in packages), 0),
+        })
+
+    return render(request, "packages/customer_list.html", {**_common(request, branch), "rows": rows, "query": query})
+
+
+@packages_required
+def customer_add(request):
+    """Add a customer with their details and their first package, in one step."""
+    choose_branch = is_super_admin(request.user)
+    customer_form = CustomerForm(request.POST or None, choose_branch=choose_branch)
+    package_form = PackageDetailsForm(request.POST or None, prefix="pkg")
+
+    if request.method == "POST" and customer_form.is_valid() and package_form.is_valid():
+        branch = customer_form.cleaned_data["branch"] if choose_branch else request.user.branch
+        existing = Customer.objects.filter(branch=branch, phone=customer_form.cleaned_data["phone"]).first()
+        if existing:
+            customer_form.add_error(
+                "phone", f"{existing.name} already has this phone number in {branch.name}. "
+                         f"Open that customer to add a package.",
+            )
+            return render(request, "packages/customer_add.html", {
+                "customer_form": customer_form, "package_form": package_form, "existing": existing,
+                "rate_list": PackageType.objects.filter(is_active=True),
+            })
+        with transaction.atomic():
+            customer = customer_form.save(commit=False)
+            customer.branch = branch
+            customer.save()
+            package = _create_package(request, customer, package_form.cleaned_data)
+        messages.success(request, f"{customer.name} added with {package.package_type.name}.")
+        return redirect("customer_detail", pk=customer.pk)
+
+    return render(request, "packages/customer_add.html", {
+        "customer_form": customer_form, "package_form": package_form,
+        "rate_list": PackageType.objects.filter(is_active=True),
+    })
+
+
+@packages_required
+def customer_detail(request, pk):
+    customer = _customer(request, pk)
+    running, earlier = _split_packages(customer)
+    return render(request, "packages/customer_detail.html", {
+        "customer": customer,
+        "running": running,
+        "earlier": earlier,
+        "visit_form": VisitForm(),
+        "total_paid": sum((p.amount_paid for p in running + earlier), 0),
+        "total_due": sum((p.balance for p in running + earlier), 0),
+    })
+
+
+@packages_required
+def customer_edit(request, pk):
+    customer = _customer(request, pk)
+    form = CustomerForm(request.POST or None, instance=customer)
+    if request.method == "POST" and form.is_valid():
+        clash = (Customer.objects.filter(branch=customer.branch, phone=form.cleaned_data["phone"])
+                 .exclude(pk=customer.pk).first())
+        if clash:
+            form.add_error("phone", f"{clash.name} already has this phone number in {customer.branch.name}.")
+        else:
+            form.save()
+            messages.success(request, "Customer details saved.")
+            return redirect("customer_detail", pk=customer.pk)
+    return render(request, "packages/customer_edit.html", {"form": form, "customer": customer})
+
+
+@packages_required
+def customer_package_add(request, pk):
+    """Add another package for a customer who is already saved."""
+    customer = _customer(request, pk)
+    form = PackageDetailsForm(request.POST or None)
+    if request.method == "POST" and form.is_valid():
+        package = _create_package(request, customer, form.cleaned_data)
+        messages.success(request, f"{package.package_type.name} added for {customer.name}.")
+        return redirect("customer_detail", pk=customer.pk)
+    return render(request, "packages/customer_package_add.html", {
+        "form": form, "customer": customer, "rate_list": PackageType.objects.filter(is_active=True),
+    })

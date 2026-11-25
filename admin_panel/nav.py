@@ -81,7 +81,9 @@ NAV_GROUPS = [  # (heading, items)
     ]),
     ("Massage Packages", [
         ("packages", "Package Dashboard", "fa-solid fa-spa", "package_dashboard", ["package_dashboard"]),
-        ("packages", "Customers & Packages", "fa-solid fa-address-book", "package_list",
+        ("packages", "Customers", "fa-solid fa-user-group", "customer_list",
+         ["customer_list", "customer_add", "customer_detail", "customer_edit", "customer_package_add"]),
+        ("packages", "All Packages", "fa-solid fa-address-book", "package_list",
          ["package_list", "package_add", "package_detail", "package_edit", "package_delete",
           "package_renew", "package_visit_add", "package_visit_delete"]),
         ("packages", "Renewal Follow-up", "fa-solid fa-phone-volume", "package_follow_ups",

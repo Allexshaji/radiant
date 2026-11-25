@@ -1,0 +1,53 @@
+{% extends "admin_panel/admin_base.html" %}
+{% load package_tags %}
+
+{% block title %}Customers{% endblock %}
+{% block page_title %}Customers{% endblock %}
+{% block page_subtitle %}Every package customer. Open one to see the packages they are running.{% endblock %}
+{% block header_actions %}
+    {% include "packages/_branch_filter.html" %}
+    <a href="{% url 'customer_add' %}" class="bg-[#273B30] text-white text-sm font-semibold px-5 py-2.5 rounded-lg shadow-sm hover:opacity-90 whitespace-nowrap"><i class="fa-solid fa-user-plus mr-1"></i>Add Customer</a>
+{% endblock %}
+
+{% block content %}
+    <form method="get" class="bg-white rounded-xl border border-gray-100 shadow-sm p-4 mb-6 flex flex-col sm:flex-row gap-3">
+        {% if selected_branch %}<input type="hidden" name="branch" value="{{ selected_branch.pk }}">{% endif %}
+        <input type="text" name="q" value="{{ query }}" placeholder="Search name or phone">
+        <button type="submit" class="bg-[#F0F3F1] text-gray-900 text-sm font-semibold px-5 py-2.5 rounded-lg hover:bg-[#E3EAE6]">Search</button>
+    </form>
+
+    <div class="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden">
+        <div class="px-5 py-4 border-b border-gray-100 text-sm text-gray-500">{{ rows|length }} customer{{ rows|length|pluralize }}</div>
+        {% if rows %}
+        <div class="overflow-x-auto"><table class="w-full text-sm text-left">
+            <thead class="bg-gray-50/60 text-gray-600"><tr>
+                <th class="px-5 py-3 font-semibold">Customer</th>
+                <th class="px-5 py-3 font-semibold">Running Package</th>
+                <th class="px-5 py-3 font-semibold text-right">Massages Left</th>
+                <th class="px-5 py-3 font-semibold">Last Visit</th>
+                <th class="px-5 py-3 font-semibold text-right">Packages</th>
+                <th class="px-5 py-3 font-semibold text-right">Balance</th>
+                <th class="px-5 py-3"></th></tr></thead>
+            <tbody class="divide-y divide-gray-50">
+            {% for row in rows %}
+                <tr class="hover:bg-gray-50/50">
+                    <td class="px-5 py-3"><a href="{% url 'customer_detail' row.customer.pk %}" class="font-semibold text-gray-900 hover:underline">{{ row.customer.name }}</a>
+                        <span class="block text-xs text-gray-500">{{ row.customer.phone }}{% if is_super and not selected_branch %} · {{ row.customer.branch.name }}{% endif %}</span></td>
+                    <td class="px-5 py-3">
+                        {% for p in row.running %}
+                            <span class="inline-flex items-center gap-1 mr-1 mb-1 px-2 py-0.5 rounded border text-xs font-semibold {{ p.status|status_style }}">{{ p.package_type.name }} · {{ p.massages_remaining }} left</span>
+                        {% empty %}<span class="text-xs text-gray-400">None running</span>{% endfor %}
+                    </td>
+                    <td class="px-5 py-3 text-right font-semibold">{{ row.remaining }}</td>
+                    <td class="px-5 py-3">{{ row.last_visit|date:"d M Y"|default:"-" }}</td>
+                    <td class="px-5 py-3 text-right">{{ row.packages }}</td>
+                    <td class="px-5 py-3 text-right {% if row.balance %}text-rose-700 font-semibold{% endif %}">{{ row.balance|rs }}</td>
+                    <td class="px-5 py-3 text-right"><a href="{% url 'customer_detail' row.customer.pk %}" class="font-semibold text-[#273B30] hover:underline">View</a></td>
+                </tr>
+            {% endfor %}
+            </tbody></table></div>
+        {% else %}
+            <p class="px-5 py-8 text-sm text-gray-500">{% if query %}No customer matches this search.{% else %}No customers yet. Use "Add Customer" to add the first one with their package.{% endif %}</p>
+        {% endif %}
+    </div>
+{% endblock %}

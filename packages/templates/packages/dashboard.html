@@ -6,7 +6,7 @@
 {% block page_subtitle %}{% if selected_branch %}{{ selected_branch.name }}{% elif is_super %}All branches{% else %}{{ request.user.branch.name }}{% endif %} · updated from every package and massage entry{% endblock %}
 {% block header_actions %}
     {% include "packages/_branch_filter.html" %}
-    <a href="{% url 'package_add' %}" class="bg-[#273B30] text-white text-sm font-semibold px-5 py-2.5 rounded-lg shadow-sm hover:opacity-90 whitespace-nowrap"><i class="fa-solid fa-plus mr-1"></i>Add Package</a>
+    <a href="{% url 'customer_add' %}" class="bg-[#273B30] text-white text-sm font-semibold px-5 py-2.5 rounded-lg shadow-sm hover:opacity-90 whitespace-nowrap"><i class="fa-solid fa-user-plus mr-1"></i>Add Customer</a>
 {% endblock %}
 
 {% block content %}
