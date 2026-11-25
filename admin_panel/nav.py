@@ -50,6 +50,10 @@ NAV_GROUPS = [  # (heading, items)
          ["super_admin_admin_leave"]),
         ("super_admin", "Admin Salary", "fa-solid fa-money-check-dollar", "super_admin_admin_salary",
          ["super_admin_admin_salary", "super_admin_admin_salary_detail"]),
+        ("super_admin", "Admin Reports", "fa-solid fa-file-pen", "super_admin_reports",
+         ["super_admin_reports"]),
+        ("super_admin", "Staff Reports", "fa-solid fa-file-circle-check", "super_staff_reports",
+         ["super_staff_reports"]),
     ]),
     ("Staff", [
         ("staff", "Pending Approvals", "fa-solid fa-user-clock", "pending_staff_approval",

@@ -17,6 +17,7 @@ from django.core.exceptions import PermissionDenied
 from django.db import transaction
 from django.db.models import Q
 from django.shortcuts import get_object_or_404, redirect, render
+from django.urls import reverse
 from django.utils import timezone
 from django.views.decorators.http import require_POST
 
@@ -59,6 +60,31 @@ def _my_report(request, report_id):
         id=report_id,
         staff=request.user,
     )
+
+
+def _open_report(request, report_id):
+    """A report this user may fill in or change: their own, or for the Super Admin any report."""
+    if is_super_admin(request.user):
+        return get_object_or_404(DailyReport.objects.select_related("branch", "staff"), id=report_id)
+    return _my_report(request, report_id)
+
+
+def _locked(request, report):
+    """An approved report is locked for its owner. The Super Admin can still correct it."""
+    return report.status == DailyReport.APPROVED and not is_super_admin(request.user)
+
+
+def _after_save(request, report):
+    """Where to go after saving: back to the list for one's own report, to the report page otherwise."""
+    if report.staff_id != request.user.id:
+        return redirect("admin_report_hub", report_id=report.id)
+    return redirect("admin_reports_add")
+
+
+def _review_back_url(report):
+    """The Super Admin's review list this report came from, with its owner already chosen."""
+    kind = "admin" if report.staff.role == User.ADMIN else "staff"
+    return f"{reverse(f'super_{kind}_reports')}?person={report.staff_id}"
 
 
 def _my_reports(user):
@@ -146,7 +172,7 @@ def create_report(request):
 
 @my_reports_required
 def report_hub(request, report_id):
-    report = _my_report(request, report_id)
+    report = _open_report(request, report_id)
 
     submission = ReportSubmission.objects.filter(report=report).select_related("sent_by").first()
 
@@ -158,6 +184,8 @@ def report_hub(request, report_id):
             "submission": submission,
             # The Super Admin's own reports are not sent anywhere, so the send section is hidden for them.
             "show_send": not is_super_admin(request.user),
+            # A Super Admin opening someone else's report goes back to the review list.
+            "back_url": _review_back_url(report) if report.staff_id != request.user.id else reverse("admin_reports_add"),
         },
     )
 
@@ -221,12 +249,12 @@ def send_report(request, report_id):
 
 @my_reports_required
 def add_walkins(request, report_id):
-    report = _my_report(request, report_id)
+    report = _open_report(request, report_id)
 
     # Approved report cannot be edited
-    if report.status == DailyReport.APPROVED:
+    if _locked(request, report):
         messages.error(request, "This report is approved and locked. Changes cannot be saved.")
-        return redirect("admin_reports_add")
+        return _after_save(request, report)
 
     # Walk-ins and payments are saved together on the same sheet.
     try:
@@ -253,7 +281,7 @@ def add_walkins(request, report_id):
 
             messages.success(request, "Walk-ins and payments saved successfully!")
 
-            return redirect("admin_reports_add")
+            return _after_save(request, report)
 
     else:
 
@@ -274,12 +302,12 @@ def add_walkins(request, report_id):
 
 @my_reports_required
 def add_revenues(request, report_id):
-    report = _my_report(request, report_id)
+    report = _open_report(request, report_id)
 
     # Approved report cannot be edited
-    if report.status == DailyReport.APPROVED:
+    if _locked(request, report):
         messages.error(request, "This report is approved and locked. Changes cannot be saved.")
-        return redirect("admin_reports_add")
+        return _after_save(request, report)
 
     try:
         revenue = report.revenues
@@ -298,7 +326,7 @@ def add_revenues(request, report_id):
 
             messages.success(request, "Revenue details saved successfully!")
 
-            return redirect("admin_reports_add")
+            return _after_save(request, report)
 
     else:
 
@@ -317,10 +345,10 @@ def add_revenues(request, report_id):
 
 @my_reports_required
 def add_expenses(request, report_id):
-    report = _my_report(request, report_id)
+    report = _open_report(request, report_id)
 
     # APPROVED REPORT = LOCKED
-    if report.status == DailyReport.APPROVED:
+    if _locked(request, report):
         messages.error(request, "This report is approved and locked. Changes cannot be saved.")
         return redirect("admin_expenses_history")
 
@@ -334,7 +362,7 @@ def add_expenses(request, report_id):
 
             messages.success(request, "Expense details saved successfully!")
 
-            return redirect("admin_reports_add")
+            return _after_save(request, report)
 
     else:
 

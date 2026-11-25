@@ -1,6 +1,6 @@
 from django.urls import path
 
-from . import admin_work, views
+from . import admin_work, report_review, views
 
 urlpatterns = [
     path("", views.super_dashboard, name="super_dashboard"),
@@ -28,4 +28,9 @@ urlpatterns = [
     path("admin-leave/", admin_work.admin_leave, name="super_admin_admin_leave"),
     path("admin-salary/", admin_work.admin_salary, name="super_admin_admin_salary"),
     path("admin-salary/<int:user_id>/", admin_work.admin_salary_detail, name="super_admin_admin_salary_detail"),
+
+    # Review admin and staff reports: choose a person, then edit, approve or reject (see report_review.py)
+    path("admin-reports/", report_review.review_reports, {"kind": "admin"}, name="super_admin_reports"),
+    path("staff-reports/", report_review.review_reports, {"kind": "staff"}, name="super_staff_reports"),
+    path("review-reports/<int:report_id>/status/", report_review.set_report_status, name="super_set_report_status"),
 ]
