@@ -1,0 +1,128 @@
+{% extends "admin_panel/admin_base.html" %}
+{% load package_tags %}
+
+{% block title %}Massage Package Dashboard{% endblock %}
+{% block page_title %}Massage Package Dashboard{% endblock %}
+{% block page_subtitle %}{% if selected_branch %}{{ selected_branch.name }}{% elif is_super %}All branches{% else %}{{ request.user.branch.name }}{% endif %} · updated from every package and massage entry{% endblock %}
+{% block header_actions %}
+    {% include "packages/_branch_filter.html" %}
+    <a href="{% url 'package_add' %}" class="bg-[#273B30] text-white text-sm font-semibold px-5 py-2.5 rounded-lg shadow-sm hover:opacity-90 whitespace-nowrap"><i class="fa-solid fa-plus mr-1"></i>Add Package</a>
+{% endblock %}
+
+{% block content %}
+    <!-- Customer & package overview -->
+    <h2 class="text-xs font-bold text-gray-500 uppercase tracking-wider mb-3">Customer &amp; Package Overview</h2>
+    <div class="grid grid-cols-2 md:grid-cols-4 xl:grid-cols-7 gap-3 mb-8">
+        {% with o=overview %}
+        <div class="bg-white rounded-xl border border-gray-100 shadow-sm p-4"><p class="text-xs text-gray-500 font-semibold">Total Customers</p><p class="text-2xl font-bold text-gray-900 mt-1">{{ o.customers }}</p></div>
+        <div class="bg-white rounded-xl border border-gray-100 shadow-sm p-4"><p class="text-xs text-gray-500 font-semibold">Active Packages</p><p class="text-2xl font-bold text-emerald-700 mt-1">{{ o.active_packages }}</p></div>
+        <div class="bg-white rounded-xl border border-gray-100 shadow-sm p-4"><p class="text-xs text-gray-500 font-semibold">Massages Remaining</p><p class="text-2xl font-bold text-gray-900 mt-1">{{ o.massages_remaining }}</p></div>
+        <div class="bg-white rounded-xl border border-gray-100 shadow-sm p-4"><p class="text-xs text-gray-500 font-semibold">Renewal Due</p><p class="text-2xl font-bold text-amber-700 mt-1">{{ o.renewal_due }}</p></div>
+        <div class="bg-white rounded-xl border border-gray-100 shadow-sm p-4"><p class="text-xs text-gray-500 font-semibold">Expiring in 7 Days</p><p class="text-2xl font-bold text-amber-700 mt-1">{{ o.expiring_soon }}</p></div>
+        <div class="bg-white rounded-xl border border-gray-100 shadow-sm p-4"><p class="text-xs text-gray-500 font-semibold">Expired &amp; Not Renewed</p><p class="text-2xl font-bold text-rose-700 mt-1">{{ o.expired_not_renewed }}</p></div>
+        <div class="bg-white rounded-xl border border-gray-100 shadow-sm p-4"><p class="text-xs text-gray-500 font-semibold">Renewed Customers</p><p class="text-2xl font-bold text-indigo-700 mt-1">{{ o.renewed_customers }}</p></div>
+        {% endwith %}
+    </div>
+
+    <!-- Financial overview -->
+    <h2 class="text-xs font-bold text-gray-500 uppercase tracking-wider mb-3">Financial Overview</h2>
+    <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-8">
+        <div class="bg-white rounded-xl border border-gray-100 shadow-sm p-5"><p class="text-xs text-gray-500 font-semibold">Total Package Sales</p><p class="text-2xl font-bold text-gray-900 mt-1">{{ money.sales|rs }}</p></div>
+        <div class="bg-white rounded-xl border border-gray-100 shadow-sm p-5"><p class="text-xs text-gray-500 font-semibold">Amount Collected</p><p class="text-2xl font-bold text-emerald-700 mt-1">{{ money.collected|rs }}</p></div>
+        <div class="bg-white rounded-xl border border-gray-100 shadow-sm p-5"><p class="text-xs text-gray-500 font-semibold">Pending Amount</p><p class="text-2xl font-bold text-rose-700 mt-1">{{ money.pending|rs }}</p></div>
+    </div>
+
+    <div class="grid grid-cols-1 xl:grid-cols-3 gap-6 mb-8">
+        <!-- Package-wise sales -->
+        <div class="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden xl:col-span-2">
+            <div class="px-5 py-4 border-b border-gray-100"><h2 class="font-bold text-gray-900">Package-wise Sales</h2></div>
+            <div class="overflow-x-auto">
+            <table class="w-full text-sm text-left">
+                <thead class="bg-gray-50/60 text-gray-600"><tr>
+                    <th class="px-5 py-3 font-semibold">Package</th><th class="px-5 py-3 font-semibold text-right">Customers</th>
+                    <th class="px-5 py-3 font-semibold text-right">Sold</th><th class="px-5 py-3 font-semibold text-right">Rate</th>
+                    <th class="px-5 py-3 font-semibold text-right">Total Sales</th></tr></thead>
+                <tbody class="divide-y divide-gray-50">
+                    {% for row in package_rows %}
+                        <tr><td class="px-5 py-3 font-medium text-gray-900">{{ row.name }}</td><td class="px-5 py-3 text-right">{{ row.customers }}</td>
+                            <td class="px-5 py-3 text-right">{{ row.sold }}</td><td class="px-5 py-3 text-right">{{ row.rate|rs }}</td>
+                            <td class="px-5 py-3 text-right font-semibold">{{ row.sales|rs }}</td></tr>
+                    {% endfor %}
+                    <tr class="bg-gray-50/60 font-bold"><td class="px-5 py-3">Total</td><td class="px-5 py-3 text-right">{{ package_total.customers }}</td>
+                        <td class="px-5 py-3 text-right">{{ package_total.sold }}</td><td></td><td class="px-5 py-3 text-right">{{ package_total.sales|rs }}</td></tr>
+                </tbody>
+            </table>
+            </div>
+        </div>
+        <div class="space-y-3">
+            <div class="bg-white rounded-xl border border-gray-100 shadow-sm p-5"><p class="text-xs text-gray-500 font-semibold">Best-Selling Package</p><p class="text-xl font-bold text-gray-900 mt-1">{{ best_package|default:"-" }}</p></div>
+            <div class="bg-white rounded-xl border border-gray-100 shadow-sm p-5"><p class="text-xs text-gray-500 font-semibold">Package Renewal Rate</p>
+                <p class="text-xl font-bold text-gray-900 mt-1">{% if renewal_rate is not None %}{{ renewal_rate }}%{% else %}-{% endif %}</p>
+                <p class="text-xs text-gray-400 mt-1">Of the packages that have ended, how many were renewed.</p></div>
+        </div>
+    </div>
+
+    <!-- Today's follow-up call list -->
+    <div class="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden mb-8">
+        <div class="px-5 py-4 border-b border-gray-100 flex justify-between items-center">
+            <h2 class="font-bold text-gray-900">Today's Follow-up · Call List</h2>
+            <a href="{% url 'package_follow_ups' %}{% if branch_query %}?{{ branch_query }}{% endif %}" class="text-sm font-semibold text-[#273B30] hover:underline">Full follow-up list</a>
+        </div>
+        {% if follow_ups_today %}
+        <div class="overflow-x-auto"><table class="w-full text-sm text-left">
+            <thead class="bg-gray-50/60 text-gray-600"><tr>
+                <th class="px-5 py-3 font-semibold">Customer</th><th class="px-5 py-3 font-semibold">Phone</th><th class="px-5 py-3 font-semibold">Package</th>
+                <th class="px-5 py-3 font-semibold text-right">Left</th><th class="px-5 py-3 font-semibold">Expiry</th><th class="px-5 py-3 font-semibold">Status</th>
+                <th class="px-5 py-3 font-semibold">Follow-up</th></tr></thead>
+            <tbody class="divide-y divide-gray-50">
+            {% for p in follow_ups_today %}
+                <tr><td class="px-5 py-3 font-medium"><a class="hover:underline" href="{% url 'package_detail' p.pk %}">{{ p.customer.name }}</a></td>
+                    <td class="px-5 py-3"><a href="tel:{{ p.customer.phone }}" class="text-[#273B30] hover:underline">{{ p.customer.phone }}</a></td>
+                    <td class="px-5 py-3">{{ p.package_type.name }}</td><td class="px-5 py-3 text-right">{{ p.massages_remaining }}</td>
+                    <td class="px-5 py-3">{{ p.expiry_date|date:"d M Y" }}</td>
+                    <td class="px-5 py-3"><span class="px-2 py-0.5 rounded border text-xs font-semibold {{ p.status|status_style }}">{{ p.status }}</span></td>
+                    <td class="px-5 py-3">{{ p.get_follow_up_status_display }}</td></tr>
+            {% endfor %}
+            </tbody></table></div>
+        {% else %}<p class="px-5 py-6 text-sm text-gray-500">No follow-up calls due today.</p>{% endif %}
+    </div>
+
+    <!-- Expired, not renewed -->
+    <div class="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden mb-8">
+        <div class="px-5 py-4 border-b border-gray-100"><h2 class="font-bold text-gray-900">Expired · Not Renewed</h2></div>
+        {% if expired_list %}
+        <div class="overflow-x-auto"><table class="w-full text-sm text-left">
+            <thead class="bg-gray-50/60 text-gray-600"><tr>
+                <th class="px-5 py-3 font-semibold">Customer</th><th class="px-5 py-3 font-semibold">Phone</th><th class="px-5 py-3 font-semibold">Package</th>
+                <th class="px-5 py-3 font-semibold">Expiry</th><th class="px-5 py-3 font-semibold text-right">Days Since</th><th class="px-5 py-3 font-semibold text-right">Rate</th>
+                <th class="px-5 py-3 font-semibold">Follow-up</th><th class="px-5 py-3 font-semibold">Remarks</th></tr></thead>
+            <tbody class="divide-y divide-gray-50">
+            {% for p in expired_list %}
+                <tr><td class="px-5 py-3 font-medium"><a class="hover:underline" href="{% url 'package_detail' p.pk %}">{{ p.customer.name }}</a>{% if is_super and not selected_branch %}<span class="block text-xs text-gray-400">{{ p.customer.branch.name }}</span>{% endif %}</td>
+                    <td class="px-5 py-3"><a href="tel:{{ p.customer.phone }}" class="text-[#273B30] hover:underline">{{ p.customer.phone }}</a></td>
+                    <td class="px-5 py-3">{{ p.package_type.name }}</td><td class="px-5 py-3">{{ p.expiry_date|date:"d M Y" }}</td>
+                    <td class="px-5 py-3 text-right">{% widthratio p.days_to_expiry 1 -1 %}</td><td class="px-5 py-3 text-right">{{ p.rate|rs }}</td>
+                    <td class="px-5 py-3">{{ p.get_follow_up_status_display }}</td><td class="px-5 py-3 text-gray-500">{{ p.remarks }}</td></tr>
+            {% endfor %}
+            </tbody></table></div>
+        {% else %}<p class="px-5 py-6 text-sm text-gray-500">No expired packages waiting for renewal.</p>{% endif %}
+    </div>
+
+    <!-- Month-wise and year-wise -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div class="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden">
+            <div class="px-5 py-4 border-b border-gray-100"><h2 class="font-bold text-gray-900">Packages Sold &amp; Expired · Last 12 Months</h2></div>
+            <table class="w-full text-sm text-left">
+                <thead class="bg-gray-50/60 text-gray-600"><tr><th class="px-5 py-2.5 font-semibold">Month</th><th class="px-5 py-2.5 font-semibold text-right">Sold</th><th class="px-5 py-2.5 font-semibold text-right">Expired</th></tr></thead>
+                <tbody class="divide-y divide-gray-50">{% for m in months %}<tr><td class="px-5 py-2.5">{{ m.month|date:"M Y" }}</td><td class="px-5 py-2.5 text-right">{{ m.sold }}</td><td class="px-5 py-2.5 text-right">{{ m.expired }}</td></tr>{% endfor %}</tbody>
+            </table>
+        </div>
+        <div class="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden self-start">
+            <div class="px-5 py-4 border-b border-gray-100"><h2 class="font-bold text-gray-900">Packages Sold &amp; Expired · Last 5 Years</h2></div>
+            <table class="w-full text-sm text-left">
+                <thead class="bg-gray-50/60 text-gray-600"><tr><th class="px-5 py-2.5 font-semibold">Year</th><th class="px-5 py-2.5 font-semibold text-right">Sold</th><th class="px-5 py-2.5 font-semibold text-right">Expired</th></tr></thead>
+                <tbody class="divide-y divide-gray-50">{% for y in years %}<tr><td class="px-5 py-2.5">{{ y.year }}</td><td class="px-5 py-2.5 text-right">{{ y.sold }}</td><td class="px-5 py-2.5 text-right">{{ y.expired }}</td></tr>{% endfor %}</tbody>
+            </table>
+        </div>
+    </div>
+{% endblock %}

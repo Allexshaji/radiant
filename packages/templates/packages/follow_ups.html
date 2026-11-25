@@ -1,0 +1,44 @@
+{% extends "admin_panel/admin_base.html" %}
+{% load package_tags %}
+
+{% block title %}Renewal Follow-up{% endblock %}
+{% block page_title %}Renewal Follow-up{% endblock %}
+{% block page_subtitle %}Priority call list. 1 = expired, 2-4 = 1 to 3 massages left, 5 = expires within 7 days. "Not Interested" customers drop off.{% endblock %}
+{% block header_actions %}{% include "packages/_branch_filter.html" %}{% endblock %}
+
+{% block content %}
+<div class="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden">
+    <div class="px-5 py-4 border-b border-gray-100 text-sm text-gray-500">{{ rows|length }} customer{{ rows|length|pluralize }} to call</div>
+    {% if rows %}
+    <div class="overflow-x-auto"><table class="w-full text-sm text-left">
+        <thead class="bg-gray-50/60 text-gray-600"><tr>
+            <th class="px-4 py-3 font-semibold">Priority</th><th class="px-4 py-3 font-semibold">Customer</th><th class="px-4 py-3 font-semibold">Package</th>
+            <th class="px-4 py-3 font-semibold text-right">Left</th><th class="px-4 py-3 font-semibold">Expiry</th><th class="px-4 py-3 font-semibold">Reason</th>
+            <th class="px-4 py-3 font-semibold">Follow-up</th></tr></thead>
+        <tbody class="divide-y divide-gray-50">
+        {% for p in rows %}
+            <tr class="align-top">
+                <td class="px-4 py-3"><span class="inline-flex w-7 h-7 items-center justify-center rounded-full text-xs font-bold {% if p.follow_up_priority == 1 %}bg-rose-100 text-rose-700{% elif p.follow_up_priority == 5 %}bg-sky-100 text-sky-700{% else %}bg-amber-100 text-amber-700{% endif %}">{{ p.follow_up_priority }}</span></td>
+                <td class="px-4 py-3"><a href="{% url 'package_detail' p.pk %}" class="font-semibold text-gray-900 hover:underline">{{ p.customer.name }}</a>
+                    <a href="tel:{{ p.customer.phone }}" class="block text-xs text-[#273B30] hover:underline">{{ p.customer.phone }}</a>
+                    {% if is_super and not selected_branch %}<span class="block text-xs text-gray-400">{{ p.customer.branch.name }}</span>{% endif %}</td>
+                <td class="px-4 py-3">{{ p.package_type.name }}</td>
+                <td class="px-4 py-3 text-right">{{ p.massages_remaining }}</td>
+                <td class="px-4 py-3">{{ p.expiry_date|date:"d M Y" }}<span class="block text-xs text-gray-400">{{ p.days_to_expiry }} days</span></td>
+                <td class="px-4 py-3 text-gray-700">{{ p.follow_up_reason }}</td>
+                <td class="px-4 py-3">
+                    <form method="post" action="{% url 'package_follow_up' p.pk %}" class="m-0 flex flex-col gap-2 min-w-[14rem]">
+                        {% csrf_token %}
+                        <input type="hidden" name="next" value="{{ request.get_full_path }}">
+                        <select name="follow_up_status">{% for value, label in follow_up_choices %}<option value="{{ value }}" {% if value == p.follow_up_status %}selected{% endif %}>{{ label }}</option>{% endfor %}</select>
+                        <input type="date" name="next_follow_up" value="{{ p.next_follow_up|date:'Y-m-d' }}" title="Next follow-up date">
+                        <input type="text" name="remarks" value="{{ p.remarks }}" maxlength="255" placeholder="Remarks">
+                        <button class="bg-[#F0F3F1] text-gray-900 text-xs font-semibold px-3 py-2 rounded-lg hover:bg-[#E3EAE6]">Save</button>
+                    </form>
+                </td>
+            </tr>
+        {% endfor %}
+        </tbody></table></div>
+    {% else %}<p class="px-5 py-8 text-sm text-gray-500">Nobody needs a renewal call right now.</p>{% endif %}
+</div>
+{% endblock %}

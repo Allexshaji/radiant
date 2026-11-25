@@ -65,6 +65,7 @@ INSTALLED_APPS = [
     'admin_panel',
     'staff_panel',
     'accounts',
+    'packages',
 ]
 
 MIDDLEWARE = [

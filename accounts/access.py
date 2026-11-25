@@ -20,6 +20,7 @@ ADMIN_SECTIONS = [
     ("my_salary", "My Salary", "The admin's own salary"),
     ("my_profile", "My Profile", "The admin's own account details"),
     ("requirements", "Requirements", "Requirements sent by staff"),
+    ("packages", "Massage Packages", "Customer massage packages, visits, renewals and follow-ups"),
     ("leave", "Leave", "Leave dashboard, leave requests and leave policies"),
     ("expenses", "Expenses", "Expense names that staff choose from"),
     ("salary", "Salary", "Salary management"),
@@ -130,6 +131,11 @@ ADMIN_URL_SECTIONS = {
     "delete_admin": "admins",
 }
 
+# Every massage package page belongs to the "packages" section.
+from packages.pages import PACKAGE_PAGES  # noqa: E402
+
+ADMIN_URL_SECTIONS.update({name: "packages" for name in PACKAGE_PAGES})
+
 # Staff page (URL name) -> staff feature. Profile and dashboard are always open.
 STAFF_URL_FEATURES = {
     "check_in": "attendance",
@@ -233,7 +239,7 @@ class Permissions:
 
     KEYS = {
         "staff", "attendance", "reports", "requirements", "leave",
-        "expenses", "salary", "branches", "admins", "super_admin",
+        "expenses", "salary", "branches", "admins", "super_admin", "packages",
         "my_attendance", "my_leave", "my_salary", "my_profile",
         "my_reports", "admin_reports",
     }

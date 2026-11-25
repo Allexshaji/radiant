@@ -1,0 +1,52 @@
+{% extends "admin_panel/admin_base.html" %}
+{% load package_tags %}
+
+{% block title %}Package Rates{% endblock %}
+{% block page_title %}Package Rates{% endblock %}
+{% block page_subtitle %}Standard price and validity of each package, for every branch.{% if not can_edit %} Only a Super Admin can change these.{% endif %}{% endblock %}
+
+{% block content %}
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+    <div class="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden lg:col-span-2 self-start">
+        <table class="w-full text-sm text-left">
+            <thead class="bg-gray-50/60 text-gray-600"><tr>
+                <th class="px-5 py-3 font-semibold">Package</th><th class="px-5 py-3 font-semibold text-right">Massages</th>
+                <th class="px-5 py-3 font-semibold text-right">Rate</th><th class="px-5 py-3 font-semibold text-right">Validity</th>
+                <th class="px-5 py-3 font-semibold">On sale</th>{% if can_edit %}<th></th>{% endif %}</tr></thead>
+            <tbody class="divide-y divide-gray-50">
+            {% for t in rates %}
+                <tr class="{% if editing and editing.pk == t.pk %}bg-amber-50/50{% endif %}">
+                    <td class="px-5 py-3 font-semibold">{{ t.name }}</td><td class="px-5 py-3 text-right">{{ t.total_massages }}</td>
+                    <td class="px-5 py-3 text-right">{{ t.rate|rs }}</td><td class="px-5 py-3 text-right">{{ t.validity_months }} months</td>
+                    <td class="px-5 py-3">{% if t.is_active %}<span class="text-emerald-700 font-semibold">Yes</span>{% else %}<span class="text-gray-400">No</span>{% endif %}</td>
+                    {% if can_edit %}<td class="px-5 py-3 text-right"><a href="?edit={{ t.pk }}" class="font-semibold text-[#273B30] hover:underline">Edit</a></td>{% endif %}
+                </tr>
+            {% empty %}<tr><td colspan="6" class="px-5 py-6 text-gray-500">No packages yet.</td></tr>{% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    {% if can_edit %}
+    <form method="post" class="bg-white rounded-xl border border-gray-100 shadow-sm p-6 space-y-4 self-start">
+        {% csrf_token %}
+        <h2 class="font-bold text-gray-900">{% if editing %}Edit {{ editing.name }}{% else %}Add a Package{% endif %}</h2>
+        {% for field in form %}
+            <div>
+                {% if field.name == "is_active" %}
+                    <label class="flex items-center gap-2 text-sm font-semibold text-gray-700">{{ field }} On sale</label>
+                {% else %}
+                    <label for="{{ field.id_for_label }}" class="block text-sm font-semibold text-gray-700 mb-1">{{ field.label }}{% if field.name == "validity_months" %} (months){% endif %}</label>
+                    {{ field }}
+                {% endif %}
+                {% for error in field.errors %}<p class="text-xs text-red-600 mt-1">{{ error }}</p>{% endfor %}
+            </div>
+        {% endfor %}
+        <p class="text-xs text-gray-400">A new rate applies to packages sold from now. Packages already sold keep their rate.</p>
+        <div class="flex gap-2">
+            <button class="bg-[#273B30] text-white text-sm font-semibold px-5 py-2.5 rounded-lg hover:opacity-90">Save</button>
+            {% if editing %}<a href="{% url 'package_rates' %}" class="px-5 py-2.5 text-sm font-semibold text-gray-600 hover:underline">Cancel</a>{% endif %}
+        </div>
+    </form>
+    {% endif %}
+</div>
+{% endblock %}

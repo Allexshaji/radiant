@@ -1,4 +1,4 @@
-from django.urls import path
+from django.urls import include, path
 from . import my_reports, my_work, views
 
 urlpatterns = [
@@ -90,5 +90,6 @@ urlpatterns = [
     path('salary/<int:salary_id>/detail/', views.admin_salary_detail, name='admin_salary_detail'),
     path('salary/rates/save/', views.admin_salary_save_rates, name='admin_salary_save_rates'),
 
+    # Massage packages (packages app): Admins and the Super Admin only
+    path('packages/', include('packages.urls')),
 ]
-

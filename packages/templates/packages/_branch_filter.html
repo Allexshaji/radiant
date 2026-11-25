@@ -1,0 +1,10 @@
+{% if is_super %}
+<form method="get" class="flex items-center gap-2">
+    {% for key, value in request.GET.items %}{% if key != "branch" %}<input type="hidden" name="{{ key }}" value="{{ value }}">{% endif %}{% endfor %}
+    <label for="branch" class="text-sm font-semibold text-gray-600 whitespace-nowrap">Branch</label>
+    <select id="branch" name="branch" onchange="this.form.submit()" style="width:auto">
+        <option value="">All branches</option>
+        {% for b in branches %}<option value="{{ b.pk }}" {% if selected_branch and b.pk == selected_branch.pk %}selected{% endif %}>{{ b.name }}</option>{% endfor %}
+    </select>
+</form>
+{% endif %}

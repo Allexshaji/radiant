@@ -79,6 +79,16 @@ NAV_GROUPS = [  # (heading, items)
         ("leave", "Leave Policies", "fa-solid fa-tags", "leavetype_list",
          ["leavetype_list", "leavetype_create", "leavetype_edit", "leavetype_delete"]),
     ]),
+    ("Massage Packages", [
+        ("packages", "Package Dashboard", "fa-solid fa-spa", "package_dashboard", ["package_dashboard"]),
+        ("packages", "Customers & Packages", "fa-solid fa-address-book", "package_list",
+         ["package_list", "package_add", "package_detail", "package_edit", "package_delete",
+          "package_renew", "package_visit_add", "package_visit_delete"]),
+        ("packages", "Renewal Follow-up", "fa-solid fa-phone-volume", "package_follow_ups",
+         ["package_follow_ups", "package_follow_up"]),
+        ("packages", "Renewal History", "fa-solid fa-clock-rotate-left", "package_renewals", ["package_renewals"]),
+        ("packages", "Package Rates", "fa-solid fa-tags", "package_rates", ["package_rates"]),
+    ]),
     ("Finance", [
         ("salary", "Salary Management", "fa-solid fa-money-bill-wave", "admin_salary_manage",
          ["admin_salary_manage", "admin_salary_add_staff", "admin_salary_edit_staff",
