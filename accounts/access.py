@@ -235,7 +235,7 @@ class Permissions:
         "staff", "attendance", "reports", "requirements", "leave",
         "expenses", "salary", "branches", "admins", "super_admin",
         "my_attendance", "my_leave", "my_salary", "my_profile",
-        "my_reports",
+        "my_reports", "admin_reports",
     }
 
     def __init__(self, user):
@@ -249,8 +249,9 @@ class Permissions:
 
     def _allowed(self, key):
         role = self.user.role
-        if key == "my_reports":
-            # Sidebar only: an admin's own reports sit under Staff. The Super Admin's sit under Super Admin.
+        if key in ("my_reports", "admin_reports"):
+            # Sidebar only. An admin sees their own reports and the staff report pages under Staff.
+            # The Super Admin has My Reports under Super Admin and "Staff Reports" under Staff instead.
             return role == User.ADMIN and "reports" not in (self.user.blocked_sections or [])
         if role == User.SUPER_ADMIN:
             return key not in MY_WORK_SECTIONS
