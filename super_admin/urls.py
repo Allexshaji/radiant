@@ -33,4 +33,5 @@ urlpatterns = [
     path("admin-reports/", report_review.review_reports, {"kind": "admin"}, name="super_admin_reports"),
     path("staff-reports/", report_review.review_reports, {"kind": "staff"}, name="super_staff_reports"),
     path("review-reports/<int:report_id>/status/", report_review.set_report_status, name="super_set_report_status"),
+    path("review-reports/<int:report_id>/delete/", report_review.delete_report, name="super_delete_report"),
 ]

@@ -2,14 +2,14 @@
 
 {% block title %}{{ info.title }}{% endblock %}
 {% block heading %}{{ info.title }}{% endblock %}
-{% block subheading %}Choose a {{ info.who }} to see, edit, approve or reject their reports{% endblock %}
+{% block subheading %}Every {{ info.who }} report. Edit, approve, reject or delete it here.{% endblock %}
 
 {% block content %}
     <form method="get" class="bg-white rounded-xl shadow-sm border border-gray-100 p-5 mb-6 flex flex-col sm:flex-row gap-3 sm:items-end">
         <div class="flex-1">
             <label for="person" class="block text-sm font-semibold text-gray-700 mb-1">{{ info.who|capfirst }}</label>
             <select id="person" name="person" onchange="this.form.submit()" class="w-full border border-gray-300 rounded-lg px-3.5 py-2.5 text-sm text-gray-900 bg-white">
-                <option value="">Choose a {{ info.who }}</option>
+                <option value="">All</option>
                 {% for p in people %}
                     <option value="{{ p.pk }}" {% if person and p.pk == person.pk %}selected{% endif %}>
                         {{ p.get_full_name|default:p.username }} — {{ p.branch.name|default:"No branch" }}
@@ -28,56 +28,70 @@
         <noscript><button type="submit" class="bg-[#273B30] text-white text-sm font-semibold px-5 py-2.5 rounded-lg">Show</button></noscript>
     </form>
 
-    {% if not person %}
-        <div class="bg-white rounded-xl shadow-sm border border-gray-100 px-6 py-10 text-center text-sm text-gray-500">
-            Choose a {{ info.who }} above to see their reports.
+    <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+        <div class="px-6 py-4 border-b border-gray-100 flex justify-between items-center">
+            <h2 class="font-bold text-gray-900">
+                {% if person %}Reports of {{ person.get_full_name|default:person.username }}{% else %}All {{ info.who }} reports{% endif %}
+            </h2>
+            <span class="text-sm text-gray-500">{{ page.paginator.count }} report{{ page.paginator.count|pluralize }}</span>
         </div>
-    {% else %}
-        <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
-            <div class="px-6 py-4 border-b border-gray-100">
-                <h2 class="font-bold text-gray-900">Reports of {{ person.get_full_name|default:person.username }}</h2>
-            </div>
-            {% if reports %}
-                <div class="divide-y divide-gray-100">
-                    {% for report in reports %}
-                        <div class="px-6 py-4 flex flex-col lg:flex-row lg:items-center justify-between gap-4">
-                            <div>
-                                <p class="font-semibold text-gray-900">Report #{{ report.id }} · {{ report.report_date|date:"d M Y" }}</p>
-                                <p class="text-sm text-gray-500 mt-1">
-                                    {{ report.branch.name }} ·
-                                    {% if report.status == "APPROVED" %}<span class="text-emerald-700 font-semibold">Approved</span>
-                                    {% elif report.status == "REJECTED" %}<span class="text-rose-700 font-semibold">Rejected</span>
-                                    {% else %}<span class="text-amber-700 font-semibold">Submitted</span>{% endif %}
-                                    {% if kind == "admin" %} · {% if report.super_admin_submission %}Sent to Super Admin{% else %}Not sent yet{% endif %}{% endif %}
-                                </p>
-                                {% if report.super_admin_submission.review_note %}
-                                    <p class="text-xs text-rose-700 mt-1">Reason: {{ report.super_admin_submission.review_note }}</p>
-                                {% endif %}
-                            </div>
-                            <div class="flex flex-wrap items-center gap-2">
-                                <a href="{% url 'admin_report_hub' report.id %}" class="px-4 py-2 bg-[#F0F3F1] text-gray-900 text-sm font-semibold rounded-lg hover:bg-[#E3EAE6]"><i class="fa-solid fa-pen mr-1"></i>Edit</a>
-                                {% if report.status != "APPROVED" %}
-                                    <form method="post" action="{% url 'super_set_report_status' report.id %}" class="m-0">
-                                        {% csrf_token %}
-                                        <input type="hidden" name="status" value="{{ status }}">
-                                        <button name="action" value="approve" class="px-4 py-2 bg-emerald-600 text-white text-sm font-semibold rounded-lg hover:bg-emerald-700">Approve</button>
-                                    </form>
-                                {% endif %}
-                                {% if report.status != "REJECTED" %}
-                                    <form method="post" action="{% url 'super_set_report_status' report.id %}" class="m-0 flex items-center gap-2">
-                                        {% csrf_token %}
-                                        <input type="hidden" name="status" value="{{ status }}">
-                                        <input type="text" name="note" placeholder="Reason (optional)" class="border border-gray-300 rounded-lg px-3 py-2 text-sm w-40">
-                                        <button name="action" value="reject" class="px-4 py-2 bg-rose-50 text-rose-700 border border-rose-100 text-sm font-semibold rounded-lg hover:bg-rose-100">Reject</button>
-                                    </form>
-                                {% endif %}
-                            </div>
+        {% if reports %}
+            <div class="divide-y divide-gray-100">
+                {% for report in reports %}
+                    <div class="px-6 py-4 flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+                        <div>
+                            <p class="font-semibold text-gray-900">Report #{{ report.id }} · {{ report.report_date|date:"d M Y" }}</p>
+                            <p class="text-sm text-gray-500 mt-1">
+                                <i class="fa-regular fa-user"></i> {{ report.staff.get_full_name|default:report.staff.username }} ·
+                                {{ report.branch.name }} ·
+                                {% if report.status == "APPROVED" %}<span class="text-emerald-700 font-semibold">Approved</span>
+                                {% elif report.status == "REJECTED" %}<span class="text-rose-700 font-semibold">Rejected</span>
+                                {% else %}<span class="text-amber-700 font-semibold">Submitted</span>{% endif %}
+                                {% if kind == "admin" %} · {% if report.super_admin_submission %}Sent to Super Admin{% else %}Not sent yet{% endif %}{% endif %}
+                            </p>
+                            {% if report.super_admin_submission.review_note %}
+                                <p class="text-xs text-rose-700 mt-1">Reason: {{ report.super_admin_submission.review_note }}</p>
+                            {% endif %}
                         </div>
-                    {% endfor %}
+                        <div class="flex flex-wrap items-center gap-2">
+                            <a href="{% url 'admin_report_hub' report.id %}" class="px-4 py-2 bg-[#F0F3F1] text-gray-900 text-sm font-semibold rounded-lg hover:bg-[#E3EAE6]"><i class="fa-solid fa-pen mr-1"></i>Edit</a>
+                            {% if report.status != "APPROVED" %}
+                                <form method="post" action="{% url 'super_set_report_status' report.id %}" class="m-0">
+                                    {% csrf_token %}
+                                    <input type="hidden" name="person" value="{{ person.pk|default:'' }}">
+                                    <input type="hidden" name="status" value="{{ status }}">
+                                    <button name="action" value="approve" class="px-4 py-2 bg-emerald-600 text-white text-sm font-semibold rounded-lg hover:bg-emerald-700">Approve</button>
+                                </form>
+                            {% endif %}
+                            {% if report.status != "REJECTED" %}
+                                <form method="post" action="{% url 'super_set_report_status' report.id %}" class="m-0 flex items-center gap-2">
+                                    {% csrf_token %}
+                                    <input type="hidden" name="person" value="{{ person.pk|default:'' }}">
+                                    <input type="hidden" name="status" value="{{ status }}">
+                                    <input type="text" name="note" placeholder="Reason (optional)" class="border border-gray-300 rounded-lg px-3 py-2 text-sm w-40">
+                                    <button name="action" value="reject" class="px-4 py-2 bg-rose-50 text-rose-700 border border-rose-100 text-sm font-semibold rounded-lg hover:bg-rose-100">Reject</button>
+                                </form>
+                            {% endif %}
+                            <form method="post" action="{% url 'super_delete_report' report.id %}" class="m-0"
+                                  onsubmit="return confirm('Delete Report #{{ report.id }}? Its walk-ins, payments, revenue and expenses will also be deleted. This cannot be undone.');">
+                                {% csrf_token %}
+                                <input type="hidden" name="person" value="{{ person.pk|default:'' }}">
+                                <input type="hidden" name="status" value="{{ status }}">
+                                <button type="submit" title="Delete report" class="px-3 py-2 bg-[#FEF6F5] text-[#D06B5D] border border-[#FBE9E7] text-sm font-semibold rounded-lg hover:bg-[#FBE9E7]"><i class="fa-regular fa-trash-can"></i></button>
+                            </form>
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+            {% if page.has_other_pages %}
+                <div class="px-6 py-4 border-t border-gray-100 flex items-center justify-between text-sm">
+                    {% if page.has_previous %}<a class="font-semibold text-[#273B30] hover:underline" href="?page={{ page.previous_page_number }}{% if person %}&person={{ person.pk }}{% endif %}{% if status %}&status={{ status }}{% endif %}">← Newer</a>{% else %}<span></span>{% endif %}
+                    <span class="text-gray-500">Page {{ page.number }} of {{ page.paginator.num_pages }}</span>
+                    {% if page.has_next %}<a class="font-semibold text-[#273B30] hover:underline" href="?page={{ page.next_page_number }}{% if person %}&person={{ person.pk }}{% endif %}{% if status %}&status={{ status }}{% endif %}">Older →</a>{% else %}<span></span>{% endif %}
                 </div>
-            {% else %}
-                <p class="px-6 py-8 text-sm text-gray-500">No reports{% if status %} with this status{% endif %}.</p>
             {% endif %}
-        </div>
-    {% endif %}
+        {% else %}
+            <p class="px-6 py-8 text-sm text-gray-500">No reports{% if person or status %} for this choice{% endif %}.</p>
+        {% endif %}
+    </div>
 {% endblock %}

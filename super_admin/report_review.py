@@ -4,7 +4,10 @@ Choose an admin (or a staff member), see their reports, open one to edit it,
 then approve or reject it. Editing uses the same report pages admins use
 (admin_panel/my_reports.py), which let the Super Admin open any report.
 """
+from urllib.parse import urlencode
+
 from django.contrib import messages
+from django.core.paginator import Paginator
 from django.db import transaction
 from django.http import Http404
 from django.shortcuts import get_object_or_404, redirect, render
@@ -22,12 +25,21 @@ KINDS = {
     "admin": {"role": User.ADMIN, "title": "Admin Reports", "who": "admin"},
     "staff": {"role": User.STAFF, "title": "Staff Reports", "who": "staff member"},
 }
+PAGE_SIZE = 30
 STATUSES = [
     ("", "All"),
     (DailyReport.SUBMITTED, "Submitted"),
     (DailyReport.APPROVED, "Approved"),
     (DailyReport.REJECTED, "Rejected"),
 ]
+
+
+def _back_url(request, report):
+    """The review list the form came from, with the same person and status filters."""
+    kind = "admin" if report.staff.role == User.ADMIN else "staff"
+    query = {k: request.POST[k] for k in ("person", "status") if request.POST.get(k)}
+    url = reverse(f"super_{kind}_reports")
+    return f"{url}?{urlencode(query)}" if query else url
 
 
 def _kind(kind):
@@ -51,15 +63,17 @@ def review_reports(request, kind):
     if status not in dict(STATUSES):
         status = ""
 
-    reports = DailyReport.objects.none()
+    # All reports of admins (or of staff) show at once. Choosing a person or a status narrows the list.
+    reports = (
+        DailyReport.objects.filter(staff__role=info["role"])
+        .select_related("branch", "staff", "super_admin_submission")
+        .order_by("-report_date", "-id")
+    )
     if person:
-        reports = (
-            DailyReport.objects.filter(staff=person)
-            .select_related("branch", "super_admin_submission")
-            .order_by("-report_date", "-id")
-        )
-        if status:
-            reports = reports.filter(status=status)
+        reports = reports.filter(staff=person)
+    if status:
+        reports = reports.filter(status=status)
+    page = Paginator(reports, PAGE_SIZE).get_page(request.GET.get("page"))
 
     return render(request, "super_admin/review_reports.html", {
         "kind": kind,
@@ -68,7 +82,8 @@ def review_reports(request, kind):
         "person": person,
         "status": status,
         "statuses": STATUSES,
-        "reports": reports,
+        "reports": page,
+        "page": page,
     })
 
 
@@ -79,10 +94,7 @@ def set_report_status(request, report_id):
     report = get_object_or_404(DailyReport.objects.select_related("staff"), id=report_id)
     action = request.POST.get("action")
     note = request.POST.get("note", "").strip()
-    kind = "admin" if report.staff.role == User.ADMIN else "staff"
-    back = f"{reverse(f'super_{kind}_reports')}?person={report.staff_id}"
-    if request.POST.get("status"):
-        back += f"&status={request.POST['status']}"
+    back = _back_url(request, report)
 
     if action == "approve":
         report.status = DailyReport.APPROVED
@@ -105,4 +117,17 @@ def set_report_status(request, report_id):
             submission.save(update_fields=["review_note", "reviewed_at"])
 
     messages.success(request, done)
+    return redirect(back)
+
+
+@super_admin_required
+@require_POST
+def delete_report(request, report_id):
+    """Delete an admin or staff report, with everything in it (walk-ins, payments, revenue, expenses)."""
+    report = get_object_or_404(DailyReport.objects.select_related("staff"), id=report_id)
+    back = _back_url(request, report)
+    owner = report.staff.get_full_name() or report.staff.username
+    number = report.id
+    report.delete()
+    messages.success(request, f"Report #{number} of {owner} deleted.")
     return redirect(back)
