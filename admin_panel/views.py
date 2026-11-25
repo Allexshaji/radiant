@@ -365,10 +365,10 @@ def view_walkins(request, report_id):
 
 
     report = get_object_or_404(
-        in_my_branch(DailyReport.objects.select_related(
+        viewable_reports(DailyReport.objects.select_related(
             "staff",
             "branch",
-        ), request.user, "staff"),
+        ), request.user),
         id=report_id
     )
 
@@ -395,10 +395,10 @@ def view_walkins(request, report_id):
 def view_revenues(request, report_id):
 
     report = get_object_or_404(
-        in_my_branch(DailyReport.objects.select_related(
+        viewable_reports(DailyReport.objects.select_related(
             "staff",
             "branch",
-        ), request.user, "staff"),
+        ), request.user),
         id=report_id
     )
 
@@ -426,12 +426,12 @@ def view_payments(request, report_id):
 def view_expenses(request, report_id):
 
     report = get_object_or_404(
-        in_my_branch(DailyReport.objects.select_related(
+        viewable_reports(DailyReport.objects.select_related(
             "staff",
             "branch",
         ).prefetch_related(
             "expenses",
-        ), request.user, "staff"),
+        ), request.user),
         id=report_id
     )
 
@@ -853,6 +853,15 @@ def delete_branch_view(request, branch_id):
 def is_admin_or_staff(user):
     """Check if user is admin or has staff permission"""
     return is_admin_role(user) or user.is_staff or user.groups.filter(name__in=['Admin', 'HR']).exists()
+
+def viewable_reports(queryset, user):
+    """Reports this user may open read-only: the staff reports of their branch, plus the
+    reports the Super Admin made for their branch. A Super Admin sees every report."""
+    rows = in_my_branch(queryset, user, "staff")
+    if getattr(user, "role", None) == User.ADMIN and user.branch_id:
+        rows = rows | queryset.filter(staff__role=User.SUPER_ADMIN, branch_id=user.branch_id)
+    return rows
+
 
 def reviewable_leaves(user):
     """The leave rows this user may look at and decide on.

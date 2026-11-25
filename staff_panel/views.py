@@ -30,6 +30,7 @@ from admin_panel.models import LeaveType
 from staff_panel.forms import LeaveApplicationForm, RequirementForm
 from staff_panel.models import Requirement
 from .location import place_name_for
+from .report_dates import chosen_report_date
 
 
 def staff_required(view_func):
@@ -433,6 +434,8 @@ def reports_add(request):
         "staff_panel/add_reports/reports_add.html",
         {
             "reports": reports,
+            # The date box next to "Create New Report" starts on today.
+            "today": timezone.localdate(),
         }
     )
 
@@ -443,16 +446,21 @@ def create_report(request):
     if request.method != "POST":
         return redirect("reports_add")
 
+    report_date, problem = chosen_report_date(request.POST)
+    if problem:
+        messages.error(request, problem)
+        return redirect("reports_add")
+
     report = DailyReport.objects.create(
         staff=request.user,
         branch=request.user.branch,
-        report_date=timezone.localdate(),
+        report_date=report_date,
         status=DailyReport.SUBMITTED,
     )
 
     messages.success(
         request,
-        f"Report #{report.id} created successfully!"
+        f"Report #{report.id} created for {report_date:%d %b %Y}."
     )
 
     return redirect(

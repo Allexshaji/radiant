@@ -1,4 +1,3 @@
-from datetime import date
 from decimal import Decimal
 from functools import wraps
 
@@ -16,6 +15,7 @@ from accounts.access import ADMIN_ROLES, ADMIN_SECTIONS, STAFF_FEATURES, is_supe
 from accounts.models import Branch, StaffFeatureSetting, User
 from admin_panel.models import ReportSubmission
 from staff_panel.models import DailyReport
+from staff_panel.report_dates import chosen_report_date
 
 from .forms import AdminAccountForm
 
@@ -93,19 +93,13 @@ def super_report_create(request):
     """Make a report for one branch on one date. The date can be today or any day before it."""
     branch_id = request.POST.get("branch", "")
     branch = Branch.objects.filter(pk=int(branch_id)).first() if branch_id.isdigit() else None
-    try:
-        report_date = date.fromisoformat(request.POST.get("report_date", ""))
-    except ValueError:
-        report_date = None
+    report_date, problem = chosen_report_date(request.POST)
 
     if branch is None:
         messages.error(request, "Choose a branch.")
         return redirect("super_reports")
-    if report_date is None:
-        messages.error(request, "Choose a valid date.")
-        return redirect("super_reports")
-    if report_date > timezone.localdate():
-        messages.error(request, "A report cannot be made for a future date.")
+    if problem:
+        messages.error(request, problem)
         return redirect("super_reports")
 
     report = (

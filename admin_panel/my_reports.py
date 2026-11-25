@@ -21,6 +21,7 @@ from django.utils import timezone
 from django.views.decorators.http import require_POST
 
 from accounts.access import ADMIN_ROLES, is_super_admin
+from accounts.models import Branch, User
 from staff_panel.forms import (
     ExpenseFormSet,
     PaymentSummaryForm,
@@ -28,6 +29,7 @@ from staff_panel.forms import (
     WalkinServicesForm,
 )
 from staff_panel.models import DailyReport, PaymentSummary, Revenue, WalkInService
+from staff_panel.report_dates import chosen_report_date
 from staff_panel.views import _payment_data
 
 from .models import ReportSubmission
@@ -63,6 +65,15 @@ def _my_reports(user):
     return DailyReport.objects.filter(staff=user).select_related("branch", "staff")
 
 
+def _listed_reports(user):
+    """The reports on an admin's My Reports page: their own, plus the ones the Super Admin
+    made for the admin's branch. The Super Admin's ones can only be viewed, not changed."""
+    rows = Q(staff=user)
+    if user.role == User.ADMIN and user.branch_id:
+        rows |= Q(staff__role=User.SUPER_ADMIN, branch_id=user.branch_id)
+    return DailyReport.objects.filter(rows).select_related("branch", "staff")
+
+
 def _is_sent(report):
     return ReportSubmission.objects.filter(report=report).exists()
 
@@ -90,14 +101,20 @@ def report_dashboard(request):
 
 @my_reports_required
 def reports_add(request):
-    reports = _my_reports(request.user).select_related(
+    reports = _listed_reports(request.user).select_related(
         "super_admin_submission",
     ).order_by("-report_date", "-id")
 
     return render(
         request,
         "admin_panel/my_reports/reports_add.html",
-        {"reports": reports},
+        {
+            "reports": reports,
+            # The date box next to "Create New Report" starts on today.
+            "today": timezone.localdate(),
+            # The Super Admin has no branch of their own, so they also choose the branch here.
+            "branches": Branch.objects.order_by("name") if is_super_admin(request.user) else None,
+        },
     )
 
 
@@ -110,14 +127,19 @@ def create_report(request):
     if is_super_admin(request.user):
         return redirect("super_reports")
 
+    report_date, problem = chosen_report_date(request.POST)
+    if problem:
+        messages.error(request, problem)
+        return redirect("admin_reports_add")
+
     report = DailyReport.objects.create(
         staff=request.user,
         branch=request.user.branch,
-        report_date=timezone.localdate(),
+        report_date=report_date,
         status=DailyReport.SUBMITTED,
     )
 
-    messages.success(request, f"Report #{report.id} created successfully!")
+    messages.success(request, f"Report #{report.id} created for {report_date:%d %b %Y}.")
 
     return redirect("admin_report_hub", report_id=report.id)
 

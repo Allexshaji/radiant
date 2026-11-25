@@ -24,7 +24,8 @@
                     <label for="report_date" class="block text-sm font-semibold text-gray-700 mb-1">Report date</label>
                     <input id="report_date" type="date" name="report_date" required
                            value="{{ today|date:'Y-m-d' }}" max="{{ today|date:'Y-m-d' }}"
-                           class="w-full border border-gray-300 rounded-lg px-3.5 py-2.5 text-sm text-gray-900 bg-white">
+                           onclick="if (this.showPicker) { try { this.showPicker(); } catch (e) {} }"
+                           class="cursor-pointer w-full border border-gray-300 rounded-lg px-3.5 py-2.5 text-sm text-gray-900 bg-white">
                     <p class="text-xs text-gray-500 mt-1">Today or any earlier day. Future dates are not allowed.</p>
                 </div>
                 <button type="submit" class="bg-[#273B30] text-white text-sm font-semibold px-5 py-2.5 rounded-lg shadow-sm hover:opacity-90 transition">Create report</button>

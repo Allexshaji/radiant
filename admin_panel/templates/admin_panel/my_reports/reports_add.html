@@ -42,8 +42,21 @@
 
             <!-- Create Report Button Form -->
             <div class="flex items-center w-full md:w-auto">
-                <form method="POST" action="{% url 'admin_create_report' %}" class="w-full">
+                <form method="POST" action="{% if branches is not None %}{% url 'super_report_create' %}{% else %}{% url 'admin_create_report' %}{% endif %}" class="w-full flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
                     {% csrf_token %}
+                    {% if branches is not None %}
+                    <label for="branch" class="sr-only">Branch</label>
+                    <select id="branch" name="branch" required class="border border-gray-300 rounded-lg px-3 py-2.5 text-sm text-gray-900 bg-white">
+                        <option value="">Choose branch</option>
+                        {% for branch in branches %}<option value="{{ branch.pk }}">{{ branch.name }}</option>{% endfor %}
+                    </select>
+                    {% endif %}
+                    <!-- Report date: starts on today; click it to pick another day from the calendar. -->
+                    <label for="report_date" class="sr-only">Report date</label>
+                    <input id="report_date" type="date" name="report_date" required
+                           value="{{ today|date:'Y-m-d' }}" max="{{ today|date:'Y-m-d' }}"
+                           onclick="if (this.showPicker) { try { this.showPicker(); } catch (e) {} }"
+                           class="border border-gray-300 rounded-lg px-3 py-2.5 text-sm text-gray-900 bg-white cursor-pointer">
                     <button type="submit" class="w-full md:w-auto bg-[#273B30] hover:bg-[#1A2720] text-white text-sm font-medium px-6 py-3 rounded-lg shadow-sm transition flex items-center justify-center">
                         <i class="fa-solid fa-plus mr-2"></i> Create New Report
                     </button>
@@ -96,6 +109,11 @@
                                         <i class="fa-solid fa-clock-rotate-left text-amber-500"></i> Submitted
                                     </span>
                                 {% endif %}
+                                {% if report.staff_id != user.id %}
+                                    <span class="mt-2 bg-indigo-50 text-indigo-700 border border-indigo-100 px-3 py-1.5 rounded-md text-[11px] font-bold tracking-wider uppercase flex items-center gap-1.5 w-max">
+                                        <i class="fa-solid fa-crown"></i> By Super Admin
+                                    </span>
+                                {% endif %}
                                 {% if report.super_admin_submission %}
                                     <span class="mt-2 bg-[#F0F3F1] text-[#273B30] border border-gray-200 px-3 py-1.5 rounded-md text-[11px] font-bold tracking-wider uppercase flex items-center gap-1.5 w-max">
                                         <i class="fa-solid fa-paper-plane"></i> Sent to Super Admin
@@ -105,6 +123,12 @@
 
                             <!-- Buttons -->
                             <div class="flex items-center gap-2">
+                                {% if report.staff_id != user.id %}
+                                {# Made by the Super Admin for this branch: view only. #}
+                                <a href="{% url 'view_walkins' report.id %}" class="px-4 py-2 bg-[#F0F3F1] text-gray-900 text-sm font-semibold rounded-lg hover:bg-[#E3EAE6] transition">Walk-ins</a>
+                                <a href="{% url 'view_revenue' report.id %}" class="px-4 py-2 bg-[#F0F3F1] text-gray-900 text-sm font-semibold rounded-lg hover:bg-[#E3EAE6] transition">Revenue</a>
+                                <a href="{% url 'view_expenses' report.id %}" class="px-4 py-2 bg-[#F0F3F1] text-gray-900 text-sm font-semibold rounded-lg hover:bg-[#E3EAE6] transition">Expenses</a>
+                                {% else %}
                                 {% if can.reports %}<a href="{% url 'admin_report_hub' report.id %}" class="px-4 py-2 bg-[#F0F3F1] text-gray-900 text-sm font-semibold rounded-lg hover:bg-[#E3EAE6] transition flex items-center gap-2">
                                     Open
                                 </a>{% endif %}
@@ -116,6 +140,7 @@
                                         <i class="fa-regular fa-trash-can"></i>
                                     </button>
                                 </form>
+                                {% endif %}
                                 {% endif %}
                             </div>
                         </div>
