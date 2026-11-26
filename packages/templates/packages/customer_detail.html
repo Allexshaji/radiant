@@ -6,95 +6,142 @@
 {% block page_title %}{{ customer.name }}{% endblock %}
 {% block page_subtitle %}<a href="tel:{{ customer.phone }}" class="hover:underline">{{ customer.phone }}</a> · {{ customer.branch.name }}{% endblock %}
 {% block header_actions %}
-    <a href="{% url 'customer_edit' customer.pk %}" class="bg-white border border-gray-200 text-gray-800 text-sm font-semibold px-4 py-2.5 rounded-lg hover:bg-gray-50"><i class="fa-solid fa-pen mr-1"></i>Edit Details</a>
     <a href="{% url 'customer_package_add' customer.pk %}" class="bg-[#273B30] text-white text-sm font-semibold px-4 py-2.5 rounded-lg hover:opacity-90"><i class="fa-solid fa-plus mr-1"></i>Add Package</a>
 {% endblock %}
 
 {% block content %}
-<div class="grid grid-cols-1 xl:grid-cols-3 gap-6">
-    <div class="xl:col-span-2 space-y-6">
-        <!-- Running packages -->
-        <section>
-            <h2 class="text-xs font-bold text-gray-500 uppercase tracking-wider mb-3">Running Packages ({{ running|length }})</h2>
-            {% for p in running %}
-                <div class="bg-white rounded-xl border border-gray-100 shadow-sm p-5 mb-4">
+<div class="space-y-8">
+
+    <!-- 1. Customer details -->
+    <section class="bg-white rounded-xl border border-gray-100 shadow-sm p-6">
+        <div class="flex items-center justify-between mb-4">
+            <h2 class="font-bold text-gray-900">Customer Details</h2>
+            <a href="{% url 'customer_edit' customer.pk %}" class="text-sm font-semibold text-[#273B30] hover:underline"><i class="fa-solid fa-pen mr-1"></i>Edit Details</a>
+        </div>
+        <dl class="grid grid-cols-2 md:grid-cols-4 gap-x-6 gap-y-4 text-sm">
+            <div><dt class="text-gray-500">Phone</dt><dd class="font-semibold"><a href="tel:{{ customer.phone }}" class="hover:underline">{{ customer.phone }}</a></dd></div>
+            <div><dt class="text-gray-500">Email</dt><dd class="font-semibold break-all">{{ customer.email|default:"-" }}</dd></div>
+            <div><dt class="text-gray-500">Gender</dt><dd class="font-semibold">{{ customer.get_gender_display|default:"-" }}</dd></div>
+            <div><dt class="text-gray-500">Date of Birth</dt><dd class="font-semibold">{% if customer.date_of_birth %}{{ customer.date_of_birth|date:"d M Y" }} ({{ customer.age }} yrs){% else %}-{% endif %}</dd></div>
+            <div class="col-span-2"><dt class="text-gray-500">Address</dt><dd class="font-semibold">{{ customer.address|default:"-" }}</dd></div>
+            <div><dt class="text-gray-500">Branch</dt><dd class="font-semibold">{{ customer.branch.name }}</dd></div>
+            <div><dt class="text-gray-500">Customer since</dt><dd class="font-semibold">{{ customer.created_at|date:"d M Y" }}</dd></div>
+            <div><dt class="text-gray-500">Total Paid</dt><dd class="font-bold">{{ total_paid|rs }}</dd></div>
+            <div><dt class="text-gray-500">Balance Due</dt><dd class="font-bold {% if total_due %}text-rose-700{% endif %}">{{ total_due|rs }}</dd></div>
+            {% if customer.notes %}<div class="col-span-2"><dt class="text-gray-500">Notes</dt><dd class="font-semibold">{{ customer.notes }}</dd></div>{% endif %}
+        </dl>
+    </section>
+
+    <!-- 2. Running packages -->
+    <section>
+        <h2 class="text-xs font-bold text-gray-500 uppercase tracking-wider mb-3">Running Packages ({{ running|length }})</h2>
+        {% for p in running %}
+            <div class="bg-white rounded-xl border border-gray-100 shadow-sm mb-4 overflow-hidden">
+                <div class="p-5">
                     <div class="flex flex-wrap items-start justify-between gap-3">
                         <div>
                             <div class="flex items-center gap-2">
-                                <a href="{% url 'package_detail' p.pk %}" class="text-lg font-bold text-gray-900 hover:underline">{{ p.package_type.name }}</a>
+                                <span class="text-lg font-bold text-gray-900">{{ p.package_type.name }}</span>
                                 <span class="px-2 py-0.5 rounded border text-xs font-semibold {{ p.status|status_style }}">{{ p.status }}</span>
                             </div>
                             <p class="text-sm text-gray-500 mt-1">{{ p.purchase_date|date:"d M Y" }} → {{ p.expiry_date|date:"d M Y" }} · {{ p.days_to_expiry }} day{{ p.days_to_expiry|pluralize }} left</p>
+                            <p class="text-sm text-gray-500">Paid {{ p.amount_paid|rs }}{% if p.balance %} · <span class="text-rose-700 font-semibold">{{ p.balance|rs }} due</span>{% endif %}</p>
                         </div>
                         <div class="text-right">
                             <p class="text-3xl font-bold text-gray-900 leading-none">{{ p.massages_remaining }}<span class="text-base text-gray-400 font-semibold"> / {{ p.total_massages }}</span></p>
-                            <p class="text-xs text-gray-500 mt-1">massages left</p>
+                            <p class="text-xs text-gray-500 mt-1">massages left · {{ p.massages_used }} used</p>
                         </div>
                     </div>
-                    <!-- progress -->
                     <div class="mt-4 h-2 bg-gray-100 rounded-full overflow-hidden">
                         <div class="h-full bg-[#273B30]" style="width: {% widthratio p.massages_used p.total_massages 100 %}%"></div>
                     </div>
-                    <div class="mt-3 flex flex-wrap items-center justify-between gap-3 text-sm">
-                        <span class="text-gray-600">Used {{ p.massages_used }} · Last visit {{ p.last_massage_date|date:"d M Y"|default:"-" }} · Paid {{ p.amount_paid|rs }}{% if p.balance %} · <span class="text-rose-700 font-semibold">{{ p.balance|rs }} due</span>{% endif %}</span>
+
+                    <!-- Record a massage: today, or a chosen date -->
+                    {% if p.massages_remaining > 0 %}
+                    <div class="mt-4 flex flex-wrap items-center gap-3">
+                        <form method="post" action="{% url 'package_visit_add' p.pk %}" class="m-0">
+                            {% csrf_token %}
+                            <input type="hidden" name="next" value="{{ request.path }}">
+                            <input type="hidden" name="visit_date" value="{{ today|date:'Y-m-d' }}">
+                            <button class="bg-[#273B30] text-white text-sm font-semibold px-4 py-2.5 rounded-lg hover:opacity-90 whitespace-nowrap"><i class="fa-solid fa-check mr-1"></i>Record Massage · Today</button>
+                        </form>
+                        <span class="text-xs text-gray-400">or</span>
                         <form method="post" action="{% url 'package_visit_add' p.pk %}" class="m-0 flex items-center gap-2">
                             {% csrf_token %}
                             <input type="hidden" name="next" value="{{ request.path }}">
-                            <input type="date" name="visit_date" value="{% now 'Y-m-d' %}" max="{% now 'Y-m-d' %}" required style="width:auto"
+                            <label class="sr-only" for="visit_date_{{ p.pk }}">Massage date</label>
+                            <input id="visit_date_{{ p.pk }}" type="date" name="visit_date" value="{{ today|date:'Y-m-d' }}" max="{{ today|date:'Y-m-d' }}" required style="width:auto"
                                    onclick="if (this.showPicker) { try { this.showPicker(); } catch (e) {} }">
-                            <button class="bg-[#273B30] text-white text-sm font-semibold px-4 py-2.5 rounded-lg hover:opacity-90 whitespace-nowrap"><i class="fa-solid fa-check mr-1"></i>Record Massage</button>
+                            <button class="bg-white border border-gray-200 text-gray-800 text-sm font-semibold px-4 py-2.5 rounded-lg hover:bg-gray-50 whitespace-nowrap">Record on this date</button>
                         </form>
                     </div>
+                    {% else %}
+                        <p class="mt-4 text-sm text-amber-700">All massages in this package are used.</p>
+                    {% endif %}
                 </div>
-            {% empty %}
-                <div class="bg-white rounded-xl border border-dashed border-gray-200 p-6 text-sm text-gray-500">
-                    No package running right now.
-                    <a href="{% url 'customer_package_add' customer.pk %}" class="font-semibold text-[#273B30] hover:underline">Add a package</a>{% if earlier %} or renew an earlier one below{% endif %}.
+
+                <!-- Package actions: undo, edit, delete -->
+                <div class="px-5 py-3 bg-gray-50/70 border-t border-gray-100 flex flex-wrap items-center gap-2">
+                    {% if p.massages_used %}
+                    <form method="post" action="{% url 'package_visit_undo' p.pk %}" class="m-0"
+                          onsubmit="return confirm('Undo the last recorded massage? It goes back into the package.');">
+                        {% csrf_token %}
+                        <input type="hidden" name="next" value="{{ request.path }}">
+                        <button class="bg-white border border-amber-200 text-amber-800 text-sm font-semibold px-3 py-2 rounded-lg hover:bg-amber-50"><i class="fa-solid fa-rotate-left mr-1"></i>Undo Last Massage</button>
+                    </form>
+                    {% endif %}
+                    <a href="{% url 'package_edit' p.pk %}" class="bg-white border border-gray-200 text-gray-800 text-sm font-semibold px-3 py-2 rounded-lg hover:bg-gray-50"><i class="fa-solid fa-pen mr-1"></i>Edit</a>
+                    <form method="post" action="{% url 'package_delete' p.pk %}" class="m-0 ml-auto"
+                          onsubmit="return confirm('Delete the {{ p.package_type.name }} package of {{ customer.name|escapejs }} and all its massage entries? This cannot be undone.');">
+                        {% csrf_token %}
+                        <button class="bg-[#FEF6F5] text-[#D06B5D] border border-[#FBE9E7] text-sm font-semibold px-3 py-2 rounded-lg hover:bg-[#FBE9E7]"><i class="fa-regular fa-trash-can mr-1"></i>Delete Package</button>
+                    </form>
                 </div>
-            {% endfor %}
-        </section>
+                <details class="border-t border-gray-100 group">
+                    <summary class="px-5 py-3 cursor-pointer text-sm font-semibold text-[#273B30] hover:bg-gray-50 list-none flex items-center gap-2">
+                        <i class="fa-solid fa-clock-rotate-left"></i> View History ({{ p.massages_used }} visit{{ p.massages_used|pluralize }})
+                        <i class="fa-solid fa-chevron-down text-xs ml-auto group-open:rotate-180 transition"></i>
+                    </summary>
+                    <div class="border-t border-gray-100">{% include "packages/_visit_list.html" with can_remove=True %}</div>
+                </details>
+            </div>
+        {% empty %}
+            <div class="bg-white rounded-xl border border-dashed border-gray-200 p-6 text-sm text-gray-500">
+                No package running right now.
+                <a href="{% url 'customer_package_add' customer.pk %}" class="font-semibold text-[#273B30] hover:underline">Add a package</a>{% if earlier %} or renew an earlier one below{% endif %}.
+            </div>
+        {% endfor %}
+    </section>
 
-        <!-- Earlier packages -->
-        {% if earlier %}
-        <section class="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden">
-            <div class="px-5 py-4 border-b border-gray-100"><h2 class="font-bold text-gray-900">Earlier Packages</h2></div>
-            <div class="overflow-x-auto"><table class="w-full text-sm text-left">
-                <thead class="bg-gray-50/60 text-gray-600"><tr>
-                    <th class="px-5 py-3 font-semibold">Package</th><th class="px-5 py-3 font-semibold">Bought</th><th class="px-5 py-3 font-semibold">Expiry</th>
-                    <th class="px-5 py-3 font-semibold text-right">Used</th><th class="px-5 py-3 font-semibold">Status</th><th class="px-5 py-3"></th></tr></thead>
-                <tbody class="divide-y divide-gray-50">
-                {% for p in earlier %}
-                    <tr><td class="px-5 py-3 font-medium">{{ p.package_type.name }}</td><td class="px-5 py-3">{{ p.purchase_date|date:"d M Y" }}</td>
-                        <td class="px-5 py-3">{{ p.expiry_date|date:"d M Y" }}</td><td class="px-5 py-3 text-right">{{ p.massages_used }} / {{ p.total_massages }}</td>
-                        <td class="px-5 py-3"><span class="px-2 py-0.5 rounded border text-xs font-semibold {{ p.status|status_style }}">{{ p.status }}</span></td>
-                        <td class="px-5 py-3 text-right whitespace-nowrap">
-                            {% if p.status == "Expired" %}<a href="{% url 'package_renew' p.pk %}" class="font-semibold text-[#273B30] hover:underline mr-3">Renew</a>{% endif %}
-                            <a href="{% url 'package_detail' p.pk %}" class="font-semibold text-gray-600 hover:underline">Open</a></td></tr>
-                {% endfor %}
-                </tbody></table></div>
-        </section>
-        {% endif %}
-    </div>
-
-    <!-- Customer details -->
-    <aside class="space-y-6">
-        <div class="bg-white rounded-xl border border-gray-100 shadow-sm p-6">
-            <h2 class="font-bold text-gray-900 mb-4">Customer Details</h2>
-            <dl class="space-y-3 text-sm">
-                <div class="flex justify-between gap-4"><dt class="text-gray-500">Phone</dt><dd class="font-semibold text-right"><a href="tel:{{ customer.phone }}" class="hover:underline">{{ customer.phone }}</a></dd></div>
-                <div class="flex justify-between gap-4"><dt class="text-gray-500">Email</dt><dd class="font-semibold text-right break-all">{{ customer.email|default:"-" }}</dd></div>
-                <div class="flex justify-between gap-4"><dt class="text-gray-500">Gender</dt><dd class="font-semibold text-right">{{ customer.get_gender_display|default:"-" }}</dd></div>
-                <div class="flex justify-between gap-4"><dt class="text-gray-500">Date of Birth</dt><dd class="font-semibold text-right">{% if customer.date_of_birth %}{{ customer.date_of_birth|date:"d M Y" }} ({{ customer.age }} yrs){% else %}-{% endif %}</dd></div>
-                <div class="flex justify-between gap-4"><dt class="text-gray-500">Address</dt><dd class="font-semibold text-right">{{ customer.address|default:"-" }}</dd></div>
-                <div class="flex justify-between gap-4"><dt class="text-gray-500">Branch</dt><dd class="font-semibold text-right">{{ customer.branch.name }}</dd></div>
-                <div class="flex justify-between gap-4"><dt class="text-gray-500">Customer since</dt><dd class="font-semibold text-right">{{ customer.created_at|date:"d M Y" }}</dd></div>
-            </dl>
-            {% if customer.notes %}<p class="text-sm text-gray-600 mt-4 pt-4 border-t border-gray-100"><span class="font-semibold">Notes:</span> {{ customer.notes }}</p>{% endif %}
+    <!-- 3. All package history -->
+    <section class="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden">
+        <div class="px-5 py-4 border-b border-gray-100">
+            <h2 class="font-bold text-gray-900">All Package History ({{ all_packages|length }})</h2>
+            <p class="text-xs text-gray-500 mt-0.5">Every package {{ customer.name }} has taken. Click one to see the days they came.</p>
         </div>
-        <div class="bg-white rounded-xl border border-gray-100 shadow-sm p-6 grid grid-cols-2 gap-4 text-sm">
-            <div><p class="text-gray-500">Total Paid</p><p class="text-lg font-bold">{{ total_paid|rs }}</p></div>
-            <div><p class="text-gray-500">Balance Due</p><p class="text-lg font-bold {% if total_due %}text-rose-700{% endif %}">{{ total_due|rs }}</p></div>
-        </div>
-    </aside>
+        {% for p in all_packages %}
+            <details class="border-b border-gray-100 last:border-b-0 group">
+                <summary class="px-5 py-4 cursor-pointer hover:bg-gray-50 list-none flex flex-wrap items-center gap-x-6 gap-y-1 text-sm">
+                    <span class="font-semibold text-gray-900 min-w-[7rem]">{{ p.package_type.name }}</span>
+                    <span class="text-gray-600">{{ p.purchase_date|date:"d M Y" }} → {{ p.expiry_date|date:"d M Y" }}</span>
+                    <span class="text-gray-600">{{ p.massages_used }} / {{ p.total_massages }} used</span>
+                    <span class="text-gray-600">{{ p.rate|rs }}</span>
+                    <span class="px-2 py-0.5 rounded border text-xs font-semibold {{ p.status|status_style }}">{{ p.status }}</span>
+                    <i class="fa-solid fa-chevron-down text-xs text-gray-400 ml-auto group-open:rotate-180 transition"></i>
+                </summary>
+                <div class="bg-gray-50/60 border-t border-gray-100">
+                    {% include "packages/_visit_list.html" with can_remove=False %}
+                    <div class="px-4 py-3 border-t border-gray-100 flex flex-wrap gap-4 text-sm">
+                        {% if p.last_massage_date %}<span class="text-gray-500">Last visit {{ p.last_massage_date|date:"d M Y" }}</span>{% endif %}
+                        {% if p.renewed_from_id %}<span class="text-indigo-600">Renewal of an earlier package</span>{% endif %}
+                        <a href="{% url 'package_detail' p.pk %}" class="font-semibold text-[#273B30] hover:underline ml-auto">Open package</a>
+                        {% if p.status == "Expired" %}<a href="{% url 'package_renew' p.pk %}" class="font-semibold text-[#273B30] hover:underline">Renew</a>{% endif %}
+                    </div>
+                </div>
+            </details>
+        {% empty %}
+            <p class="px-5 py-6 text-sm text-gray-500">No packages yet.</p>
+        {% endfor %}
+    </section>
 </div>
 {% endblock %}

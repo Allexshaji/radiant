@@ -12,11 +12,10 @@
 {% block content %}
     <!-- Customer & package overview -->
     <h2 class="text-xs font-bold text-gray-500 uppercase tracking-wider mb-3">Customer &amp; Package Overview</h2>
-    <div class="grid grid-cols-2 md:grid-cols-4 xl:grid-cols-7 gap-3 mb-8">
+    <div class="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-3 mb-8">
         {% with o=overview %}
         <div class="bg-white rounded-xl border border-gray-100 shadow-sm p-4"><p class="text-xs text-gray-500 font-semibold">Total Customers</p><p class="text-2xl font-bold text-gray-900 mt-1">{{ o.customers }}</p></div>
         <div class="bg-white rounded-xl border border-gray-100 shadow-sm p-4"><p class="text-xs text-gray-500 font-semibold">Active Packages</p><p class="text-2xl font-bold text-emerald-700 mt-1">{{ o.active_packages }}</p></div>
-        <div class="bg-white rounded-xl border border-gray-100 shadow-sm p-4"><p class="text-xs text-gray-500 font-semibold">Massages Remaining</p><p class="text-2xl font-bold text-gray-900 mt-1">{{ o.massages_remaining }}</p></div>
         <div class="bg-white rounded-xl border border-gray-100 shadow-sm p-4"><p class="text-xs text-gray-500 font-semibold">Renewal Due</p><p class="text-2xl font-bold text-amber-700 mt-1">{{ o.renewal_due }}</p></div>
         <div class="bg-white rounded-xl border border-gray-100 shadow-sm p-4"><p class="text-xs text-gray-500 font-semibold">Expiring in 7 Days</p><p class="text-2xl font-bold text-amber-700 mt-1">{{ o.expiring_soon }}</p></div>
         <div class="bg-white rounded-xl border border-gray-100 shadow-sm p-4"><p class="text-xs text-gray-500 font-semibold">Expired &amp; Not Renewed</p><p class="text-2xl font-bold text-rose-700 mt-1">{{ o.expired_not_renewed }}</p></div>

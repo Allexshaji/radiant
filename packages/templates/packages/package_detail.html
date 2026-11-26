@@ -39,7 +39,16 @@
 
         <!-- Massages taken -->
         <div class="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden">
-            <div class="px-6 py-4 border-b border-gray-100"><h2 class="font-bold text-gray-900">Massages Taken</h2></div>
+            <div class="px-6 py-4 border-b border-gray-100 flex items-center justify-between gap-3">
+                <h2 class="font-bold text-gray-900">Massages Taken</h2>
+                {% if package.massages_used %}
+                <form method="post" action="{% url 'package_visit_undo' package.pk %}" class="m-0"
+                      onsubmit="return confirm('Undo the last recorded massage? It goes back into the package.');">
+                    {% csrf_token %}
+                    <button class="bg-white border border-amber-200 text-amber-800 text-xs font-semibold px-3 py-2 rounded-lg hover:bg-amber-50"><i class="fa-solid fa-rotate-left mr-1"></i>Undo Last Massage</button>
+                </form>
+                {% endif %}
+            </div>
             {% if package.massages_remaining > 0 %}
             <form method="post" action="{% url 'package_visit_add' package.pk %}" class="px-6 py-4 border-b border-gray-100 flex flex-col sm:flex-row gap-3 sm:items-end bg-gray-50/40">
                 {% csrf_token %}

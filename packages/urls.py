@@ -17,6 +17,7 @@ urlpatterns = [
     path("<int:pk>/delete/", views.package_delete, name="package_delete"),
     path("<int:pk>/renew/", views.package_renew, name="package_renew"),
     path("<int:pk>/visits/add/", views.visit_add, name="package_visit_add"),
+    path("<int:pk>/visits/undo/", views.visit_undo, name="package_visit_undo"),
     path("<int:pk>/visits/<int:visit_id>/delete/", views.visit_delete, name="package_visit_delete"),
     path("<int:pk>/follow-up/", views.follow_up_update, name="package_follow_up"),
     path("follow-up/", views.follow_ups, name="package_follow_ups"),

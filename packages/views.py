@@ -12,6 +12,7 @@ from django.core.exceptions import PermissionDenied
 from django.db import transaction
 from django.db.models import Q
 from django.shortcuts import get_object_or_404, redirect, render
+from django.utils import timezone
 from django.views.decorators.http import require_POST
 
 from accounts.access import is_super_admin
@@ -277,11 +278,31 @@ def visit_add(request, pk):
 
 @packages_required
 @require_POST
+def visit_undo(request, pk):
+    """Take back the massage recorded last (for a wrong click). The massage goes back into the package."""
+    package = _package(request, pk)
+    last = package.visits.order_by("-created_at", "-id").first()
+    if last is None:
+        messages.error(request, "No massage to undo in this package.")
+    else:
+        day = last.visit_date
+        last.delete()
+        messages.success(
+            request,
+            f"Undone: the massage on {day:%d %b %Y} was removed. {package.massages_remaining} left.",
+        )
+    return _back(request, package)
+
+
+@packages_required
+@require_POST
 def visit_delete(request, pk, visit_id):
     package = _package(request, pk)
-    get_object_or_404(MassageVisit, pk=visit_id, package=package).delete()
-    messages.success(request, "Massage entry removed.")
-    return redirect("package_detail", pk=package.pk)
+    visit = get_object_or_404(MassageVisit, pk=visit_id, package=package)
+    day = visit.visit_date
+    visit.delete()
+    messages.success(request, f"Massage on {day:%d %b %Y} removed. {package.massages_remaining} left.")
+    return _back(request, package)
 
 
 @packages_required
@@ -410,10 +431,14 @@ def customer_add(request):
 def customer_detail(request, pk):
     customer = _customer(request, pk)
     running, earlier = _split_packages(customer)
+    every = sorted(running + earlier, key=lambda p: (p.purchase_date, p.pk), reverse=True)
     return render(request, "packages/customer_detail.html", {
         "customer": customer,
         "running": running,
         "earlier": earlier,
+        # Every package this customer has taken, newest first, for "All Package History".
+        "all_packages": every,
+        "today": timezone.localdate(),
         "visit_form": VisitForm(),
         "total_paid": sum((p.amount_paid for p in running + earlier), 0),
         "total_due": sum((p.balance for p in running + earlier), 0),

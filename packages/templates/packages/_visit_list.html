@@ -1,0 +1,40 @@
+{# The massages taken from one package (`p`), newest first. `can_remove` shows a remove button per entry. #}
+{% with visits=p.visits.all %}
+{% if visits %}
+    <table class="w-full text-sm text-left">
+        <thead class="text-gray-500">
+            <tr>
+                <th class="px-4 py-2 font-semibold w-12">#</th>
+                <th class="px-4 py-2 font-semibold">Date</th>
+                <th class="px-4 py-2 font-semibold">Day</th>
+                <th class="px-4 py-2 font-semibold">Note</th>
+                <th class="px-4 py-2 font-semibold">Recorded by</th>
+                {% if can_remove %}<th class="px-4 py-2"></th>{% endif %}
+            </tr>
+        </thead>
+        <tbody class="divide-y divide-gray-100">
+            {% for v in visits %}
+                <tr>
+                    <td class="px-4 py-2 text-gray-400">{{ forloop.revcounter }}</td>
+                    <td class="px-4 py-2 font-semibold text-gray-900">{{ v.visit_date|date:"d M Y" }}</td>
+                    <td class="px-4 py-2 text-gray-600">{{ v.visit_date|date:"l" }}</td>
+                    <td class="px-4 py-2 text-gray-600">{{ v.note|default:"-" }}</td>
+                    <td class="px-4 py-2 text-gray-500">{{ v.recorded_by|default:"-" }}</td>
+                    {% if can_remove %}
+                    <td class="px-4 py-2 text-right">
+                        <form method="post" action="{% url 'package_visit_delete' p.pk v.pk %}" class="m-0"
+                              onsubmit="return confirm('Remove the massage on {{ v.visit_date|date:"d M Y" }}? It goes back into the package.');">
+                            {% csrf_token %}
+                            <input type="hidden" name="next" value="{{ request.path }}">
+                            <button class="text-gray-400 hover:text-rose-600" title="Remove this massage"><i class="fa-regular fa-trash-can"></i></button>
+                        </form>
+                    </td>
+                    {% endif %}
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+{% else %}
+    <p class="px-4 py-3 text-sm text-gray-500">No massages taken from this package yet.</p>
+{% endif %}
+{% endwith %}
