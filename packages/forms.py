@@ -28,7 +28,7 @@ class PackageDetailsForm(forms.Form):
     purchase_date = forms.DateField(widget=DateInput())
     expiry_date = forms.DateField(
         widget=DateInput(), required=False,
-        help_text="Leave empty to work it out from the package's validity.",
+        help_text="Filled in from the package's validity when you choose a package or start date. You can change it.",
     )
     rate = forms.DecimalField(
         max_digits=10, decimal_places=2, min_value=0, required=False,

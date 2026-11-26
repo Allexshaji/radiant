@@ -36,3 +36,10 @@ STATUS_STYLES = {
 @register.filter
 def status_style(status):
     return STATUS_STYLES.get(status, "bg-gray-50 text-gray-700 border-gray-100")
+
+
+@register.simple_tag
+def package_validity():
+    """{package id: validity in months} for every package on sale, for the expiry-date script."""
+    from packages.models import PackageType
+    return {str(t.pk): t.validity_months for t in PackageType.objects.filter(is_active=True)}

@@ -23,7 +23,7 @@ from .forms import (
     CustomerForm, FollowUpForm, PackageDetailsForm, PackageEditForm, PackageSaleForm, PackageTypeForm,
     VisitForm,
 )
-from .models import Customer, CustomerPackage, MassageVisit, PackageType, add_months
+from .models import Customer, CustomerPackage, MassageVisit, PackageType, package_end_date
 
 STATUS_FILTERS = [
     ("", "All"),
@@ -142,7 +142,7 @@ def _create_package(request, customer, data, previous=None):
         rate=data["rate"] if data.get("rate") is not None else package_type.rate,
         amount_paid=data["amount_paid"],
         purchase_date=data["purchase_date"],
-        expiry_date=data.get("expiry_date") or add_months(data["purchase_date"], package_type.validity_months),
+        expiry_date=data.get("expiry_date") or package_end_date(data["purchase_date"], package_type.validity_months),
         renewed_from=previous,
         remarks=data.get("remarks", ""),
         created_by=request.user,

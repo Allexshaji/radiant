@@ -1,0 +1,35 @@
+{% load package_tags %}
+{% package_validity as validity %}
+{{ validity|json_script:"package-validity" }}
+<script>
+// Fills the expiry date from the chosen package and the start date: a 6-month package from
+// 26 Nov 2026 ends on 25 May 2027 (the same rule as package_end_date in packages/models.py).
+// It runs again when the package or the start date changes. The date can still be changed by hand.
+(function () {
+    var validity = JSON.parse(document.getElementById("package-validity").textContent);
+    document.querySelectorAll("form").forEach(function (form) {
+        var pkg = form.querySelector('select[name$="package_type"]');
+        var start = form.querySelector('input[name$="purchase_date"]');
+        var end = form.querySelector('input[name$="expiry_date"]');
+        if (!pkg || !start || !end) { return; }
+
+        function pad(n) { return (n < 10 ? "0" : "") + n; }
+
+        function fill() {
+            var months = validity[pkg.value];
+            if (!months || !start.value) { return; }
+            var parts = start.value.split("-").map(Number);
+            var y = parts[0], m = parts[1] - 1 + months, d = parts[2];
+            y += Math.floor(m / 12); m = m % 12;
+            var lastDay = new Date(y, m + 1, 0).getDate();      // a 31st becomes the month's last day
+            var date = new Date(y, m, Math.min(d, lastDay));
+            date.setDate(date.getDate() - 1);                  // the day before: the last day of the period
+            end.value = date.getFullYear() + "-" + pad(date.getMonth() + 1) + "-" + pad(date.getDate());
+        }
+
+        pkg.addEventListener("change", fill);
+        start.addEventListener("change", fill);
+        if (!end.value) { fill(); }   // a fresh form, or a renewal with the package already chosen
+    });
+})();
+</script>

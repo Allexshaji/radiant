@@ -6,7 +6,7 @@ An admin sees only their own branch; the Super Admin sees every branch.
 Numbers such as massages used, balance and status are worked out from the saved rows,
 so they can never drift out of step with the visits and payments.
 """
-from datetime import date
+from datetime import date, timedelta
 from decimal import Decimal
 
 from django.conf import settings
@@ -30,6 +30,15 @@ def add_months(start, months):
             return date(year, month, day)
         except ValueError:
             continue
+
+
+def package_end_date(start, validity_months):
+    """The last day of a package that starts on `start` and runs `validity_months` full months.
+
+    A 6-month package from 26 Nov 2026 ends on 25 May 2027. The Add Package form fills the same date
+    in the browser (packages/templates/packages/_expiry_script.html), and it can be changed there.
+    """
+    return add_months(start, validity_months) - timedelta(days=1)
 
 
 class PackageType(models.Model):
