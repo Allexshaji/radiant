@@ -84,6 +84,8 @@ NAV_GROUPS = [  # (heading, items)
         ("packages", "All Packages", "fa-solid fa-address-book", "package_list",
          ["package_list", "package_add", "package_detail", "package_edit", "package_delete",
           "package_renew", "package_visit_add", "package_visit_undo", "package_visit_delete"]),
+        ("packages", "Expiry Alerts", "fa-solid fa-bell", "package_alerts",
+         ["package_alerts", "package_mark_called"]),
         ("packages", "Renewal Follow-up", "fa-solid fa-phone-volume", "package_follow_ups",
          ["package_follow_ups", "package_follow_up"]),
         ("packages", "Renewal History", "fa-solid fa-clock-rotate-left", "package_renewals", ["package_renewals"]),

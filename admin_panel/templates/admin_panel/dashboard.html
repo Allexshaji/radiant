@@ -1,3 +1,4 @@
+{% load package_tags %}
 <!doctype html>
 <html lang="en">
 <head>
@@ -61,6 +62,8 @@
                 No branch is assigned to your account. Ask the Super Admin to assign your branch. Until then you will not see any staff data.
             </div>
             {% endif %}
+
+            {% package_alert_banner %}
 
             <!-- Money summary -->
             {% if can.reports %}

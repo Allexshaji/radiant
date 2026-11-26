@@ -81,7 +81,7 @@ def _package(request, pk):
 @packages_required
 def dashboard(request):
     customers, branch = _branch_filter(request)
-    context = {**_common(request, branch), **stats.dashboard(customers)}
+    context = {**_common(request, branch), **stats.dashboard(customers), "alerts": stats.expiry_alerts(customers)}
     return render(request, "packages/dashboard.html", context)
 
 
@@ -473,3 +473,23 @@ def customer_package_add(request, pk):
     return render(request, "packages/customer_package_add.html", {
         "form": form, "customer": customer, "rate_list": PackageType.objects.filter(is_active=True),
     })
+
+
+# --- expiry alerts --------------------------------------------------------------------------------
+
+@packages_required
+def alerts(request):
+    """Customers whose package ends within a week with massages still left: call or WhatsApp them."""
+    customers, branch = _branch_filter(request)
+    return render(request, "packages/alerts.html", {**_common(request, branch), "rows": stats.expiry_alerts(customers)})
+
+
+@packages_required
+@require_POST
+def mark_called(request, pk):
+    """Mark that the customer was told (by call or WhatsApp). Their remarks and next follow-up date stay."""
+    package = _package(request, pk)
+    package.follow_up_status = CustomerPackage.CONTACTED
+    package.save(update_fields=["follow_up_status"])
+    messages.success(request, f"{package.customer.name} marked as contacted.")
+    return _back(request, package)

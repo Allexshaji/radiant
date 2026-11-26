@@ -1,0 +1,10 @@
+{% if rows %}
+<a href="{% url 'package_alerts' %}" class="mb-6 flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium bg-amber-50 text-amber-900 border border-amber-200 hover:bg-amber-100 transition">
+    <i class="fa-solid fa-bell text-amber-600"></i>
+    <span class="flex-1">
+        <span class="font-bold">{{ rows|length }} customer{{ rows|length|pluralize }}</span>
+        {% if rows|length == 1 %}has{% else %}have{% endif %} a massage package ending within 7 days with massages still left{% if waiting %} · <span class="font-bold">{{ waiting }} not contacted yet</span>{% endif %}.
+    </span>
+    <span class="font-semibold whitespace-nowrap">Call now <i class="fa-solid fa-arrow-right ml-1"></i></span>
+</a>
+{% endif %}

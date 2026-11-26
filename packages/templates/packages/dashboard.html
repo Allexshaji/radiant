@@ -10,6 +10,17 @@
 {% endblock %}
 
 {% block content %}
+    <!-- Expiry alerts: package ends within a week, massages still left -->
+    {% if alerts %}
+    <div class="bg-white rounded-xl border border-amber-200 shadow-sm overflow-hidden mb-8">
+        <div class="px-5 py-4 border-b border-amber-100 bg-amber-50 flex flex-wrap items-center justify-between gap-2">
+            <h2 class="font-bold text-amber-900"><i class="fa-solid fa-bell mr-2"></i>Ending This Week · Massages Left ({{ alerts|length }})</h2>
+            <a href="{% url 'package_alerts' %}{% if branch_query %}?{{ branch_query }}{% endif %}" class="text-sm font-semibold text-amber-900 hover:underline">See all</a>
+        </div>
+        {% include "packages/_alert_rows.html" with rows=alerts|slice:":5" %}
+    </div>
+    {% endif %}
+
     <!-- Customer & package overview -->
     <h2 class="text-xs font-bold text-gray-500 uppercase tracking-wider mb-3">Customer &amp; Package Overview</h2>
     <div class="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-3 mb-8">

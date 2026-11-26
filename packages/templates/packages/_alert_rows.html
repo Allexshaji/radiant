@@ -1,0 +1,39 @@
+{% load package_tags %}
+{# One row per package ending within a week with massages left. Needs `rows`. #}
+<div class="divide-y divide-gray-100">
+{% for p in rows %}
+    <div class="px-5 py-4 flex flex-col lg:flex-row lg:items-center justify-between gap-3 {% if p.follow_up_status == 'CONTACTED' %}bg-gray-50/70{% endif %}">
+        <div class="min-w-0">
+            <div class="flex flex-wrap items-center gap-2">
+                <a href="{% url 'customer_detail' p.customer.pk %}" class="font-semibold text-gray-900 hover:underline">{{ p.customer.name }}</a>
+                {% if p.follow_up_status == 'CONTACTED' %}
+                    <span class="px-2 py-0.5 rounded border text-xs font-semibold bg-emerald-50 text-emerald-700 border-emerald-100"><i class="fa-solid fa-check mr-1"></i>Contacted</span>
+                {% else %}
+                    <span class="px-2 py-0.5 rounded border text-xs font-semibold bg-amber-50 text-amber-800 border-amber-100">Not contacted</span>
+                {% endif %}
+                {% if is_super and not selected_branch %}<span class="text-xs text-gray-400">{{ p.customer.branch.name }}</span>{% endif %}
+            </div>
+            <p class="text-sm text-gray-600 mt-1">
+                {{ p.package_type.name }} ·
+                <span class="font-bold text-gray-900">{{ p.massages_remaining }} massage{{ p.massages_remaining|pluralize }} left</span> ·
+                ends {{ p.expiry_date|date:"d M Y" }}
+                <span class="font-semibold {% if p.days_to_expiry <= 2 %}text-rose-700{% else %}text-amber-700{% endif %}">({% if p.days_to_expiry == 0 %}today{% else %}in {{ p.days_to_expiry }} day{{ p.days_to_expiry|pluralize }}{% endif %})</span>
+            </p>
+            {% if p.remarks %}<p class="text-xs text-gray-500 mt-0.5">Remarks: {{ p.remarks }}</p>{% endif %}
+        </div>
+        <div class="flex flex-wrap items-center gap-2 shrink-0">
+            <a href="tel:{{ p.customer.phone }}" class="bg-[#273B30] text-white text-sm font-semibold px-4 py-2 rounded-lg hover:opacity-90 whitespace-nowrap"><i class="fa-solid fa-phone mr-1"></i>Call {{ p.customer.phone }}</a>
+            {% with wa=p|whatsapp_url %}
+            {% if wa %}<a href="{{ wa }}" target="_blank" rel="noopener" class="bg-[#25D366] text-white text-sm font-semibold px-4 py-2 rounded-lg hover:opacity-90 whitespace-nowrap"><i class="fa-brands fa-whatsapp mr-1"></i>WhatsApp</a>{% endif %}
+            {% endwith %}
+            {% if p.follow_up_status != 'CONTACTED' %}
+            <form method="post" action="{% url 'package_mark_called' p.pk %}" class="m-0">
+                {% csrf_token %}
+                <input type="hidden" name="next" value="{{ request.get_full_path }}">
+                <button class="bg-white border border-gray-200 text-gray-800 text-sm font-semibold px-4 py-2 rounded-lg hover:bg-gray-50 whitespace-nowrap"><i class="fa-solid fa-check mr-1"></i>Mark Contacted</button>
+            </form>
+            {% endif %}
+        </div>
+    </div>
+{% endfor %}
+</div>

@@ -1,0 +1,20 @@
+{% extends "admin_panel/admin_base.html" %}
+
+{% block title %}Expiry Alerts{% endblock %}
+{% block page_title %}Expiry Alerts{% endblock %}
+{% block page_subtitle %}Packages that end within 7 days but still have massages left. Call or WhatsApp the customer so they use them.{% endblock %}
+{% block header_actions %}{% include "packages/_branch_filter.html" %}{% endblock %}
+
+{% block content %}
+<div class="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden">
+    <div class="px-5 py-4 border-b border-gray-100 flex flex-wrap items-center justify-between gap-2">
+        <p class="text-sm text-gray-600"><span class="font-bold text-gray-900">{{ rows|length }}</span> customer{{ rows|length|pluralize }} to tell</p>
+        <p class="text-xs text-gray-400">WhatsApp opens with the message ready. Check it, then press Send.</p>
+    </div>
+    {% if rows %}
+        {% include "packages/_alert_rows.html" %}
+    {% else %}
+        <p class="px-5 py-10 text-center text-sm text-gray-500"><i class="fa-regular fa-circle-check text-emerald-600 mr-1"></i>No package ends this week with massages left.</p>
+    {% endif %}
+</div>
+{% endblock %}

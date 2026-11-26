@@ -122,3 +122,17 @@ def follow_up_list(customers):
     """The Renewal Follow-up call list: packages that need a call, most urgent first."""
     rows = [p for p in packages_for(customers) if p.follow_up_priority is not None]
     return sorted(rows, key=lambda p: (p.follow_up_priority, p.expiry_date, p.customer.name))
+
+
+def expiry_alerts(customers):
+    """Packages that end within EXPIRING_DAYS days and still have massages left, so the customer
+    should be told to use them. Not yet called first, then the soonest to end.
+    Renewed packages and "Not Interested" customers are left out."""
+    rows = [
+        p for p in packages_for(customers)
+        if p.status != CustomerPackage.RENEWED
+        and 0 <= p.days_to_expiry <= EXPIRING_DAYS
+        and p.massages_remaining > 0
+        and p.follow_up_status != CustomerPackage.NOT_INTERESTED
+    ]
+    return sorted(rows, key=lambda p: (p.follow_up_status == CustomerPackage.CONTACTED, p.expiry_date, p.customer.name))

@@ -21,6 +21,8 @@ urlpatterns = [
     path("<int:pk>/visits/<int:visit_id>/delete/", views.visit_delete, name="package_visit_delete"),
     path("<int:pk>/follow-up/", views.follow_up_update, name="package_follow_up"),
     path("follow-up/", views.follow_ups, name="package_follow_ups"),
+    path("alerts/", views.alerts, name="package_alerts"),
+    path("<int:pk>/called/", views.mark_called, name="package_mark_called"),
     path("renewals/", views.renewal_history, name="package_renewals"),
     path("rates/", views.rates, name="package_rates"),
 ]
