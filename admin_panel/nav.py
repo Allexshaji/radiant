@@ -48,8 +48,6 @@ NAV_GROUPS = [  # (heading, items)
          ["super_admin_attendance"]),
         ("super_admin", "Admin Leave", "fa-solid fa-envelope-open", "super_admin_admin_leave",
          ["super_admin_admin_leave"]),
-        ("super_admin", "Admin Salary", "fa-solid fa-money-check-dollar", "super_admin_admin_salary",
-         ["super_admin_admin_salary", "super_admin_admin_salary_detail"]),
         ("super_admin", "Admin Reports", "fa-solid fa-file-pen", "super_admin_reports",
          ["super_admin_reports"]),
     ]),
@@ -92,7 +90,10 @@ NAV_GROUPS = [  # (heading, items)
         ("packages", "Package Rates", "fa-solid fa-tags", "package_rates", ["package_rates"]),
     ]),
     ("Finance", [
-        ("salary", "Salary Management", "fa-solid fa-money-bill-wave", "admin_salary_manage",
+        # The Super Admin: staff and admin salaries together. An admin: their branch's staff salaries.
+        ("super_admin", "Salary Management", "fa-solid fa-money-bill-wave", "super_salary",
+         ["super_salary", "super_admin_admin_salary", "super_admin_admin_salary_detail", "super_salary_delete"]),
+        ("admin_salary", "Salary Management", "fa-solid fa-money-bill-wave", "admin_salary_manage",
          ["admin_salary_manage", "admin_salary_add_staff", "admin_salary_edit_staff",
           "admin_salary_delete_staff", "admin_salary_allowance", "admin_salary_detail",
           "admin_salary_save_rates"]),

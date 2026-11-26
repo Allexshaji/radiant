@@ -1,0 +1,109 @@
+{% extends "super_admin/base.html" %}
+
+{% block title %}Salary Management{% endblock %}
+{% block heading %}Salary Management{% endblock %}
+{% block subheading %}Staff and admin salaries for {{ month|date:"F Y" }}. Leave deductions follow the leave policies.{% endblock %}
+
+{% block content %}
+    <!-- Filters -->
+    <form method="get" class="bg-white rounded-xl shadow-sm border border-gray-100 p-5 mb-6 grid grid-cols-1 md:grid-cols-5 gap-3 items-end">
+        <div>
+            <label for="month" class="block text-sm font-semibold text-gray-700 mb-1">Month</label>
+            <input id="month" type="month" name="month" value="{{ month|date:'Y-m' }}" onchange="this.form.submit()"
+                   class="w-full border border-gray-300 rounded-lg px-3.5 py-2.5 text-sm text-gray-900 bg-white">
+        </div>
+        <div>
+            <label for="role" class="block text-sm font-semibold text-gray-700 mb-1">Show</label>
+            <select id="role" name="role" onchange="this.form.submit()" class="w-full border border-gray-300 rounded-lg px-3.5 py-2.5 text-sm text-gray-900 bg-white">
+                {% for value, label in role_filters %}<option value="{{ value }}" {% if value == role %}selected{% endif %}>{{ label }}</option>{% endfor %}
+            </select>
+        </div>
+        <div>
+            <label for="branch" class="block text-sm font-semibold text-gray-700 mb-1">Branch</label>
+            <select id="branch" name="branch" onchange="this.form.submit()" class="w-full border border-gray-300 rounded-lg px-3.5 py-2.5 text-sm text-gray-900 bg-white">
+                <option value="">All branches</option>
+                {% for b in branches %}<option value="{{ b.pk }}" {% if selected_branch and b.pk == selected_branch.pk %}selected{% endif %}>{{ b.name }}</option>{% endfor %}
+            </select>
+        </div>
+        <div>
+            <label for="q" class="block text-sm font-semibold text-gray-700 mb-1">Name</label>
+            <input id="q" type="text" name="q" value="{{ query }}" placeholder="Search name"
+                   class="w-full border border-gray-300 rounded-lg px-3.5 py-2.5 text-sm text-gray-900 bg-white">
+        </div>
+        <button type="submit" class="bg-[#273B30] text-white text-sm font-semibold px-5 py-2.5 rounded-lg shadow-sm hover:opacity-90">Apply</button>
+    </form>
+
+    <!-- Totals -->
+    <div class="grid grid-cols-2 md:grid-cols-5 gap-3 mb-6">
+        <div class="bg-white rounded-xl border border-gray-100 shadow-sm p-4"><p class="text-xs text-gray-500 font-semibold">People</p>
+            <p class="text-2xl font-bold text-gray-900 mt-1">{{ totals.people }}</p>
+            <p class="text-xs text-gray-400">{{ totals.staff }} staff · {{ totals.admins }} admin{{ totals.admins|pluralize }}</p></div>
+        <div class="bg-white rounded-xl border border-gray-100 shadow-sm p-4"><p class="text-xs text-gray-500 font-semibold">Monthly Salaries</p><p class="text-2xl font-bold text-gray-900 mt-1">₹{{ totals.monthly }}</p></div>
+        <div class="bg-white rounded-xl border border-gray-100 shadow-sm p-4"><p class="text-xs text-gray-500 font-semibold">Leave Deductions</p><p class="text-2xl font-bold text-rose-700 mt-1">- ₹{{ totals.deduction }}</p></div>
+        <div class="bg-white rounded-xl border border-gray-100 shadow-sm p-4"><p class="text-xs text-gray-500 font-semibold">Allowances</p><p class="text-2xl font-bold text-gray-900 mt-1">₹{{ totals.allowance }}</p></div>
+        <div class="bg-white rounded-xl border border-gray-100 shadow-sm p-4"><p class="text-xs text-gray-500 font-semibold">Total Payable</p><p class="text-2xl font-bold text-emerald-700 mt-1">₹{{ totals.payable }}</p>
+            {% if totals.without_salary %}<p class="text-xs text-amber-700">{{ totals.without_salary }} without a salary set</p>{% endif %}</div>
+    </div>
+
+    <!-- Rows -->
+    <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+        {% if rows %}
+        <div class="overflow-x-auto">
+        <table class="w-full text-left text-sm">
+            <thead class="bg-gray-50/50 border-b border-gray-100">
+                <tr>
+                    <th class="px-5 py-3 font-semibold text-gray-600">Name</th>
+                    <th class="px-5 py-3 font-semibold text-gray-600">Branch</th>
+                    <th class="px-5 py-3 font-semibold text-gray-600 text-right">Monthly Salary</th>
+                    <th class="px-5 py-3 font-semibold text-gray-600 text-right">Leave Deduction</th>
+                    <th class="px-5 py-3 font-semibold text-gray-600 text-right">Allowance</th>
+                    <th class="px-5 py-3 font-semibold text-gray-600 text-right">Payable</th>
+                    <th class="px-5 py-3 font-semibold text-gray-600 text-right">Records</th>
+                    <th class="px-5 py-3"></th>
+                </tr>
+            </thead>
+            <tbody class="divide-y divide-gray-50">
+                {% for row in rows %}
+                {% with a=row.account p=row.payroll %}
+                    <tr class="hover:bg-gray-50/50">
+                        <td class="px-5 py-3">
+                            <span class="font-semibold text-gray-900">{{ a.full_name|default:a.username }}</span>
+                            <span class="ml-1 px-2 py-0.5 rounded text-[11px] font-bold uppercase tracking-wide {% if a.role == 'ADMIN' %}bg-indigo-50 text-indigo-700{% else %}bg-emerald-50 text-emerald-700{% endif %}">{{ a.get_role_display }}</span>
+                        </td>
+                        <td class="px-5 py-3 text-gray-700">{{ a.branch.name|default:"-" }}</td>
+                        {% if p.has_rate %}
+                            <td class="px-5 py-3 text-right text-gray-900">₹{{ p.monthly }}</td>
+                            <td class="px-5 py-3 text-right {% if p.deduction %}text-rose-700{% else %}text-gray-500{% endif %}">{% if p.deduction %}- ₹{{ p.deduction }} <span class="block text-xs text-gray-400">{{ p.deducted_days }} day{{ p.deducted_days|pluralize }}</span>{% else %}-{% endif %}</td>
+                        {% else %}
+                            <td colspan="2" class="px-5 py-3 text-right text-amber-700 text-xs font-semibold">No monthly salary set</td>
+                        {% endif %}
+                        <td class="px-5 py-3 text-right text-gray-700">{% if p.has_allowance %}₹{{ p.allowance }}{% else %}-{% endif %}</td>
+                        <td class="px-5 py-3 text-right font-bold text-gray-900">{% if p.has_rate %}₹{{ p.total }}{% else %}-{% endif %}</td>
+                        <td class="px-5 py-3 text-right text-gray-500">{{ a.records }}</td>
+                        <td class="px-5 py-3">
+                            <div class="flex justify-end items-center gap-2">
+                                <a href="{% url 'super_admin_admin_salary_detail' a.pk %}" class="px-3 py-2 bg-[#F0F3F1] text-gray-900 text-sm font-semibold rounded-lg hover:bg-[#E3EAE6] whitespace-nowrap"><i class="fa-solid fa-pen mr-1"></i>Edit</a>
+                                {% if p.has_rate or p.has_allowance or a.records %}
+                                <form method="post" action="{% url 'super_salary_delete' a.pk %}" class="m-0"
+                                      onsubmit="return confirm('Delete ALL salary data of {{ a.full_name|default:a.username|escapejs }}?\n\nThis removes the monthly salary, the allowance and {{ a.records }} salary record(s). Their account, attendance and leave stay. This cannot be undone.');">
+                                    {% csrf_token %}
+                                    <input type="hidden" name="month" value="{{ month|date:'Y-m' }}">
+                                    {% if role %}<input type="hidden" name="role" value="{{ role }}">{% endif %}
+                                    {% if selected_branch %}<input type="hidden" name="branch" value="{{ selected_branch.pk }}">{% endif %}
+                                    {% if query %}<input type="hidden" name="q" value="{{ query }}">{% endif %}
+                                    <button type="submit" title="Delete all salary data" class="px-3 py-2 bg-[#FEF6F5] text-[#D06B5D] border border-[#FBE9E7] text-sm font-semibold rounded-lg hover:bg-[#FBE9E7]"><i class="fa-regular fa-trash-can"></i></button>
+                                </form>
+                                {% endif %}
+                            </div>
+                        </td>
+                    </tr>
+                {% endwith %}
+                {% endfor %}
+            </tbody>
+        </table>
+        </div>
+        {% else %}
+            <p class="px-6 py-10 text-center text-sm text-gray-500">Nobody matches these filters.</p>
+        {% endif %}
+    </div>
+{% endblock %}

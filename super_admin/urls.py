@@ -29,6 +29,10 @@ urlpatterns = [
     path("admin-salary/", admin_work.admin_salary, name="super_admin_admin_salary"),
     path("admin-salary/<int:user_id>/", admin_work.admin_salary_detail, name="super_admin_admin_salary_detail"),
 
+    # Salary Management: staff and admin salaries together, in Finance (see super_admin/admin_work.py)
+    path("salary/", admin_work.salary_management, name="super_salary"),
+    path("salary/<int:user_id>/delete/", admin_work.salary_delete, name="super_salary_delete"),
+
     # Review admin and staff reports: choose a person, then edit, approve or reject (see report_review.py)
     path("admin-reports/", report_review.review_reports, {"kind": "admin"}, name="super_admin_reports"),
     path("staff-reports/", report_review.review_reports, {"kind": "staff"}, name="super_staff_reports"),

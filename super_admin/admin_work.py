@@ -7,13 +7,19 @@ also sets each admin's monthly salary and allowance.
 """
 from decimal import Decimal, InvalidOperation
 
-from django.contrib import messages
-from django.shortcuts import get_object_or_404, redirect, render
-from django.utils import timezone
+from urllib.parse import urlencode
 
-from accounts.models import User
+from django.contrib import messages
+from django.db import transaction
+from django.db.models import Count, Q
+from django.shortcuts import get_object_or_404, redirect, render
+from django.urls import reverse
+from django.utils import timezone
+from django.views.decorators.http import require_POST
+
+from accounts.models import Branch, User
 from admin_panel.models import Salary
-from admin_panel.payroll import monthly_summary
+from admin_panel.payroll import monthly_summary, parse_month
 from staff_panel.models import Attendance, LeaveApplication
 from staff_panel.views import _approved_leave_on, attendance_context
 
@@ -87,10 +93,90 @@ def admin_leave(request):
 
 @super_admin_required
 def admin_salary(request):
-    """Each admin's pay for this month. Open an admin to see the history and set the monthly salary."""
-    today = timezone.localdate()
-    rows = [{"account": admin, "payroll": monthly_summary(admin, today)} for admin in _admins()]
-    return render(request, "super_admin/admin_salary.html", {"rows": rows})
+    """The old Admin Salary page. Admins are now on Salary Management with staff, filtered to admins."""
+    return redirect(f"{reverse('super_salary')}?role=admin")
+
+
+ROLE_FILTERS = [("", "Staff & Admins"), ("staff", "Staff"), ("admin", "Admins")]
+
+
+def _salary_url(request):
+    """The Salary Management page with the filters the form came from, so a save or delete returns there."""
+    query = {k: request.POST.get(k) for k in ("role", "branch", "q", "month") if request.POST.get(k)}
+    url = reverse("super_salary")
+    return f"{url}?{urlencode(query)}" if query else url
+
+
+@super_admin_required
+def salary_management(request):
+    """Staff and admin salaries together, for one month. Filter by role, branch or name."""
+    month = parse_month(request.GET.get("month")) or timezone.localdate().replace(day=1)
+    role = request.GET.get("role", "")
+    if role not in dict(ROLE_FILTERS):
+        role = ""
+    branch_id = request.GET.get("branch", "")
+    branch = Branch.objects.filter(pk=int(branch_id)).first() if branch_id.isdigit() else None
+    query = request.GET.get("q", "").strip()
+
+    people = User.objects.filter(
+        Q(role=User.ADMIN) | Q(role=User.STAFF, is_approved=True)
+    ).select_related("branch")
+    if role == "staff":
+        people = people.filter(role=User.STAFF)
+    elif role == "admin":
+        people = people.filter(role=User.ADMIN)
+    if branch:
+        people = people.filter(branch=branch)
+    if query:
+        people = people.filter(
+            Q(full_name__icontains=query) | Q(first_name__icontains=query)
+            | Q(last_name__icontains=query) | Q(username__icontains=query)
+        )
+    people = people.annotate(records=Count("salaries")).order_by("role", "branch__name", "full_name", "username")
+
+    rows = [{"account": person, "payroll": monthly_summary(person, month)} for person in people]
+    set_rows = [r for r in rows if r["payroll"]["has_rate"]]
+    return render(request, "super_admin/salary_management.html", {
+        "rows": rows,
+        "month": month,
+        "role": role,
+        "role_filters": ROLE_FILTERS,
+        "branches": Branch.objects.order_by("name"),
+        "selected_branch": branch,
+        "query": query,
+        "totals": {
+            "people": len(rows),
+            "staff": sum(1 for r in rows if r["account"].role == User.STAFF),
+            "admins": sum(1 for r in rows if r["account"].role == User.ADMIN),
+            "without_salary": len(rows) - len(set_rows),
+            "monthly": sum((r["payroll"]["monthly"] for r in set_rows), Decimal("0")),
+            "deduction": sum((r["payroll"]["deduction"] for r in set_rows), Decimal("0")),
+            "allowance": sum((r["payroll"]["allowance"] for r in rows), Decimal("0")),
+            "payable": sum((r["payroll"]["total"] for r in set_rows), Decimal("0")),
+        },
+    })
+
+
+@super_admin_required
+@require_POST
+def salary_delete(request, user_id):
+    """Delete all of one person's salary data: every salary record, the monthly salary and the allowance.
+
+    The person's account, attendance and leave are kept. Only the salary data goes.
+    """
+    account = get_object_or_404(User, pk=user_id, role__in=[User.ADMIN, User.STAFF])
+    name = account.full_name or account.username
+    with transaction.atomic():
+        records, _ = Salary.objects.filter(staff=account).delete()
+        account.monthly_salary = None
+        account.allowance = None
+        account.save(update_fields=["monthly_salary", "allowance"])
+    messages.success(
+        request,
+        f"All salary data of {name} deleted ({records} salary record{'s' if records != 1 else ''}, "
+        f"monthly salary and allowance).",
+    )
+    return redirect(_salary_url(request))
 
 
 def _money(raw, label):
@@ -110,8 +196,8 @@ def _money(raw, label):
 
 @super_admin_required
 def admin_salary_detail(request, user_id):
-    """One admin's salary: this month's pay, the salary history, and the monthly salary and allowance."""
-    account = get_object_or_404(User, pk=user_id, role=User.ADMIN)
+    """One admin's or staff member's salary: this month's pay, the history, and the monthly salary and allowance."""
+    account = get_object_or_404(User, pk=user_id, role__in=[User.ADMIN, User.STAFF])
     monthly_value = account.monthly_salary
     allowance_value = account.allowance
 

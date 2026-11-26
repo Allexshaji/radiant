@@ -234,6 +234,10 @@ def staff_feature_states():
     return {key: saved.get(key, True) for key, _label, _text in STAFF_FEATURES}
 
 
+# Sidebar keys that are on for an admin (while the named section is on) and off for the Super Admin.
+ADMIN_ONLY_KEYS = {"my_reports": "reports", "admin_reports": "reports", "admin_salary": "salary"}
+
+
 class Permissions:
     """What the signed-in user may open. Templates read it as {{ can.leave }}."""
 
@@ -241,7 +245,7 @@ class Permissions:
         "staff", "attendance", "reports", "requirements", "leave",
         "expenses", "salary", "branches", "admins", "super_admin", "packages",
         "my_attendance", "my_leave", "my_salary", "my_profile",
-        "my_reports", "admin_reports",
+        "my_reports", "admin_reports", "admin_salary",
     }
 
     def __init__(self, user):
@@ -255,10 +259,11 @@ class Permissions:
 
     def _allowed(self, key):
         role = self.user.role
-        if key in ("my_reports", "admin_reports"):
-            # Sidebar only. An admin sees their own reports and the staff report pages under Staff.
-            # The Super Admin has My Reports under Super Admin and "Staff Reports" under Staff instead.
-            return role == User.ADMIN and "reports" not in (self.user.blocked_sections or [])
+        if key in ADMIN_ONLY_KEYS:
+            # Sidebar only: pages an admin uses that the Super Admin has its own version of.
+            # My Reports sits under Super Admin, "Staff Reports" under Staff, and the Super Admin's
+            # Salary Management (staff and admins together) under Finance.
+            return role == User.ADMIN and ADMIN_ONLY_KEYS[key] not in (self.user.blocked_sections or [])
         if role == User.SUPER_ADMIN:
             return key not in MY_WORK_SECTIONS
         if key == "super_admin":
